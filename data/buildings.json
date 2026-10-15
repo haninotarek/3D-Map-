@@ -62,8 +62,8 @@
   },
   "bld_e1": {
     "osm": "10", "collection": "Faculty Buildings", "kind": "block",
-    "name_en": "Academic Block E1", "name_ar": "مبنى أكاديمي E1",
-    "category": "Academic building (faculty not confirmed)",
+    "name_en": "Engineering Building 2", "name_ar": "مبنى هندسة 2",
+    "category": "Faculty of Engineering", "faculty": "Engineering / كلية الهندسة",
     "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
     "facade_upper": "facade_upper", "facade_ground": "facade_ground",
     "sfm_height_m": "roof p50 18.1 / p75 19.9",
@@ -72,8 +72,8 @@
   },
   "bld_e2": {
     "osm": "09", "collection": "Faculty Buildings", "kind": "block",
-    "name_en": "Academic Block E2", "name_ar": "مبنى أكاديمي E2",
-    "category": "Academic building (faculty not confirmed)",
+    "name_en": "Engineering Building 1", "name_ar": "مبنى هندسة 1", "interior": "data/interiors/bld_e2.json",
+    "category": "Faculty of Engineering", "faculty": "Engineering / كلية الهندسة",
     "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
     "facade_upper": "facade_upper", "facade_ground": "facade_ground",
     "sfm_height_m": "roof p50 18.4 / p75 19.9",

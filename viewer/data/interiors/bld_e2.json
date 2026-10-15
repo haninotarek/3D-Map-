@@ -1,0 +1,98 @@
+{
+  "_note": "Indicative interior layout of Engineering Building 1 (bld_e2). NOT a survey: room positions come from a verbal description (entrance in the west courtyard, left stair = north, right stair = south) and sizes are estimates. Coordinates are local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Rect = [x0, y0, x1, y1]. A room with \"split\": n is drawn as n equal rooms with one shared label.",
+  "building_id": "bld_e2",
+  "footprint": [[176.11, -34.5], [124.9, -35.33], [125.23, -55.46], [160.05, -54.9], [160.29, -69.68], [124.96, -70.25], [125.28, -89.6], [176.74, -88.78], [176.82, -93.62], [187.57, -93.45], [187.21, -71.02], [179.78, -71.15], [179.99, -83.63], [176.91, -83.68]],
+  "wall_height": 3.0,
+  "floors": [
+    {
+      "id": "G", "name_en": "Ground floor", "name_ar": "الدور الأرضي", "level": 0.6,
+      "entrances": [
+        { "at": [160.17, -62.3], "width": 3.5, "name_en": "Main entrance", "name_ar": "المدخل الرئيسي" },
+        { "at": [139.0, -69.95], "width": 3.0, "label_offset": [0, 3], "name_en": "Side entrance", "name_ar": "مدخل فرعي" }
+      ],
+      "rooms": [
+        { "id": "lobby", "kind": "lobby", "rect": [160.4, -70, 176.3, -55], "open": true, "name_en": "Lobby", "name_ar": "اللوبي" },
+        { "id": "cafeteria", "kind": "cafe", "rect": [164.5, -78.2, 176.3, -70], "name_en": "Cafeteria", "name_ar": "الكافتريا" },
+        { "id": "stair_n", "kind": "stair", "rect": [148, -55, 158, -46.5], "name_en": "Left stair", "name_ar": "السلم الشمال" },
+        { "id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70], "name_en": "Right stair", "name_ar": "السلم اليمين" },
+        { "id": "off_n_out_e", "kind": "office", "rect": [159.3, -43.5, 176.3, -35.2], "split": 2, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "wc_m", "kind": "wc", "rect": [150.8, -43.5, 159.3, -35.2], "name_en": "Men's WC", "name_ar": "حمام الرجال" },
+        { "id": "off_n_out_w", "kind": "office", "rect": [125.3, -43.5, 150.8, -35.2], "split": 3, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "off_n_in", "kind": "office", "rect": [125.3, -55, 148, -46.5], "split": 3, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "off_s_out_e", "kind": "office", "rect": [159.3, -89, 176.3, -81.2], "split": 2, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "wc_f", "kind": "wc", "rect": [150.8, -89, 159.3, -81.2], "name_en": "Women's WC", "name_ar": "حمام البنات" },
+        { "id": "off_s_out_w", "kind": "office", "rect": [125.5, -89, 150.8, -81.2], "split": 3, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "off_s_in_w", "kind": "office", "rect": [125.3, -78.2, 136.8, -70], "split": 2, "name_en": "Admin offices", "name_ar": "مكاتب إدارية" },
+        { "id": "side_hall", "kind": "lobby", "rect": [136.8, -78.2, 141.2, -70], "open": true, "nolabel": true, "name_en": "Side entrance hall", "name_ar": "مدخل فرعي" },
+        { "id": "off_s_in_e", "kind": "office", "rect": [141.2, -78.2, 148, -70], "name_en": "Admin office", "name_ar": "مكتب إداري" }
+      ]
+    },
+    {
+      "id": "1", "name_en": "First floor", "name_ar": "الدور الأول", "level": 5.1,
+      "rooms": [
+        { "id": "stair_n", "kind": "stair", "rect": [148, -55, 158, -46.5], "name_en": "Left stair", "name_ar": "السلم الشمال" },
+        { "id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70], "name_en": "Right stair", "name_ar": "السلم اليمين" },
+        { "id": "lifts_n", "kind": "lift", "rect": [158.2, -55, 162.2, -46.5], "split": 2, "name_en": "Lifts", "name_ar": "أسانسيرات" },
+        { "id": "lifts_s", "kind": "lift", "rect": [158.2, -78.2, 162.2, -70], "split": 2, "name_en": "Lifts", "name_ar": "أسانسيرات" },
+        { "id": "lobby_n", "kind": "lobby", "rect": [162.2, -55, 176.3, -43.5], "open": true, "name_en": "Lift lobby", "name_ar": "لوبي الأسانسيرات" },
+        { "id": "lobby_s", "kind": "lobby", "rect": [162.2, -81.2, 176.3, -70], "open": true, "name_en": "Lift lobby", "name_ar": "لوبي الأسانسيرات" },
+        { "id": "void", "kind": "void", "rect": [160.6, -69.8, 169.5, -55.2], "name_en": "Open to the lobby below", "name_ar": "مفتوح على اللوبي اللي تحت" },
+        { "id": "gallery", "kind": "lobby", "rect": [169.5, -70, 176.3, -55], "open": true, "nolabel": true, "name_en": "Gallery", "name_ar": "ممر بدرابزين" },
+        { "id": "ele_room_2", "kind": "service", "rect": [173.3, -64, 176.3, -60], "name_en": "ELE Room 2", "name_ar": "غرفة كهربا 2" },
+
+        { "id": "wc_n", "kind": "wc", "rect": [162.2, -43.5, 167, -35.2], "name_en": "WC", "name_ar": "حمام" },
+        { "id": "lab_2", "kind": "lab", "rect": [152, -43.5, 162.2, -35.2], "name_en": "Lab 2", "name_ar": "Lab 2" },
+        { "id": "room_104", "kind": "lab", "rect": [144.5, -43.5, 152, -35.2], "name_en": "Room 104 · Lab 1", "name_ar": "معمل 1 (104)" },
+        { "id": "room_105", "kind": "lab", "rect": [137, -43.5, 144.5, -35.2], "name_en": "Room 105", "name_ar": "غرفة 105" },
+        { "id": "cls_n_in", "kind": "room", "rect": [137, -55, 148, -46.5], "name_en": "Classroom", "name_ar": "فصل" },
+        { "id": "lockers_n", "kind": "locker", "rect": [138, -46.5, 147.5, -45.9], "open": true, "name_en": "Lockers", "name_ar": "لوكرز" },
+        { "id": "room_106", "kind": "room", "rect": [131, -43.5, 137, -35.2], "name_en": "Classroom 106", "name_ar": "فصل 106" },
+        { "id": "end_lobby_n", "kind": "lobby", "rect": [131, -47, 137, -43.5], "open": true, "nolabel": true, "name_en": "End lobby", "name_ar": "لوبي آخر الجناح" },
+        { "id": "exit_n", "kind": "exit", "rect": [133, -55, 137, -47], "name_en": "Emergency stair", "name_ar": "سلم طوارئ" },
+        { "id": "back_space_n", "kind": "lobby", "rect": [125.3, -47, 131, -35.2], "open": true, "name_en": "Space in front of Drawing Hall 4", "name_ar": "المساحة قدام قاعة الرسم 4" },
+        { "id": "lockers_back_n", "kind": "locker", "rect": [130.4, -42, 131, -37], "open": true, "nolabel": true, "name_en": "Lockers", "name_ar": "لوكرز" },
+        { "id": "drawing_hall_4", "kind": "drawing", "rect": [125.3, -55, 133, -47], "name_en": "Drawing Hall 4", "name_ar": "قاعة الرسم 4" },
+
+        { "id": "wc_s", "kind": "wc", "rect": [162.2, -89, 167, -81.2], "name_en": "WC", "name_ar": "حمام" },
+        { "id": "cls_s_out", "kind": "room", "rect": [137, -89, 162.2, -81.2], "split": 3, "name_en": "Classrooms", "name_ar": "فصول" },
+        { "id": "cls_s_in", "kind": "room", "rect": [137, -78.2, 148, -70], "name_en": "Classroom", "name_ar": "فصل" },
+        { "id": "lockers_s", "kind": "locker", "rect": [138, -78.8, 147.5, -78.2], "open": true, "name_en": "Lockers", "name_ar": "لوكرز" },
+        { "id": "drawing_hall_3", "kind": "drawing", "rect": [125.3, -89, 137, -78.2], "name_en": "Drawing Hall 3", "name_ar": "قاعة الرسم 3" },
+        { "id": "end_lobby_s", "kind": "lobby", "rect": [125.3, -78.2, 137, -74.5], "open": true, "nolabel": true, "name_en": "End lobby", "name_ar": "لوبي آخر الجناح" },
+        { "id": "exit_s", "kind": "exit", "rect": [125.3, -78.2, 126.8, -74.5], "open": true, "name_en": "Emergency exit", "name_ar": "خروج طوارئ" },
+        { "id": "big_room_s", "kind": "hall", "rect": [125.3, -74.5, 137, -70], "name_en": "Large classroom", "name_ar": "فصل كبير" }
+      ]
+    },
+    {
+      "id": "2", "name_en": "Second floor", "name_ar": "الدور التاني", "level": 9.1,
+      "rooms": [
+        { "id": "stair_n", "kind": "stair", "rect": [148, -55, 158, -46.5], "name_en": "Left stair", "name_ar": "السلم الشمال" },
+        { "id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70], "name_en": "Right stair", "name_ar": "السلم اليمين" },
+        { "id": "hall_4", "kind": "hall", "rect": [125.3, -55, 147.5, -35.2], "name_en": "Hall 4", "name_ar": "قاعة 4" },
+        { "id": "hall_3", "kind": "hall", "rect": [125.3, -89, 147.5, -70], "name_en": "Hall 3", "name_ar": "قاعة 3" }
+      ]
+    },
+    {
+      "id": "3", "name_en": "Third floor", "name_ar": "الدور التالت", "level": 13.1,
+      "rooms": [
+        { "id": "stair_n", "kind": "stair", "rect": [148, -55, 158, -46.5], "name_en": "Left stair", "name_ar": "السلم الشمال" },
+        { "id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70], "name_en": "Right stair", "name_ar": "السلم اليمين" },
+        { "id": "lifts_n", "kind": "lift", "rect": [158.2, -55, 162.2, -46.5], "split": 2, "name_en": "Lifts", "name_ar": "أسانسيرات" },
+        { "id": "lifts_s", "kind": "lift", "rect": [158.2, -78.2, 162.2, -70], "split": 2, "name_en": "Lifts", "name_ar": "أسانسيرات" },
+        { "id": "lobby_n", "kind": "lobby", "rect": [162.2, -55, 176.3, -43.5], "open": true, "name_en": "Lift lobby", "name_ar": "لوبي الأسانسيرات" },
+        { "id": "lobby_s", "kind": "lobby", "rect": [162.2, -81.2, 176.3, -70], "open": true, "name_en": "Lift lobby", "name_ar": "لوبي الأسانسيرات" },
+        { "id": "wc_n", "kind": "wc", "rect": [158, -43.5, 164, -35.2], "name_en": "WC", "name_ar": "حمام" },
+        { "id": "wc_s", "kind": "wc", "rect": [158, -89, 164, -81.2], "name_en": "WC", "name_ar": "حمام" },
+        { "id": "cls_n_out", "kind": "room", "rect": [125.3, -43.5, 158, -35.2], "split": 4, "name_en": "Classrooms", "name_ar": "فصول" },
+        { "id": "cls_n_in", "kind": "room", "rect": [125.3, -55, 148, -46.5], "split": 3, "name_en": "Classrooms", "name_ar": "فصول" },
+        { "id": "cls_s_out", "kind": "room", "rect": [125.5, -89, 158, -81.2], "split": 4, "name_en": "Classrooms", "name_ar": "فصول" },
+        { "id": "cls_s_in", "kind": "room", "rect": [125.3, -78.2, 148, -70], "split": 3, "name_en": "Classrooms", "name_ar": "فصول" },
+        { "id": "lockers_n", "kind": "locker", "rect": [129, -43.5, 156, -42.9], "open": true, "name_en": "Lockers", "name_ar": "لوكرز" },
+        { "id": "lockers_s", "kind": "locker", "rect": [129, -78.8, 147, -78.2], "open": true, "name_en": "Lockers", "name_ar": "لوكرز" },
+        { "id": "exit_n", "kind": "exit", "rect": [125.3, -46.5, 126.8, -43.5], "open": true, "name_en": "Emergency exit", "name_ar": "خروج طوارئ" },
+        { "id": "exit_s", "kind": "exit", "rect": [125.3, -81.2, 126.8, -78.2], "open": true, "name_en": "Emergency exit", "name_ar": "خروج طوارئ" },
+        { "id": "halls_tbd", "kind": "pending", "rect": [164, -70, 176.3, -55], "open": true, "name_en": "Lecture halls (to be placed)", "name_ar": "القاعات (لسه هتتحدد)" }
+      ]
+    }
+  ]
+}

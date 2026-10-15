@@ -18,22 +18,39 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="brand-en">East Port Said National University</span>
-      <span class="brand-ar" dir="rtl" lang="ar">جامعة شرق بورسعيد الأهلية</span>
+      <img class="logo" src="assets/logo_university.png" alt="East Port Said National University logo" width="44" height="44">
+      <div class="brand-text">
+        <span class="brand-en">East Port Said National University</span>
+        <span class="brand-ar" dir="rtl" lang="ar">جامعة شرق بورسعيد الأهلية</span>
+      </div>
     </div>
-    <div class="brand-sub">Interactive 3D campus guide</div>
+    <div class="brand-sub">
+      <div class="brand-text right">
+        <span class="sub-title">Interactive 3D Campus Guide</span>
+        <span class="sub-ar" dir="rtl" lang="ar">الدليل التفاعلي ثلاثي الأبعاد للحرم الجامعي</span>
+      </div>
+      <img class="logo" src="assets/logo_faculty.png" alt="Faculty of Computer Science and Information Technology logo" width="44" height="44">
+    </div>
   </header>
 
   <main id="stage" aria-label="3D campus view">
     <div id="canvas-host"></div>
 
     <div id="toolbar" role="toolbar" aria-label="View controls">
-      <button id="btn-overview" title="Overview / reset view (Home)" aria-label="Overview">⌂ <span>Overview</span></button>
-      <button id="btn-prev" title="Previous building (←)" aria-label="Previous building">‹</button>
-      <button id="btn-next" title="Next building (→)" aria-label="Next building">›</button>
-      <button id="btn-labels" title="Show/hide labels (L)" aria-pressed="true" aria-label="Toggle labels">Labels</button>
-      <button id="btn-list" title="Building list" aria-label="Building list" aria-expanded="false">☰ <span>Buildings</span></button>
-      <button id="btn-help" title="Help (?)" aria-label="Help">?</button>
+      <button id="btn-overview" title="Overview / reset view (Home)" aria-label="Overview">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5"/></svg><span>Overview</span></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button id="btn-prev" class="icon" title="Previous building (←)" aria-label="Previous building">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button id="btn-next" class="icon" title="Next building (→)" aria-label="Next building">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button id="btn-labels" title="Show/hide labels (L)" aria-pressed="true" aria-label="Toggle labels">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg><span>Labels</span></button>
+      <button id="btn-list" title="Building list" aria-label="Building list" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6"/></svg><span>Buildings</span></button>
+      <button id="btn-help" class="icon" title="Help (?)" aria-label="Help">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="17" r=".6"/></svg></button>
     </div>
 
     <div id="compass" title="North" aria-hidden="true"><div class="needle">N</div></div>
@@ -54,6 +71,7 @@
       <div id="info-category" class="chip"></div>
       <p id="info-desc"></p>
       <dl id="info-facts"></dl>
+      <div id="info-floors" class="floors hidden" role="group" aria-label="Floors"></div>
       <details id="info-evidence">
         <summary>Sources &amp; confidence</summary>
         <p id="info-evidence-text"></p>
@@ -81,7 +99,9 @@
 
     <div id="loading" role="status" aria-live="polite">
       <div class="loading-box">
+        <div class="loading-logo"><img src="assets/logo_university.png" alt="" width="96" height="96"></div>
         <div class="loading-title">Loading campus model…</div>
+        <div class="loading-ar" dir="rtl" lang="ar">جاري تحميل الحرم الجامعي…</div>
         <div class="bar"><div id="bar-fill"></div></div>
         <div id="loading-detail">Preparing</div>
       </div>

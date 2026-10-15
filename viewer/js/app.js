@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { buildInterior } from './interior.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -22,6 +23,8 @@ const state = {
   renderer: null, labelRenderer: null, scene: null, camera: null, controls: null, root: null,
   items: new Map(), // id -> {id, object, info, box, center, size, label}
   selected: null, labelsOn: true, anim: null, needsRender: true, info: {},
+  interiors: new Map(), // building id -> buildInterior() result (loaded on first use)
+  inside: null,         // {id, floor} while a floor cutaway is shown
   overview: { pos: new THREE.Vector3(-260, 300, 330), target: new THREE.Vector3(0, 0, 5) },
 };
 
@@ -148,8 +151,10 @@ function registerItems(root) {
     const ud = it.object.userData;
     const js = state.info[it.id] || {};
     it.info = {
-      name_en: ud.name_en || js.name_en || it.id, name_ar: ud.name_ar || js.name_ar || '',
-      category: ud.category || js.category || '', description: ud.description || js.description || '',
+      // buildings.json wins over glTF extras so names/text can change without re-exporting the model
+      name_en: js.name_en || ud.name_en || it.id, name_ar: js.name_ar || ud.name_ar || '',
+      category: js.category || ud.category || '', description: js.description || ud.description || '',
+      faculty: js.faculty || '', interior: js.interior || '',
       evidence: ud.evidence || js.evidence || '', storeys: ud.storeys || js.storeys || null,
       height: ud.height_m || null, sfm: ud.sfm_height || js.sfm_height_m || '', osm: ud.osm_way || '',
     };
@@ -186,6 +191,7 @@ let highlight = null;
 function select(id, fly) {
   const it = state.items.get(id);
   if (!it) return;
+  if (state.inside && state.inside.id !== id) exitInterior();
   state.selected = id;
   if (highlight) { state.scene.remove(highlight); highlight.geometry.dispose(); }
   const b = it.box.clone().expandByScalar(1.2);
@@ -200,6 +206,7 @@ function select(id, fly) {
 }
 
 function clearSelection() {
+  exitInterior();
   state.selected = null;
   if (highlight) { state.scene.remove(highlight); highlight = null; }
   document.querySelectorAll('.label3d.active, #building-list button.active').forEach((el) => el.classList.remove('active'));
@@ -215,12 +222,84 @@ function showInfo(it) {
   const facts = [];
   if (i.storeys) facts.push(['Storeys', String(i.storeys)]);
   if (i.height) facts.push(['Approx. height', `${i.height} m (reconstructed)`]);
-  if (/^bld_/.test(it.id) && it.id !== 'bld_main') facts.push(['Faculty', 'Not confirmed by available sources']);
+  if (i.faculty) facts.push(['Faculty', i.faculty]);
+  else if (/^bld_/.test(it.id) && it.id !== 'bld_main') facts.push(['Faculty', 'Not confirmed by available sources']);
   if (i.osm) facts.push(['Footprint', `OSM way ${i.osm}`]);
   $('info-facts').innerHTML = facts.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
   $('info-evidence-text').textContent = i.evidence + (i.sfm ? ` Photogrammetric roof height: ${i.sfm}.` : '');
   $('info-id').textContent = it.id;
+  renderFloorButtons(it);
   togglePanel('info-panel', true);
+}
+
+// ---------------------------------------------------------------- interior cutaway
+async function getInterior(it) {
+  if (state.interiors.has(it.id)) return state.interiors.get(it.id);
+  const r = await fetch(it.info.interior, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${it.info.interior}: ${r.status}`);
+  const interior = buildInterior(await r.json());
+  interior.group.visible = false;
+  state.scene.add(interior.group);
+  state.interiors.set(it.id, interior);
+  return interior;
+}
+
+function renderFloorButtons(it) {
+  const box = $('info-floors');
+  box.classList.toggle('hidden', !it.info.interior);
+  box.innerHTML = '';
+  if (!it.info.interior) return;
+  const add = (text, title, floor) => {
+    const b = document.createElement('button');
+    b.textContent = text; b.title = title; b.dataset.floor = floor;
+    b.addEventListener('click', () => (floor < 0 ? exitInterior(true) : enterFloor(it, floor)));
+    box.appendChild(b);
+  };
+  add('Outside', 'Show the building from outside', -1);
+  getInterior(it).then((interior) => {
+    if (state.selected !== it.id) return;
+    interior.floors.forEach((f, i) => add(f.id, `${f.name_en} — ${f.name_ar}`, i));
+    syncFloorButtons();
+  }).catch((e) => { console.warn('interior not loaded', e); box.classList.add('hidden'); });
+  syncFloorButtons();
+}
+
+function syncFloorButtons() {
+  const cur = state.inside ? state.inside.floor : -1;
+  document.querySelectorAll('#info-floors button').forEach((b) => b.classList.toggle('active', Number(b.dataset.floor) === cur));
+}
+
+async function enterFloor(it, idx) {
+  const interior = await getInterior(it);
+  const wasInside = !!state.inside;
+  state.inside = { id: it.id, floor: idx };
+  interior.group.visible = true; interior.setFloor(idx);
+  it.object.visible = false; if (it.label) it.label.visible = false;
+  if (highlight) highlight.visible = false;
+  syncFloorButtons();
+  // look down into the floor from the plaza side; keep the user's view when only switching floors
+  const level = interior.floors[idx].level;
+  if (!wasInside) {
+    const target = new THREE.Vector3(it.center.x, level, it.center.z);
+    flyTo(new THREE.Vector3(target.x - 38, level + 62, target.z + 44), target);
+  } else {
+    const dy = level - state.controls.target.y;
+    flyTo(state.camera.position.clone().add(new THREE.Vector3(0, dy, 0)), state.controls.target.clone().add(new THREE.Vector3(0, dy, 0)), 500);
+  }
+  state.needsRender = true;
+}
+
+function exitInterior(refly) {
+  if (!state.inside) return;
+  const it = state.items.get(state.inside.id);
+  const interior = state.interiors.get(state.inside.id);
+  if (interior) interior.group.visible = false;
+  if (it) { it.object.visible = true; if (it.label) it.label.visible = true; }
+  if (highlight) highlight.visible = true;
+  state.inside = null;
+  syncFloorButtons();
+  if (refly && it) flyToItem(it);
+  state.needsRender = true;
 }
 
 function flyTo(pos, target, ms = 1200) {
@@ -268,6 +347,9 @@ function pickId(clientX, clientY) {
   raycaster.setFromCamera(ndc, state.camera);
   const hits = raycaster.intersectObject(state.root, true);
   for (const h of hits) {
+    let hidden = false;
+    for (let p = h.object; p; p = p.parent) if (p.visible === false) { hidden = true; break; }
+    if (hidden) continue;   // e.g. the shell of a building shown as an interior cutaway
     let o = h.object;
     while (o) { if (o.userData && o.userData.building_id && o.userData.selectable) return o.userData.building_id; o = o.parent; }
     if (/TERRAIN/.test(h.object.name)) return null;     // ground hit first - nothing selectable in front
@@ -283,7 +365,7 @@ function initPointer() {
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     if (moved < 6 && performance.now() - down.t < 600) {
       const id = pickId(e.clientX, e.clientY);
-      if (id) select(id, true); else if (state.selected) clearSelection();
+      if (id) select(id, true); else if (state.selected && !state.inside) clearSelection();
     }
     down = null;
   });
@@ -389,7 +471,7 @@ async function main() {
     requestAnimationFrame(loop);
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality };   // QA / integration hook
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior };   // QA / integration hook
   } catch (err) {
     console.error(err);
     showError(`Loading failed: ${err && err.message ? err.message : err}. Check your connection and try again.`);
