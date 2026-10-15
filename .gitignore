@@ -1,0 +1,10 @@
+# Packaged archive: same content as deliverables/ (rebuild with pipeline/package_deliverables.py)
+EPNU_campus_3d_deliverables.zip
+
+# Transient smoke-test output (pipeline/smoke_viewer.py)
+analysis/restart_smoke/
+
+# Python / Blender byproducts
+__pycache__/
+*.pyc
+*.blend1

@@ -1,0 +1,555 @@
+I20261015 01:19:23.036880 12943 incremental_mapper.cc:225] Loading database
+I20261015 01:19:23.037743 12943 database_cache.cc:65] Loading cameras...
+I20261015 01:19:23.037766 12943 database_cache.cc:75]  4 in 0.000s
+I20261015 01:19:23.037772 12943 database_cache.cc:83] Loading matches...
+I20261015 01:19:23.040928 12943 database_cache.cc:89]  679 in 0.003s
+I20261015 01:19:23.040946 12943 database_cache.cc:105] Loading images...
+I20261015 01:19:23.049574 12943 database_cache.cc:155]  46 in 0.009s (connected 46)
+I20261015 01:19:23.049597 12943 database_cache.cc:166] Building correspondence graph...
+I20261015 01:19:23.082765 12943 database_cache.cc:195]  in 0.033s (ignored 0)
+I20261015 01:19:23.082850 12943 timer.cc:91] Elapsed time: 0.001 [minutes]
+I20261015 01:19:23.086462 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:23.301260 12943 incremental_mapper.cc:289] Initializing with image pair #13 and #18
+I20261015 01:19:23.302057 12943 incremental_mapper.cc:294] Global bundle adjustment
+I20261015 01:19:23.363253 12943 incremental_mapper.cc:375] Registering image #12 (3)
+I20261015 01:19:23.363284 12943 incremental_mapper.cc:378] => Image sees 102 / 5879 points
+I20261015 01:19:23.419317 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:23.448314 12943 incremental_mapper.cc:375] Registering image #15 (4)
+I20261015 01:19:23.448375 12943 incremental_mapper.cc:378] => Image sees 133 / 4834 points
+I20261015 01:19:23.538832 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:23.579962 12943 incremental_mapper.cc:375] Registering image #17 (5)
+I20261015 01:19:23.579988 12943 incremental_mapper.cc:378] => Image sees 163 / 4093 points
+I20261015 01:19:23.688630 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:23.816123 12943 incremental_mapper.cc:375] Registering image #16 (6)
+I20261015 01:19:23.816154 12943 incremental_mapper.cc:378] => Image sees 204 / 3608 points
+I20261015 01:19:24.039006 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:24.187469 12943 incremental_mapper.cc:375] Registering image #27 (7)
+I20261015 01:19:24.187505 12943 incremental_mapper.cc:378] => Image sees 522 / 3807 points
+I20261015 01:19:24.697117 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:24.968707 12943 incremental_mapper.cc:375] Registering image #28 (8)
+I20261015 01:19:24.968746 12943 incremental_mapper.cc:378] => Image sees 673 / 4319 points
+I20261015 01:19:25.258551 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:25.511152 12943 incremental_mapper.cc:375] Registering image #19 (9)
+I20261015 01:19:25.511210 12943 incremental_mapper.cc:378] => Image sees 705 / 4136 points
+I20261015 01:19:25.890612 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:26.620558 12943 incremental_mapper.cc:375] Registering image #29 (10)
+I20261015 01:19:26.620597 12943 incremental_mapper.cc:378] => Image sees 980 / 3873 points
+I20261015 01:19:27.046046 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:27.411155 12943 incremental_mapper.cc:375] Registering image #46 (11)
+I20261015 01:19:27.411216 12943 incremental_mapper.cc:378] => Image sees 339 / 3196 points
+I20261015 01:19:27.708503 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:28.254096 12943 incremental_mapper.cc:375] Registering image #45 (12)
+I20261015 01:19:28.254138 12943 incremental_mapper.cc:378] => Image sees 635 / 3531 points
+I20261015 01:19:28.575073 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:29.819746 12943 incremental_mapper.cc:375] Registering image #44 (13)
+I20261015 01:19:29.819784 12943 incremental_mapper.cc:378] => Image sees 732 / 3413 points
+I20261015 01:19:30.153636 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:31.262570 12943 incremental_mapper.cc:375] Registering image #43 (14)
+I20261015 01:19:31.262612 12943 incremental_mapper.cc:378] => Image sees 868 / 3117 points
+I20261015 01:19:31.636226 12943 incremental_mapper.cc:375] Registering image #42 (15)
+I20261015 01:19:31.636263 12943 incremental_mapper.cc:378] => Image sees 902 / 2522 points
+I20261015 01:19:31.990605 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:32.797119 12943 incremental_mapper.cc:375] Registering image #24 (16)
+I20261015 01:19:32.797158 12943 incremental_mapper.cc:378] => Image sees 501 / 5804 points
+I20261015 01:19:33.275389 12943 incremental_mapper.cc:375] Registering image #25 (17)
+I20261015 01:19:33.275444 12943 incremental_mapper.cc:378] => Image sees 506 / 5732 points
+I20261015 01:19:33.814838 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:37.603610 12943 incremental_mapper.cc:375] Registering image #26 (18)
+I20261015 01:19:37.603650 12943 incremental_mapper.cc:378] => Image sees 569 / 4865 points
+I20261015 01:19:38.166433 12943 incremental_mapper.cc:375] Registering image #14 (19)
+I20261015 01:19:38.166476 12943 incremental_mapper.cc:378] => Image sees 579 / 4854 points
+I20261015 01:19:38.784710 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:39.460386 12943 incremental_mapper.cc:375] Registering image #11 (20)
+I20261015 01:19:39.460427 12943 incremental_mapper.cc:378] => Image sees 592 / 4870 points
+I20261015 01:19:40.009824 12943 incremental_mapper.cc:375] Registering image #23 (21)
+I20261015 01:19:40.009865 12943 incremental_mapper.cc:378] => Image sees 532 / 3769 points
+I20261015 01:19:40.544385 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:41.258782 12943 incremental_mapper.cc:375] Registering image #40 (22)
+I20261015 01:19:41.258822 12943 incremental_mapper.cc:378] => Image sees 172 / 3134 points
+I20261015 01:19:41.428782 12943 incremental_mapper.cc:375] Registering image #41 (23)
+I20261015 01:19:41.428821 12943 incremental_mapper.cc:378] => Image sees 206 / 2522 points
+I20261015 01:19:41.713992 12943 incremental_mapper.cc:375] Registering image #39 (24)
+I20261015 01:19:41.714030 12943 incremental_mapper.cc:378] => Image sees 369 / 3167 points
+I20261015 01:19:41.968274 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:43.439182 12943 incremental_mapper.cc:375] Registering image #38 (25)
+I20261015 01:19:43.439224 12943 incremental_mapper.cc:378] => Image sees 578 / 2972 points
+I20261015 01:19:43.605280 12943 incremental_mapper.cc:375] Registering image #37 (26)
+I20261015 01:19:43.605319 12943 incremental_mapper.cc:378] => Image sees 681 / 2425 points
+I20261015 01:19:43.800089 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:44.494869 12943 incremental_mapper.cc:375] Registering image #22 (27)
+I20261015 01:19:44.494925 12943 incremental_mapper.cc:378] => Image sees 217 / 2186 points
+I20261015 01:19:44.743132 12943 incremental_mapper.cc:375] Registering image #21 (28)
+I20261015 01:19:44.743193 12943 incremental_mapper.cc:378] => Image sees 342 / 2704 points
+I20261015 01:19:44.973158 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:45.964701 12943 incremental_mapper.cc:375] Registering image #20 (29)
+I20261015 01:19:45.964742 12943 incremental_mapper.cc:378] => Image sees 747 / 2175 points
+I20261015 01:19:46.206817 12943 incremental_mapper.cc:375] Registering image #32 (30)
+I20261015 01:19:46.206861 12943 incremental_mapper.cc:378] => Image sees 108 / 2840 points
+I20261015 01:19:46.353262 12943 incremental_mapper.cc:375] Registering image #31 (31)
+I20261015 01:19:46.353305 12943 incremental_mapper.cc:378] => Image sees 113 / 2543 points
+I20261015 01:19:46.517243 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:47.618712 12943 incremental_mapper.cc:375] Registering image #33 (32)
+I20261015 01:19:47.618762 12943 incremental_mapper.cc:378] => Image sees 317 / 2218 points
+I20261015 01:19:47.814800 12943 incremental_mapper.cc:375] Registering image #30 (33)
+I20261015 01:19:47.814838 12943 incremental_mapper.cc:378] => Image sees 438 / 1613 points
+I20261015 01:19:48.040689 12943 incremental_mapper.cc:375] Registering image #8 (34)
+I20261015 01:19:48.040727 12943 incremental_mapper.cc:378] => Image sees 62 / 4786 points
+I20261015 01:19:48.189087 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.189123 12943 incremental_mapper.cc:375] Registering image #7 (34)
+I20261015 01:19:48.189132 12943 incremental_mapper.cc:378] => Image sees 59 / 4884 points
+I20261015 01:19:48.338476 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.338510 12943 incremental_mapper.cc:375] Registering image #5 (34)
+I20261015 01:19:48.338516 12943 incremental_mapper.cc:378] => Image sees 57 / 4750 points
+I20261015 01:19:48.487195 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.487227 12943 incremental_mapper.cc:375] Registering image #1 (34)
+I20261015 01:19:48.487233 12943 incremental_mapper.cc:378] => Image sees 52 / 3788 points
+I20261015 01:19:48.635270 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.635299 12943 incremental_mapper.cc:375] Registering image #6 (34)
+I20261015 01:19:48.635306 12943 incremental_mapper.cc:378] => Image sees 49 / 4771 points
+I20261015 01:19:48.780479 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.780507 12943 incremental_mapper.cc:375] Registering image #3 (34)
+I20261015 01:19:48.780514 12943 incremental_mapper.cc:378] => Image sees 45 / 4826 points
+I20261015 01:19:48.917088 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:48.917115 12943 incremental_mapper.cc:375] Registering image #9 (34)
+I20261015 01:19:48.917122 12943 incremental_mapper.cc:378] => Image sees 42 / 4618 points
+I20261015 01:19:49.066808 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:49.066839 12943 incremental_mapper.cc:375] Registering image #2 (34)
+I20261015 01:19:49.066846 12943 incremental_mapper.cc:378] => Image sees 37 / 4518 points
+I20261015 01:19:49.207110 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:49.207139 12943 incremental_mapper.cc:375] Registering image #35 (34)
+I20261015 01:19:49.207144 12943 incremental_mapper.cc:378] => Image sees 36 / 1817 points
+I20261015 01:19:49.215687 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:49.215714 12943 incremental_mapper.cc:375] Registering image #10 (34)
+I20261015 01:19:49.215723 12943 incremental_mapper.cc:378] => Image sees 33 / 4242 points
+I20261015 01:19:49.345541 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:49.345566 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:50.460961 12943 incremental_mapper.cc:375] Registering image #8 (34)
+I20261015 01:19:50.461009 12943 incremental_mapper.cc:378] => Image sees 62 / 4786 points
+I20261015 01:19:50.605445 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:50.605477 12943 incremental_mapper.cc:375] Registering image #7 (34)
+I20261015 01:19:50.605484 12943 incremental_mapper.cc:378] => Image sees 59 / 4884 points
+I20261015 01:19:50.751554 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:50.751613 12943 incremental_mapper.cc:375] Registering image #5 (34)
+I20261015 01:19:50.751621 12943 incremental_mapper.cc:378] => Image sees 57 / 4750 points
+I20261015 01:19:50.898140 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:50.898187 12943 incremental_mapper.cc:375] Registering image #1 (34)
+I20261015 01:19:50.898195 12943 incremental_mapper.cc:378] => Image sees 52 / 3788 points
+I20261015 01:19:51.037578 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.037604 12943 incremental_mapper.cc:375] Registering image #6 (34)
+I20261015 01:19:51.037609 12943 incremental_mapper.cc:378] => Image sees 49 / 4771 points
+I20261015 01:19:51.179155 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.179198 12943 incremental_mapper.cc:375] Registering image #3 (34)
+I20261015 01:19:51.179205 12943 incremental_mapper.cc:378] => Image sees 45 / 4826 points
+I20261015 01:19:51.312107 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.312129 12943 incremental_mapper.cc:375] Registering image #9 (34)
+I20261015 01:19:51.312134 12943 incremental_mapper.cc:378] => Image sees 42 / 4618 points
+I20261015 01:19:51.452181 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.452207 12943 incremental_mapper.cc:375] Registering image #2 (34)
+I20261015 01:19:51.452214 12943 incremental_mapper.cc:378] => Image sees 37 / 4518 points
+I20261015 01:19:51.595589 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.595614 12943 incremental_mapper.cc:375] Registering image #35 (34)
+I20261015 01:19:51.595620 12943 incremental_mapper.cc:378] => Image sees 36 / 1817 points
+I20261015 01:19:51.604031 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.604055 12943 incremental_mapper.cc:375] Registering image #10 (34)
+I20261015 01:19:51.604061 12943 incremental_mapper.cc:378] => Image sees 33 / 4242 points
+I20261015 01:19:51.733933 12943 incremental_mapper.cc:389] => Could not register, trying another image.
+I20261015 01:19:51.733956 12943 incremental_mapper.cc:41] Retriangulation and Global bundle adjustment
+I20261015 01:19:52.856395 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.768625 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.771139 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.773624 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.775787 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.778208 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.779403 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.781831 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.782922 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.785328 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.786446 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.788862 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.790158 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.792666 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.793747 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.796121 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.797257 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.799841 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.800956 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.803324 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.804453 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.806970 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.808034 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.810559 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.811771 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.814673 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.815886 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.818702 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.819916 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.822382 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.823452 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.825831 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.826895 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.829319 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.830385 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.832777 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.833845 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.836234 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.837327 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.839679 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.840775 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.843137 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.844224 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.846613 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.847723 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.850116 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.851202 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.853641 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.854732 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.857129 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.858239 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.860620 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.861694 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.864096 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.865229 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.867630 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.868737 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.871114 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.872200 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.874588 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.875658 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.878028 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.879093 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.881536 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.882606 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.885004 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.886070 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.888414 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.889501 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.891861 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.892958 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.895340 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.896436 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.898820 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.899893 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.902310 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.903381 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.905752 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.906819 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.909232 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.910303 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.912679 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.913790 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.916213 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.917322 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.919692 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.920785 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.923156 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.924237 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.926620 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.927686 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.930104 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.931223 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.933604 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.934666 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.937074 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.938134 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.940537 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.941606 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.944038 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.945228 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.947870 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.949066 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.951571 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.952668 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.955183 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.956255 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.958688 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.959760 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.962203 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.963280 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.965700 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.966773 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.969187 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.970256 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.972671 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.973739 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.976110 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.977272 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.979643 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.980835 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.983225 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.984300 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.986686 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.987829 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.990258 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.991340 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.993726 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.994808 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:53.997278 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:53.998422 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.000883 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.001969 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.004400 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.005484 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.007858 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.008975 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.011346 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.012439 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.014876 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.015955 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.018452 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.019594 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.021981 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.023046 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.025554 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.026618 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.029006 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.030076 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.032488 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.033557 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.035960 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.037108 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.039491 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.040627 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.043018 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.044083 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.046612 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.047883 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.050384 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.051477 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.053887 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.054965 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.057375 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.058444 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.060843 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.061906 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.064301 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.065389 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.067752 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.068845 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.071249 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.072319 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.074708 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.075769 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.078172 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.079241 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.081683 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.082825 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.085539 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.086679 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.089313 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.090468 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.092939 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.094000 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.096398 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.097465 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.099841 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.100937 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.103317 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.104416 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.106778 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.107841 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.110261 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.111330 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.113719 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.114781 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.117194 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.118266 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.120651 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.121718 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.124102 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.125216 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.127583 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.128679 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.131068 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.132144 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.134537 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.135600 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.137996 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.139058 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.141458 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.142522 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.144922 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.145985 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.148433 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.149519 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.151893 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.153002 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.155419 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.156575 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.158994 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.160073 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.162500 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.163568 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.165974 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.167037 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.169466 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.170531 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.172924 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.173993 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.176397 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.177464 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.179839 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.180934 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.183312 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.184420 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.186776 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.187839 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.190256 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.191323 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.193709 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.194777 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.197184 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.198254 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.200639 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.201702 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.204085 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.205193 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.207546 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.208649 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.211033 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.212093 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.214493 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.215557 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.217960 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.219036 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.221442 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.222508 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.224902 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.225967 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.228366 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.229445 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.231809 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.232897 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.235287 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.236378 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.238749 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.239815 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.242336 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.243398 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.245780 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.246842 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.249244 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.250312 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.252704 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.253765 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.256127 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.257233 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.259598 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.260689 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.263067 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.264144 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.266577 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.267648 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.270046 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.271116 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.273525 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.274596 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.276991 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.278057 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.280452 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.281519 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.283888 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.284986 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.287379 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.288480 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.290855 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.291929 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.294327 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.295392 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.297780 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.298849 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.301262 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.302331 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.304718 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.305784 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.308148 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.309322 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.311929 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.313092 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.315567 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.316670 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.319214 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.320277 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.322672 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.323733 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.326134 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.327216 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.329615 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.330683 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.333065 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.334126 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.336541 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.337607 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.339967 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.341058 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.343446 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.344533 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.346899 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.347975 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.350379 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.351444 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.353830 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.354887 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.357295 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.358358 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.360755 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.361817 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.364204 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.365298 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.367652 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.368744 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.371114 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.372198 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.374577 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.375649 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.378043 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.379105 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.381505 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.382584 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.384977 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.386042 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.388446 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.389523 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.391880 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.392979 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.395350 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.396454 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.398811 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.399883 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.402281 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.403353 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.405738 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.406804 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.409214 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.410283 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.412660 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.413723 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.416087 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.417193 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.419550 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.420643 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.423015 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.424082 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.426472 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.427537 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.429930 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.430996 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.433395 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.434460 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.436841 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.437902 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.440284 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.441373 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.443737 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.444828 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.447199 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.448268 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.450668 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.451740 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.454133 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.455214 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.457592 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.458655 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.461045 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.462110 12943 incremental_mapper.cc:265] Finding good initial image pair
+I20261015 01:19:54.464519 12943 incremental_mapper.cc:269] => No good initial image pair found.
+I20261015 01:19:54.464584 12943 timer.cc:91] Elapsed time: 0.524 [minutes]

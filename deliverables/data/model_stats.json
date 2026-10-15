@@ -1,0 +1,66 @@
+{
+ "desktop": {
+  "file": "campus_model.glb",
+  "size_MB": 1.15,
+  "nodes": 72,
+  "meshes": 61,
+  "materials": 34,
+  "textures": 44,
+  "triangles_unique": 14186,
+  "triangles_rendered_incl_instances": 85208,
+  "instanced_groups": 12,
+  "instances": 3820,
+  "building_ids": [
+   "bld_e1",
+   "bld_e2",
+   "bld_h1",
+   "bld_h2",
+   "bld_main",
+   "bld_s1",
+   "bld_s2",
+   "bld_s3",
+   "bld_w1",
+   "bld_w2",
+   "gate_1",
+   "lm_gazebo_garden",
+   "lm_sports_pitch"
+  ],
+  "extensions": [
+   "KHR_draco_mesh_compression",
+   "EXT_texture_webp",
+   "EXT_mesh_gpu_instancing"
+  ]
+ },
+ "mobile": {
+  "file": "campus_model_mobile.glb",
+  "size_MB": 0.72,
+  "nodes": 72,
+  "meshes": 61,
+  "materials": 34,
+  "textures": 44,
+  "triangles_unique": 14186,
+  "triangles_rendered_incl_instances": 85208,
+  "instanced_groups": 12,
+  "instances": 3820,
+  "building_ids": [
+   "bld_e1",
+   "bld_e2",
+   "bld_h1",
+   "bld_h2",
+   "bld_main",
+   "bld_s1",
+   "bld_s2",
+   "bld_s3",
+   "bld_w1",
+   "bld_w2",
+   "gate_1",
+   "lm_gazebo_garden",
+   "lm_sports_pitch"
+  ],
+  "extensions": [
+   "KHR_draco_mesh_compression",
+   "EXT_texture_webp",
+   "EXT_mesh_gpu_instancing"
+  ]
+ }
+}

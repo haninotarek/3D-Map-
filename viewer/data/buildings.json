@@ -1,0 +1,124 @@
+{
+  "_note": "Stable building IDs used by the 3D model (object custom properties -> glTF extras -> viewer). Neutral codes (W1, S2, ...) are MODEL identifiers, not official names. Faculty assignment per building is not stated in any supplied or public source and is therefore left unassigned.",
+  "bld_main": {
+    "osm": "15", "collection": "Main Buildings", "kind": "main",
+    "name_en": "Main Building", "name_ar": "المبنى الرئيسي",
+    "category": "Administration / main building",
+    "storeys": 3, "plinth": 0.6, "gf_h": 4.8, "up_h": 4.4, "parapet": 1.2,
+    "facade_upper": "facade_main_upper", "facade_ground": "facade_main_ground",
+    "sfm_height_m": "roof p50 14.5 / p75 16.2 (sparse SfM, +/-1.5 m)",
+    "evidence": "Footprint: OSM way 1250092615 (verified against 2022 satellite). Storeys: 3 (verified, frames 5.43 s, 8.88 s, 90.3 s, 135.75 s). Dome on drum: verified (frames 5.43 s, 124.38 s). Name: the video section captioned 'المبنى الرئيسي' shows a 3-storey, 3-pavilion facade with a 'MAIN BUILDING' sign; matched to this building by facade composition, storey count, forecourt kerbs and its position on the Gate No. 1 axis (high-confidence estimate).",
+    "description": "Three-storey building on the axis of Gate No. 1, with a white ribbed dome on a windowed drum. West facade: three projecting pavilions with paired giant columns, a sandstone-clad ground floor and a glazed central entrance with a 'MAIN BUILDING / المبنى الرئيسي' sign."
+  },
+  "bld_w1": {
+    "osm": "14", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block W1", "name_ar": "مبنى أكاديمي W1",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p50 18.8 / p75 20.6",
+    "evidence": "Footprint OSM 1250092614; 4 storeys verified (frame 0.5 s north facade); SfM roof height 18.8 m.",
+    "description": "Four-storey teaching block (C/E-plan) at the north end of the west column, facing the north star garden."
+  },
+  "bld_w2": {
+    "osm": "13", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block W2", "name_ar": "مبنى أكاديمي W2",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p50 19.0 / p75 21.1",
+    "evidence": "Footprint OSM 1250092613; 4 storeys (aerial frames 122.3 s, 124.38 s); SfM roof height 19.0 m.",
+    "description": "Four-storey teaching block (C/E-plan) in the west column, between Block W1 and the Main Building."
+  },
+  "bld_s1": {
+    "osm": "12", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block S1", "name_ar": "مبنى أكاديمي S1",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p75 18.3 (far from drone, weakly observed)",
+    "evidence": "Footprint OSM 1250092612 (U-plan open to the north); 4 storeys (frames 97.4 s, 122.3 s).",
+    "description": "Four-storey U-plan teaching block, the west building of the south row. Its courtyard opens north towards the plaza."
+  },
+  "bld_s2": {
+    "osm": "11", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block S2", "name_ar": "مبنى أكاديمي S2",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p75 17.9",
+    "evidence": "Footprint OSM 1250092611 (U-plan); 4 storeys (frames 97.4 s, 122.3 s).",
+    "description": "Four-storey U-plan teaching block in the middle of the south row, next to the fenced sports pitch."
+  },
+  "bld_s3": {
+    "osm": "08", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block S3", "name_ar": "مبنى أكاديمي S3",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p75 18.7",
+    "evidence": "Footprint OSM 1250092608 (U-plan); 4 storeys (frames 122.3 s, 128.9 s).",
+    "description": "Four-storey U-plan teaching block, the east building of the south row."
+  },
+  "bld_e1": {
+    "osm": "10", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block E1", "name_ar": "مبنى أكاديمي E1",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p50 18.1 / p75 19.9",
+    "evidence": "Footprint OSM 1250092610 (plan open to the west); 4 storeys; this is the building marked by the green arrow in the supplied WhatsApp image (inferred from viewpoint matching with frame 122.3 s). The arrow's meaning is not stated.",
+    "description": "Four-storey teaching block at the north end of the east column. The supplied photo marks it with a green arrow."
+  },
+  "bld_e2": {
+    "osm": "09", "collection": "Faculty Buildings", "kind": "block",
+    "name_en": "Academic Block E2", "name_ar": "مبنى أكاديمي E2",
+    "category": "Academic building (faculty not confirmed)",
+    "storeys": 4, "plinth": 0.6, "gf_h": 4.5, "up_h": 4.0, "parapet": 1.2,
+    "facade_upper": "facade_upper", "facade_ground": "facade_ground",
+    "sfm_height_m": "roof p50 18.4 / p75 19.9",
+    "evidence": "Footprint OSM 1250092609; 4 storeys; SfM roof height 18.4 m.",
+    "description": "Four-storey teaching block at the south end of the east column."
+  },
+  "bld_h1": {
+    "osm": "17", "collection": "Faculty Buildings", "kind": "hall",
+    "name_en": "Hall / Workshop H1", "name_ar": "قاعة / ورشة H1",
+    "category": "Hall or workshop building (use not confirmed)",
+    "storeys": 2, "plinth": 0.3, "gf_h": 4.2, "up_h": 4.0, "parapet": 1.0,
+    "facade_upper": "facade_upper", "facade_ground": "facade_upper",
+    "sfm_height_m": "p50 9.1 / p90 13.1 (few points)",
+    "evidence": "Footprint OSM 1250092617; a 2-storey block plus a hall with a green pitched metal roof and a large roller door (frames 0.5 s, 107-110 s).",
+    "description": "Two-storey block with an attached high hall (green pitched roof, roller door), in the north-west corner next to the parking area."
+  },
+  "bld_h2": {
+    "osm": "18", "collection": "Faculty Buildings", "kind": "hall",
+    "name_en": "Hall / Workshop H2", "name_ar": "قاعة / ورشة H2",
+    "category": "Hall or workshop building (use not confirmed)",
+    "storeys": 2, "plinth": 0.3, "gf_h": 4.2, "up_h": 4.0, "parapet": 1.0,
+    "facade_upper": "facade_upper", "facade_ground": "facade_upper",
+    "sfm_height_m": "p50 10.9 / p90 13.8 (few points)",
+    "evidence": "Footprint OSM 1250092618 (+ annex 1250092616); same building type as H1 (frame 0.5 s).",
+    "description": "Two-storey block with an attached high hall (green pitched roof, roller door), east of Hall H1."
+  },
+  "gate_1": {
+    "collection": "Entrances and Facades", "kind": "gate",
+    "name_en": "Gate No. 1 (Main Gate)", "name_ar": "بوابة رقم ١ — البوابة الرئيسية",
+    "category": "Campus entrance",
+    "evidence": "Verified: video shots 003-006 (captioned 'البوابة الرئيسية'), lettering 'EAST PORT SAID.N.UNI', 'جامعة شرق بورسعيد الأهلية', 'بوابة رقم ١'. Position: west fence on the Main Building axis (satellite + OSM approach lanes). Dimensions estimated (about 41 m wide).",
+    "description": "Main entrance from the highway on the west side: a central pier with the university roundel, two vehicle openings under lettered beams, and guard pavilions on both sides."
+  },
+  "lm_gazebo_garden": {
+    "collection": "Landscape and Vegetation", "kind": "landmark",
+    "name_en": "Central Gazebo Garden", "name_ar": "حديقة المظلات المركزية",
+    "category": "Landscape / social space",
+    "evidence": "Ring geometry traced from the SfM orthophoto; finished state (lawns, 5 hexagonal timber gazebos with benches, light poles) verified in frames 128.9 s and 22.0 s. Exact gazebo angles estimated.",
+    "description": "Circular garden at the heart of the plaza: lawns, five hexagonal timber gazebos with benches, and a purple-grey paved ring path with black-and-white kerbs."
+  },
+  "lm_sports_pitch": {
+    "collection": "Landscape and Vegetation", "kind": "landmark",
+    "name_en": "Sports Pitch", "name_ar": "ملعب",
+    "category": "Sports facility",
+    "evidence": "Outline traced from the SfM orthophoto (22.8 x 44.1 m); artificial turf with markings verified (frame 77.01 s); fenced (frames 33.7 s, 46-52 s).",
+    "description": "Fenced artificial-turf five-a-side pitch on the south side of the plaza, in front of Block S2."
+  }
+}

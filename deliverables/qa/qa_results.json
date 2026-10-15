@@ -1,0 +1,127 @@
+{
+ "base": "http://localhost:8080/",
+ "checks": [
+  {
+   "name": "desktop: full model loads without error panel (full quality, shadows on)",
+   "ok": true,
+   "detail": "2.4s"
+  },
+  {
+   "name": "desktop: all stable IDs registered from glTF extras",
+   "ok": true,
+   "detail": "13 items: ['bld_main', 'bld_w1', 'bld_w2', 'bld_s1', 'bld_s2', 'bld_s3', 'bld_e1', 'bld_e2', 'bld_h1', 'bld_h2', 'gate_1', 'lm_gazebo_garden', 'lm_sports_pitch']"
+  },
+  {
+   "name": "desktop: ?quality=high loads the full model (automatic choice uses width + deviceMemory; lite on the 1.9 GB test machine)",
+   "ok": true,
+   "detail": "high"
+  },
+  {
+   "name": "desktop: renderer stats collected",
+   "ok": true,
+   "detail": "{'calls': 134, 'tris': 84908, 'tex': 48, 'geo': 134}"
+  },
+  {
+   "name": "desktop: labels rendered",
+   "ok": true,
+   "detail": "13"
+  },
+  {
+   "name": "desktop: list selection opens info panel (Main Building)",
+   "ok": true,
+   "detail": "Main Building"
+  },
+  {
+   "name": "desktop: Arabic name shown",
+   "ok": true,
+   "detail": "المبنى الرئيسي"
+  },
+  {
+   "name": "desktop: deep-link hash updated",
+   "ok": true,
+   "detail": "#bld_main"
+  },
+  {
+   "name": "desktop: Next button navigates",
+   "ok": true,
+   "detail": "bld_w2"
+  },
+  {
+   "name": "desktop: Previous button navigates",
+   "ok": true,
+   "detail": "bld_main"
+  },
+  {
+   "name": "desktop: Overview resets view and clears selection",
+   "ok": true,
+   "detail": "None"
+  },
+  {
+   "name": "desktop: clicking buildings in the 3D view selects them (raycast via glTF extras)",
+   "ok": true,
+   "detail": "[('bld_e1', 'bld_e1'), ('bld_s2', 'bld_s2'), ('bld_main', 'bld_main')]"
+  },
+  {
+   "name": "desktop: labels toggle",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop: keyboard navigation",
+   "ok": true,
+   "detail": "bld_w2"
+  },
+  {
+   "name": "desktop: landmark (instanced gazebos) selectable",
+   "ok": true,
+   "detail": "Central Gazebo Garden"
+  },
+  {
+   "name": "desktop: deep link #bld_e1 selects building on load",
+   "ok": true,
+   "detail": "bld_e1"
+  },
+  {
+   "name": "desktop: failed model download shows error panel with Retry / lightweight options",
+   "ok": true,
+   "detail": "Loading failed: Failed to fetch. Check your connection and try again."
+  },
+  {
+   "name": "mobile 390x844: model loads",
+   "ok": true,
+   "detail": "1.5s"
+  },
+  {
+   "name": "mobile: lightweight model chosen automatically",
+   "ok": true,
+   "detail": "lite"
+  },
+  {
+   "name": "mobile: select from list -> bottom-sheet info panel",
+   "ok": true,
+   "detail": "Academic Block S2"
+  },
+  {
+   "name": "mobile: tap on building selects it",
+   "ok": true,
+   "detail": "bld_main"
+  },
+  {
+   "name": "mobile: toolbar and info panel fit the viewport",
+   "ok": true,
+   "detail": "{'toolbarRight': 330, 'panelW': 390, 'panelBottom': 822, 'vw': 390, 'vh': 844}"
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "renderer_info_desktop": {
+  "calls": 134,
+  "tris": 84908,
+  "tex": 48,
+  "geo": 134
+ },
+ "summary": {
+  "passed": 22,
+  "total": 22
+ }
+}
