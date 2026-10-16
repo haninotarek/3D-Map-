@@ -36,52 +36,77 @@
   <main id="stage" aria-label="3D campus view">
     <div id="canvas-host"></div>
 
-    <div id="toolbar" role="toolbar" aria-label="View controls">
-      <button id="btn-overview" title="Overview / reset view (Home)" aria-label="Overview">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5"/></svg><span>Overview</span></button>
-      <span class="sep" aria-hidden="true"></span>
-      <button id="btn-prev" class="icon" title="Previous building (←)" aria-label="Previous building">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button id="btn-next" class="icon" title="Next building (→)" aria-label="Next building">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-      <span class="sep" aria-hidden="true"></span>
-      <button id="btn-labels" title="Show/hide labels (L)" aria-pressed="true" aria-label="Toggle labels">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg><span>Labels</span></button>
-      <button id="btn-list" title="Building list" aria-label="Building list" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6"/></svg><span>Buildings</span></button>
-      <button id="btn-help" class="icon" title="Help (?)" aria-label="Help">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.6"/><circle cx="12" cy="17" r=".6"/></svg></button>
+    <div id="compass" title="North" aria-hidden="true"><div class="needle">N</div></div>
+
+    <!-- timetable: top tabs + side panel (js/schedule.js) -->
+    <div id="view-tabs" dir="rtl" lang="ar" role="tablist" aria-label="عرض">
+      <button type="button" id="sched-toggle" class="tab-sched" aria-expanded="false" aria-controls="sched">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>الجداول</span></button>
+      <span class="tabs-sep" aria-hidden="true"></span>
+      <button type="button" data-view="campus" class="on">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.5 2.6 14.5 0 17M12 3.5c-2.6 2.5-2.6 14.5 0 17"/></svg><span>الحرم</span></button>
+      <button type="button" data-view="bld_e2">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M9 8h.01M15 8h.01M9 12h.01M15 12h.01M10.5 20.5v-4h3v4"/></svg><span>مبنى 1</span></button>
+      <button type="button" data-view="bld_e1">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M9 8h.01M15 8h.01M9 12h.01M15 12h.01M10.5 20.5v-4h3v4"/></svg><span>مبنى 2</span></button>
     </div>
 
-    <div id="compass" title="North" aria-hidden="true"><div class="needle">N</div></div>
+    <aside id="sched" dir="rtl" lang="ar" aria-label="الجداول">
+      <div class="sched-head">
+        <div>
+          <h2>الجداول</h2>
+          <p id="sched-term"></p>
+        </div>
+        <button type="button" id="sched-close" class="close" aria-label="إغلاق الجداول">×</button>
+      </div>
+      <div class="sched-body">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+          <input id="sched-search" type="search" placeholder="دوّر على مادة أو قاعة…" autocomplete="off">
+        </label>
+        <div id="sched-levels" class="chips" role="group" aria-label="الفرقة"></div>
+        <div class="row two">
+          <select id="sched-day" aria-label="اليوم"></select>
+          <select id="sched-section" aria-label="السكشن"></select>
+        </div>
+        <div id="sched-next" hidden></div>
+        <div id="sched-list"></div>
+      </div>
+      <div class="sched-foot">
+        <div id="sched-src"></div>
+        <div class="foot-actions">
+          <button type="button" id="sched-upload" class="primary">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-3"/></svg>رفع جدول</button>
+          <button type="button" id="sched-template">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg>تنزيل CSV</button>
+          <button type="button" id="sched-reset" hidden>الجدول الأصلي</button>
+        </div>
+        <input id="sched-file" type="file" accept=".csv,.json,text/csv,application/json" hidden>
+      </div>
+      <div id="sched-toast" class="sched-toast" role="status" aria-live="polite" hidden></div>
+    </aside>
+
+    <nav id="floor-rail" class="hidden" dir="rtl" lang="ar" aria-label="الأدوار">
+      <div class="rail-title">الأدوار</div>
+      <div id="floor-list"></div>
+      <button type="button" id="floor-exit" class="hidden" title="الرجوع لشكل المبنى من برّه">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>خروج</button>
+    </nav>
+
+    <div id="legend" dir="rtl" lang="ar" aria-label="ألوان الأماكن">
+      <span><i style="background:#2f6fe0"></i>قاعة محاضرات</span>
+      <span><i style="background:#22a06b"></i>فصل</span>
+      <span><i style="background:#e8833a"></i>معمل</span>
+      <span><i style="background:#9b5de5"></i>قاعة رسم</span>
+      <span><i style="background:#e5b93a"></i>مكاتب وخدمات</span>
+      <span><i style="background:#5ab8f0"></i>حمامات</span>
+    </div>
 
     <aside id="list-panel" class="panel hidden" aria-label="Building list">
       <div class="panel-head"><h2>Buildings &amp; facilities</h2><button class="close" data-close="list-panel" aria-label="Close list">×</button></div>
       <ul id="building-list"></ul>
     </aside>
 
-    <aside id="info-panel" class="panel hidden" aria-live="polite" aria-label="Building information">
-      <div class="panel-head">
-        <div>
-          <h2 id="info-name">—</h2>
-          <div id="info-name-ar" dir="rtl" lang="ar"></div>
-        </div>
-        <button class="close" data-close="info-panel" aria-label="Close information">×</button>
-      </div>
-      <div id="info-category" class="chip"></div>
-      <p id="info-desc"></p>
-      <dl id="info-facts"></dl>
-      <div id="info-floors" class="floors hidden" role="group" aria-label="Floors"></div>
-      <details id="info-evidence">
-        <summary>Sources &amp; confidence</summary>
-        <p id="info-evidence-text"></p>
-      </details>
-      <div class="info-nav">
-        <button id="info-prev" aria-label="Previous building">‹ Previous</button>
-        <span id="info-id" class="mono"></span>
-        <button id="info-next" aria-label="Next building">Next ›</button>
-      </div>
-    </aside>
 
     <aside id="route-panel" class="panel hidden" aria-live="polite" aria-label="Directions">
       <div class="panel-head">
@@ -166,5 +191,6 @@
 
   <noscript><div class="noscript">This 3D campus guide requires JavaScript and WebGL.</div></noscript>
   <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/schedule.js"></script>
 </body>
 </html>

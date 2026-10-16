@@ -24,6 +24,17 @@ python3 serve.py 8080     # any static file server works
 - Use `?quality=lite` or `?quality=high` to force a model variant.
 - Use `#bld_main` (or any other building ID) to open the viewer with that building selected.
 
+### Timetables (الجداول)
+The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`). Students pick their level and section, see their next class, and press **وديني** to get walking directions to the room.
+
+- **Data:** the Computer Science timetable is in `viewer/data/schedules/fall-2026.json`.
+- **Upload a new timetable:** press **رفع جدول** and choose a CSV or JSON file. **تنزيل CSV** downloads the current timetable in the same format, ready to edit in Excel.
+- **CSV columns:** `level, day, period, course, type, group, sections, room, building`. Arabic headers and day names work too.
+  - `sections` takes `1:5` (sections 1 to 5) or `3,4`.
+  - `room` can be written as in the printed tables, for example `Hall:3`, `Drawing Hall 3`, `Room:104`, `Lab 2` or `قاعة 1`.
+- **Linking:** each class is linked automatically to its building, and to the room when the indoor map has it (`viewer/data/room_index.json`). The panel shows how many classes are linked.
+- **Storage:** an uploaded timetable is kept in that browser only. **الجدول الأصلي** goes back to the built-in one.
+
 Website integration options (iframe or native page) and server settings are in [`deliverables/README.md`](deliverables/README.md#website-integration).
 
 ## Repository layout

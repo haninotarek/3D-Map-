@@ -20,7 +20,9 @@
       "Room 104 (Computer Lab 1)": { "floor": "1", "room": "room_104" },
       "Room 105": { "floor": "1", "room": "room_105" },
       "Room 106 (Computer Lab 2)": { "floor": "1", "room": "room_106" },
-      "Room 204": { "floor": "2", "room": "room_204" }
+      "Room 204": { "floor": "2", "room": "room_204" },
+      "Room 104": { "floor": "1", "room": "room_104" },
+      "Room 106": { "floor": "1", "room": "room_106" }
     }
   },
   "unassigned": {

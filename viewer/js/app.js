@@ -218,6 +218,7 @@ function select(id, fly) {
 function clearSelection() {
   exitInterior();
   state.selected = null;
+  $('floor-rail').classList.add('hidden');
   if (highlight) { state.scene.remove(highlight); highlight = null; }
   document.querySelectorAll('.label3d.active, #building-list button.active').forEach((el) => el.classList.remove('active'));
   togglePanel('info-panel', false);
@@ -225,21 +226,9 @@ function clearSelection() {
   state.needsRender = true;
 }
 
+// No building info card: selecting a building only highlights it and shows the floor rail.
 function showInfo(it) {
-  const i = it.info;
-  $('info-name').textContent = i.name_en; $('info-name-ar').textContent = i.name_ar;
-  $('info-category').textContent = i.category; $('info-desc').textContent = i.description;
-  const facts = [];
-  if (i.storeys) facts.push(['Storeys', String(i.storeys)]);
-  if (i.height) facts.push(['Approx. height', `${i.height} m (reconstructed)`]);
-  if (i.faculty) facts.push(['Faculty', i.faculty]);
-  else if (/^bld_/.test(it.id) && it.id !== 'bld_main') facts.push(['Faculty', 'Not confirmed by available sources']);
-  if (i.osm) facts.push(['Footprint', `OSM way ${i.osm}`]);
-  $('info-facts').innerHTML = facts.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
-  $('info-evidence-text').textContent = i.evidence + (i.sfm ? ` Photogrammetric roof height: ${i.sfm}.` : '');
-  $('info-id').textContent = it.id;
   renderFloorButtons(it);
-  togglePanel('info-panel', true);
 }
 
 // ---------------------------------------------------------------- interior cutaway
@@ -256,29 +245,34 @@ async function getInterior(it) {
   return interior;
 }
 
+// Slim floor rail on the right (top floor first, then ground, then "exit"), shown for buildings with an interior.
 function renderFloorButtons(it) {
-  const box = $('info-floors');
-  box.classList.toggle('hidden', !it.info.interior);
-  box.innerHTML = '';
+  const rail = $('floor-rail');
+  rail.classList.toggle('hidden', !it.info.interior);
+  rail.dataset.building = it.id;
+  const list = $('floor-list');
+  list.innerHTML = '';
   if (!it.info.interior) return;
-  const add = (text, title, floor) => {
-    const b = document.createElement('button');
-    b.textContent = text; b.title = title; b.dataset.floor = floor;
-    b.addEventListener('click', () => (floor < 0 ? exitInterior(true) : enterFloor(it, floor)));
-    box.appendChild(b);
-  };
-  add('Outside', 'Show the building from outside', -1);
   getInterior(it).then((interior) => {
     if (state.selected !== it.id) return;
-    interior.floors.forEach((f, i) => add(f.id, `${f.name_en} — ${f.name_ar}`, i));
+    const btns = interior.floors.map((f, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.floor = i; b.title = `${f.name_ar} — ${f.name_en}`;
+      b.innerHTML = f.id === 'G' ? '<b>أرضي</b>' : `<b>${escapeHtml(f.id)}</b><small>الدور</small>`;
+      b.addEventListener('click', () => enterFloor(it, i));
+      return b;
+    });
+    list.append(...btns.reverse());
     syncFloorButtons();
-  }).catch((e) => { console.warn('interior not loaded', e); box.classList.add('hidden'); });
+  }).catch((e) => { console.warn('interior not loaded', e); rail.classList.add('hidden'); });
   syncFloorButtons();
 }
 
 function syncFloorButtons() {
   const cur = state.inside ? state.inside.floor : -1;
-  document.querySelectorAll('#info-floors button').forEach((b) => b.classList.toggle('active', Number(b.dataset.floor) === cur));
+  document.querySelectorAll('#floor-list button').forEach((b) => b.classList.toggle('active', Number(b.dataset.floor) === cur));
+  $('floor-exit').classList.toggle('hidden', cur < 0);
+  document.documentElement.classList.toggle('inside', cur >= 0);
 }
 
 async function enterFloor(it, idx, { fly = true } = {}) {
@@ -288,6 +282,7 @@ async function enterFloor(it, idx, { fly = true } = {}) {
   interior.group.visible = true; interior.setFloor(idx);
   it.object.visible = false; if (it.label) it.label.visible = false;
   if (highlight) highlight.visible = false;
+  togglePanel('info-panel', false);   // keep the floor plan clear; the rail stays
   syncFloorButtons();
   // look down into the floor from the plaza side; keep the user's view when only switching floors
   const level = interior.floors[idx].level;
@@ -400,25 +395,19 @@ function initPointer() {
 
 // ---------------------------------------------------------------- UI
 function togglePanel(id, show) {
-  const p = $(id); const vis = show ?? p.classList.contains('hidden');
+  const p = $(id); if (!p) return;   // e.g. the removed building info panel
+  const vis = show ?? p.classList.contains('hidden');
   p.classList.toggle('hidden', !vis);
-  if (id === 'list-panel') $('btn-list').setAttribute('aria-expanded', String(vis));
-  if (IS_SMALL && vis) { if (id === 'list-panel') $('info-panel').classList.add('hidden'); if (id === 'info-panel') $('list-panel').classList.add('hidden'); }
 }
 
+function toggleLabels() {
+  state.labelsOn = !state.labelsOn;
+  $('canvas-host').classList.toggle('labels-off', !state.labelsOn);
+}
+
+// The bottom toolbar was removed; the top tabs (الحرم / مبنى 1 / مبنى 2) and the keyboard cover its jobs.
 function initUI() {
-  $('btn-overview').addEventListener('click', () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); });
-  $('btn-prev').addEventListener('click', () => step(-1));
-  $('btn-next').addEventListener('click', () => step(1));
-  $('info-prev').addEventListener('click', () => step(-1));
-  $('info-next').addEventListener('click', () => step(1));
-  $('btn-labels').addEventListener('click', () => {
-    state.labelsOn = !state.labelsOn;
-    $('canvas-host').classList.toggle('labels-off', !state.labelsOn);
-    $('btn-labels').setAttribute('aria-pressed', String(state.labelsOn));
-  });
-  $('btn-list').addEventListener('click', () => togglePanel('list-panel'));
-  $('btn-help').addEventListener('click', () => togglePanel('help'));
+  $('floor-exit').addEventListener('click', () => exitInterior(true));
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => {
     const id = b.dataset.close; if (id === 'info-panel') clearSelection(); else togglePanel(id, false);
   }));
@@ -429,7 +418,7 @@ function initUI() {
     if (e.key === 'ArrowRight') step(1);
     else if (e.key === 'ArrowLeft') step(-1);
     else if (e.key === 'Home') { clearSelection(); flyTo(state.overview.pos, state.overview.target); }
-    else if (e.key === 'l' || e.key === 'L') $('btn-labels').click();
+    else if (e.key === 'l' || e.key === 'L') toggleLabels();
     else if (e.key === '?') togglePanel('help');
     else if (e.key === 'Escape') { ['help', 'list-panel'].forEach((p) => togglePanel(p, false)); if (state.selected) clearSelection(); }
   });
@@ -603,7 +592,9 @@ async function main() {
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     initRouting();
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour };   // QA / integration hook
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour,
+      overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
+    window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
   } catch (err) {
     console.error(err);
     showError(`Loading failed: ${err && err.message ? err.message : err}. Check your connection and try again.`);

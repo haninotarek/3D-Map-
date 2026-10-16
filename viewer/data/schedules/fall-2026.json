@@ -1,0 +1,159 @@
+{
+  "_note": "Program of Computer Science timetable, Fall 2026-2027, transcribed from the faculty's published tables. One row per class: day, period (1-4), course, type (lecture | section | lab), group, sections (\"1:5\" = 1 to 5, \"3,4\" = 3 and 4), room as printed, and building when the table names it. Rows without a building use the level's default building.",
+  "term_ar": "الفصل الدراسي الأول 2026-2027",
+  "term_en": "Fall 2026-2027",
+  "periods": [
+    { "n": 1, "from": "10:00", "to": "11:15" },
+    { "n": 2, "from": "11:20", "to": "12:30" },
+    { "n": 3, "from": "12:35", "to": "13:45" },
+    { "n": 4, "from": "13:50", "to": "15:00" }
+  ],
+  "levels": [
+    {
+      "level": 1, "name_ar": "الفرقة الأولى", "name_en": "Level One", "building": "Engineering Building 1",
+      "sections": 10,
+      "classes": [
+        ["Monday", 1, "Fundamentals of Computer Science", "lecture", "A", "1:5", "Hall 3"],
+        ["Monday", 1, "Mathematics I", "section", "", "6", "Drawing Hall 3"],
+        ["Monday", 1, "Physics 1", "section", "", "7,8", "Hall 1"],
+        ["Monday", 2, "Mathematics I", "section", "", "5", "Drawing Hall 3"],
+        ["Monday", 2, "Physics 1", "section", "", "3,4", "Hall 1"],
+        ["Monday", 2, "Fundamentals of Computer Science", "lecture", "B", "6:10", "Hall 3"],
+        ["Monday", 3, "Principles of Law and Human Rights", "lecture", "Weekly", "1:10", "Hall 1"],
+        ["Monday", 4, "Mathematics I", "section", "", "9,10", "Hall 3"],
+        ["Monday", 4, "Discrete Mathematics", "section", "", "1,2", "Hall 1"],
+
+        ["Tuesday", 1, "Programming Fundamentals", "lab", "", "1", "Room 104"],
+        ["Tuesday", 1, "Programming Fundamentals", "lab", "", "2", "Room 106"],
+        ["Tuesday", 1, "Discrete Mathematics", "section", "", "3", "Lab 2"],
+        ["Tuesday", 1, "Fundamentals of Computer Science", "lab", "", "10", "Drawing Hall 3"],
+        ["Tuesday", 2, "Programming Fundamentals", "lab", "", "7", "Room 104"],
+        ["Tuesday", 2, "Programming Fundamentals", "lab", "", "8", "Room 106"],
+        ["Tuesday", 2, "Fundamentals of Computer Science", "lab", "", "9", "Drawing Hall 3"],
+        ["Tuesday", 2, "Physics 1", "section", "", "5", "Room 105"],
+        ["Tuesday", 2, "Discrete Mathematics", "section", "", "4", "Lab 2"],
+        ["Tuesday", 3, "Programming Fundamentals", "lab", "", "3", "Room 104"],
+        ["Tuesday", 3, "Programming Fundamentals", "lab", "", "4", "Room 106"],
+        ["Tuesday", 3, "Fundamentals of Computer Science", "lab", "", "1,2", "Hall 3"],
+        ["Tuesday", 3, "Physics 1", "section", "", "6", "Room 105"],
+        ["Tuesday", 3, "Discrete Mathematics", "section", "", "9,10", "Hall 1"],
+        ["Tuesday", 4, "Programming Fundamentals", "lab", "", "9", "Room 104"],
+        ["Tuesday", 4, "Programming Fundamentals", "lab", "", "10", "Room 106"],
+        ["Tuesday", 4, "Fundamentals of Computer Science", "lab", "", "5,6", "Hall 3"],
+        ["Tuesday", 4, "Discrete Mathematics", "section", "", "7,8", "Hall 1"],
+
+        ["Wednesday", 1, "Physics 1", "lecture", "A", "1:5", "Hall 1"],
+        ["Wednesday", 1, "Discrete Mathematics", "lecture", "B", "6:10", "Hall 3"],
+        ["Wednesday", 2, "Discrete Mathematics", "lecture", "A", "1:5", "Hall 3"],
+        ["Wednesday", 2, "Physics 1", "lecture", "B", "6:10", "Hall 1"],
+        ["Wednesday", 3, "Programming Fundamentals", "lab", "", "5", "Room 104"],
+        ["Wednesday", 3, "Programming Fundamentals", "lab", "", "6", "Room 106"],
+        ["Wednesday", 3, "Fundamentals of Computer Science", "lab", "", "3,4", "Hall 3"],
+        ["Wednesday", 3, "Physics 1", "section", "", "1,2", "Hall 1"],
+        ["Wednesday", 4, "Mathematics I", "section", "", "7,8", "Hall 3"],
+        ["Wednesday", 4, "Physics 1", "section", "", "9,10", "Hall 1"],
+
+        ["Thursday", 1, "Programming Fundamentals", "lecture", "A", "1:5", "Hall 1"],
+        ["Thursday", 1, "Mathematics I", "lecture", "B", "6:10", "Hall 3"],
+        ["Thursday", 2, "Mathematics I", "lecture", "A", "1:5", "Hall 3"],
+        ["Thursday", 2, "Programming Fundamentals", "lecture", "B", "6:10", "Hall 1"],
+        ["Thursday", 3, "Discrete Mathematics", "section", "", "5,6", "Hall 1"],
+        ["Thursday", 3, "Mathematics I", "section", "", "1,2", "Hall 3"],
+        ["Thursday", 4, "Fundamentals of Computer Science", "lab", "", "7,8", "Hall 3"],
+        ["Thursday", 4, "Mathematics I", "section", "", "3,4", "Hall 1"]
+      ]
+    },
+    {
+      "level": 2, "name_ar": "الفرقة الثانية", "name_en": "Level Two", "building": "Engineering Building 2",
+      "sections": 8,
+      "classes": [
+        ["Sunday", 1, "Mathematics III", "lecture", "", "1:4", "Hall 1"],
+        ["Sunday", 1, "Mathematics III", "section", "", "5,6", "Hall 3"],
+        ["Sunday", 1, "Logic Design", "lab", "", "7", "Lab 2"],
+        ["Sunday", 2, "Mathematics III", "section", "", "1,2", "Hall 3"],
+        ["Sunday", 2, "Mathematics III", "lecture", "", "5:8", "Hall 1"],
+        ["Sunday", 3, "Numerical Analysis", "lab", "", "3,4", "Hall 1"],
+        ["Sunday", 3, "Logic Design", "lab", "", "1,2", "Hall 3"],
+        ["Sunday", 3, "Numerical Analysis", "lab", "", "5", "Drawing Hall 3", "Engineering Building 1"],
+        ["Sunday", 3, "Logic Design", "lab", "", "8", "Lab 2"],
+        ["Sunday", 4, "Systems Analysis and Design", "lab", "", "7,8", "Hall 3"],
+        ["Sunday", 4, "Mathematics III", "section", "", "3,4", "Hall 1"],
+        ["Sunday", 4, "Numerical Analysis", "lab", "", "6", "Drawing Hall 3", "Engineering Building 1"],
+
+        ["Monday", 1, "Object-Oriented Programming", "lecture", "", "1:4", "Hall 2"],
+        ["Monday", 1, "Logic Design", "lecture", "", "5:8", "Hall 4"],
+        ["Monday", 2, "Logic Design", "lecture", "", "1:4", "Hall 4"],
+        ["Monday", 2, "Object-Oriented Programming", "lecture", "", "5:8", "Hall 2"],
+        ["Monday", 3, "Numerical Analysis", "lab", "", "7,8", "Hall 2"],
+        ["Monday", 3, "Systems Analysis and Design", "lab", "", "3,4", "Room 101"],
+        ["Monday", 4, "Logic Design", "lab", "", "5,6", "Hall 4"],
+        ["Monday", 4, "Systems Analysis and Design", "section", "", "1,2", "Room 101"],
+        ["Monday", 4, "Mathematics III", "section", "", "7,8", "Lab 2"],
+
+        ["Tuesday", 1, "Systems Analysis and Design", "lecture", "", "1:4", "Hall 1"],
+        ["Tuesday", 1, "Numerical Analysis", "lecture", "", "5:8", "Hall 3"],
+        ["Tuesday", 2, "Numerical Analysis", "lecture", "", "1:4", "Hall 3"],
+        ["Tuesday", 2, "Systems Analysis and Design", "lecture", "", "5:8", "Hall 1"],
+        ["Tuesday", 3, "Object-Oriented Programming", "lab", "", "1", "Lab 2", "Engineering Building 1"],
+        ["Tuesday", 3, "Object-Oriented Programming", "lab", "", "2", "Drawing Hall 3", "Engineering Building 1"],
+        ["Tuesday", 4, "Object-Oriented Programming", "lab", "", "3", "Lab 2", "Engineering Building 1"],
+        ["Tuesday", 4, "Object-Oriented Programming", "lab", "", "4", "Drawing Hall 3", "Engineering Building 1"],
+
+        ["Wednesday", 1, "Object-Oriented Programming", "lab", "", "5", "Lab 2", "Engineering Building 1"],
+        ["Wednesday", 1, "Object-Oriented Programming", "lab", "", "6", "Drawing Hall 3", "Engineering Building 1"],
+        ["Wednesday", 2, "Computer Skills", "lecture", "", "1:8", "Hall 4"],
+        ["Wednesday", 3, "Object-Oriented Programming", "lab", "", "7", "Lab 2", "Engineering Building 1"],
+        ["Wednesday", 3, "Object-Oriented Programming", "lab", "", "8", "Drawing Hall 3", "Engineering Building 1"],
+        ["Wednesday", 4, "Logic Design", "lab", "", "3,4", "Hall 2"],
+        ["Wednesday", 4, "Numerical Analysis", "lab", "", "1,2", "Hall 4"],
+        ["Wednesday", 4, "Systems Analysis and Design", "lab", "", "5,6", "Room 101"]
+      ]
+    },
+    {
+      "level": 3, "name_ar": "الفرقة الثالثة", "name_en": "Level Three", "building": "Engineering Building 2",
+      "sections": 4,
+      "classes": [
+        ["Monday", 2, "Societal Issues", "lecture", "Weekly", "1:4", "Room 101"],
+        ["Monday", 3, "Algorithms Design and Analysis", "lecture", "", "1:4", "Hall 4"],
+        ["Monday", 4, "Introduction to History of Civilizations", "lecture", "", "1:4", "Hall 2"],
+
+        ["Tuesday", 1, "Computer Networks", "lab", "", "1", "Lab 1"],
+        ["Tuesday", 1, "Selected Topics in Computer Science", "lab", "", "2", "Lab 2"],
+        ["Tuesday", 1, "Algorithms Design and Analysis", "lab", "", "3,4", "Hall 2"],
+        ["Tuesday", 2, "Computer Networks", "lab", "", "3", "Lab 1"],
+        ["Tuesday", 2, "Selected Topics in Computer Science", "lab", "", "4", "Lab 2"],
+        ["Tuesday", 2, "Artificial Intelligence", "lab", "", "1,2", "Hall 4"],
+        ["Tuesday", 3, "Computer Networks", "lab", "", "2", "Lab 2"],
+        ["Tuesday", 3, "Selected Topics in Computer Science", "lab", "", "1", "Lab 1"],
+        ["Tuesday", 3, "Artificial Intelligence", "lab", "", "3,4", "Hall 4"],
+        ["Tuesday", 4, "Computer Networks", "lab", "", "4", "Lab 2"],
+        ["Tuesday", 4, "Selected Topics in Computer Science", "lab", "", "3", "Lab 1"],
+        ["Tuesday", 4, "Algorithms Design and Analysis", "lab", "", "1,2", "Hall 4"],
+
+        ["Wednesday", 1, "Artificial Intelligence", "lecture", "", "1:4", "Hall 2"],
+        ["Wednesday", 2, "Computer Networks", "lecture", "", "1:4", "Hall 2"],
+        ["Wednesday", 3, "Selected Topics in Computer Science", "lecture", "", "1:4", "Hall 4"]
+      ]
+    },
+    {
+      "level": 4, "name_ar": "الفرقة الرابعة", "name_en": "Level Four", "building": "Engineering Building 2",
+      "sections": 0,
+      "classes": [
+        ["Monday", 1, "Image Processing", "lab", "", "", "Room 205"],
+        ["Monday", 2, "Deep Learning", "lab", "", "", "Room 205"],
+        ["Monday", 3, "Parallel Computation", "lecture", "", "", "Room 205"],
+        ["Monday", 4, "Graduation Project I", "lecture", "", "", "Room 205"],
+        ["Tuesday", 2, "Cloud Computing", "lab", "", "", "Room 205"],
+        ["Tuesday", 3, "Theory of Computation & Compilers", "lecture", "", "", "Room 205"],
+        ["Tuesday", 4, "Graduation Project I", "lecture", "", "", "Room 205"],
+        ["Wednesday", 1, "Deep Learning", "lecture", "", "", "Room 205"],
+        ["Wednesday", 2, "Parallel Computation", "lab", "", "", "Room 205"],
+        ["Wednesday", 3, "Image Processing", "lecture", "", "", "Room 205"],
+        ["Wednesday", 4, "Graduation Project I", "lecture", "", "", "Room 205"],
+        ["Thursday", 2, "Theory of Computation & Compilers", "lab", "", "", "Room 205"],
+        ["Thursday", 3, "Cloud Computing", "lecture", "", "", "Room 205"],
+        ["Thursday", 4, "Graduation Project I", "lecture", "", "", "Room 205"]
+      ]
+    }
+  ]
+}

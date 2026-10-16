@@ -4,9 +4,10 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 const KIND_COLOR = {
-  lobby: 0xcfe6dc, cafe: 0x9fd8c4, stair: 0xf2c27a, wc: 0xa9cbee, office: 0xd8d4ca,
-  lab: 0xc4bff0, room: 0xe4e0d6, drawing: 0xb9dca4, hall: 0xf3b8a0,
-  lift: 0x9aa3ad, locker: 0xf0ece0, exit: 0xe57a6e, pending: 0xf6e7a8, service: 0xc9c2b5,
+  // light tints of the label / legend colours (css .room-label.kind-*)
+  lobby: 0xd9f2ee, cafe: 0xb5e8df, stair: 0xd5dbe3, wc: 0xcfe8fb, office: 0xf7e7b5,
+  lab: 0xfbd9bd, room: 0xcdeedd, drawing: 0xe2d3fa, hall: 0xc9dcfb,
+  lift: 0x9aa3ad, locker: 0xf0ece0, exit: 0xf4b4ae, pending: 0xf6e7a8, service: 0xefe3bd,
 };
 const SLAB = 0.25, WALL_T = 0.2, EXT_T = 0.35;
 
@@ -58,9 +59,11 @@ function stairs(group, [x0, y0, x1, y1], h) {
 
 function label(text_en, text_ar, cls) {
   const el = document.createElement('div');
+  // one short line in Arabic (the English name is in the tooltip), a coloured edge shows the room type
   el.className = 'room-label' + (cls ? ' ' + cls : '');
-  const en = document.createElement('b'); en.textContent = text_en; el.appendChild(en);
-  if (text_ar && text_ar !== text_en) { const ar = document.createElement('span'); ar.lang = 'ar'; ar.dir = 'rtl'; ar.textContent = text_ar; el.appendChild(ar); }
+  el.lang = 'ar'; el.dir = 'rtl';
+  el.textContent = text_ar || text_en;
+  if (text_en && text_en !== el.textContent) el.title = text_en;
   return new CSS2DObject(el);
 }
 
