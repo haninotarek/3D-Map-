@@ -459,3 +459,12 @@ html.touring #legend, html.touring #view-tabs { display: none; }
   #floor-exit svg { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
+
+/* footer: one quiet line, OpenStreetMap credit kept (ODbL) */
+.attrib { justify-content: center; gap: 12px; padding: 0 16px; font-size: 0.72rem; color: var(--s-muted); background: #fff;
+  border-top: 1px solid var(--s-line); font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
+.attrib span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attrib .osm { flex: none; }
+.attrib .osm::before { content: "·"; margin-inline-end: 12px; }
+.attrib a { color: inherit; }
+@media (max-width: 720px) { .attrib > span:first-child { display: none; } .attrib { justify-content: center; } }
