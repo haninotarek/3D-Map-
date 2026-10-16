@@ -83,6 +83,47 @@
       </div>
     </aside>
 
+    <aside id="route-panel" class="panel hidden" aria-live="polite" aria-label="Directions">
+      <div class="panel-head">
+        <div>
+          <h2 id="route-title">—</h2>
+          <div id="route-sub"></div>
+        </div>
+        <button class="close" id="route-close" aria-label="Close directions">×</button>
+      </div>
+      <div id="route-summary" class="chip route-chip"></div>
+      <ol id="route-steps"></ol>
+      <div id="route-notes"></div>
+    </aside>
+
+    <div id="tour-card" class="hidden" aria-label="Guided tour">
+      <div class="tour-progress" aria-hidden="true"><div id="tour-bar"></div></div>
+      <div class="tour-head">
+        <div class="tour-titles">
+          <div id="tour-title"></div>
+          <div id="tour-where"></div>
+        </div>
+        <button id="tour-close" class="tour-icon" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="tour-body" role="status" aria-live="polite">
+        <span id="tour-num">1</span>
+        <div>
+          <div id="tour-count"></div>
+          <div id="tour-step"></div>
+        </div>
+      </div>
+      <div class="tour-actions">
+        <button id="tour-play" class="tour-icon primary" type="button">
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>
+        </button>
+        <button id="tour-replay" class="tour-icon" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg></button>
+        <button id="tour-skip" class="tour-icon" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM18 5v14"/></svg></button>
+        <span class="tour-spacer"></span>
+        <button id="tour-steps" class="tour-icon" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+      </div>
+    </div>
+
     <div id="tooltip" class="hidden" role="tooltip"></div>
 
     <div id="help" class="panel hidden" role="dialog" aria-label="Help">

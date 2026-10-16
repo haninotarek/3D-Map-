@@ -7,6 +7,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { buildInterior } from './interior.js';
+import { createRouter } from './route.js';
+import { createTour } from './tour.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -15,6 +17,9 @@ const QA_MODE = params.get('qa') === '1';   // automated tests on software WebGL
 const LOW_MEM = (navigator.deviceMemory && navigator.deviceMemory <= 4) || false;
 let quality = params.get('quality') || ((IS_SMALL || LOW_MEM) ? 'lite' : 'high');
 const MODEL_URL = { high: 'models/campus_model.glb', lite: 'models/campus_model_mobile.glb' };
+// Embedded in another site (e.g. the EPNU CS Hub): hide the page chrome and talk to the parent via postMessage.
+const EMBED = params.get('embed') === '1';
+if (EMBED) document.documentElement.classList.add('embed');
 
 // Display order of interactive items (stable IDs shared with the .blend / .glb / buildings.json)
 const ORDER = ['gate_1', 'bld_main', 'bld_w2', 'bld_w1', 'bld_h1', 'bld_h2', 'bld_e1', 'bld_e2', 'bld_s3', 'bld_s2', 'bld_s1', 'lm_gazebo_garden', 'lm_sports_pitch'];
@@ -26,6 +31,7 @@ const state = {
   interiors: new Map(), // building id -> buildInterior() result (loaded on first use)
   inside: null,         // {id, floor} while a floor cutaway is shown
   overview: { pos: new THREE.Vector3(-260, 300, 330), target: new THREE.Vector3(0, 0, 5) },
+  paths: null, roomIndex: null, router: null, tour: null, // directions (data/campus_paths.json, data/room_index.json)
 };
 
 // ---------------------------------------------------------------- init
@@ -115,6 +121,10 @@ async function loadInfo() {
     if (!r.ok) throw new Error(r.status);
     state.info = await r.json();
   } catch (e) { console.warn('buildings.json not loaded; using glTF extras only', e); state.info = {}; }
+  try {
+    const [p, r] = await Promise.all(['data/campus_paths.json', 'data/room_index.json'].map((u) => fetch(u, { cache: 'no-cache' }).then((x) => (x.ok ? x.json() : null))));
+    state.paths = p; state.roomIndex = r || { buildings: {}, rooms: {}, unassigned: {} };
+  } catch (e) { console.warn('directions data not loaded', e); }
 }
 
 function loadModel(url) {
@@ -237,7 +247,9 @@ async function getInterior(it) {
   if (state.interiors.has(it.id)) return state.interiors.get(it.id);
   const r = await fetch(it.info.interior, { cache: 'no-cache' });
   if (!r.ok) throw new Error(`${it.info.interior}: ${r.status}`);
-  const interior = buildInterior(await r.json());
+  const data = await r.json();
+  const interior = buildInterior(data);
+  interior.data = data;
   interior.group.visible = false;
   state.scene.add(interior.group);
   state.interiors.set(it.id, interior);
@@ -269,7 +281,7 @@ function syncFloorButtons() {
   document.querySelectorAll('#info-floors button').forEach((b) => b.classList.toggle('active', Number(b.dataset.floor) === cur));
 }
 
-async function enterFloor(it, idx) {
+async function enterFloor(it, idx, { fly = true } = {}) {
   const interior = await getInterior(it);
   const wasInside = !!state.inside;
   state.inside = { id: it.id, floor: idx };
@@ -279,7 +291,7 @@ async function enterFloor(it, idx) {
   syncFloorButtons();
   // look down into the floor from the plaza side; keep the user's view when only switching floors
   const level = interior.floors[idx].level;
-  if (!wasInside) {
+  if (!fly) { /* the caller frames the view */ } else if (!wasInside) {
     const target = new THREE.Vector3(it.center.x, level, it.center.z);
     flyTo(new THREE.Vector3(target.x - 38, level + 62, target.z + 44), target);
   } else {
@@ -430,6 +442,123 @@ function onResize() {
   state.renderer.setSize(w, h); state.labelRenderer.setSize(w, h); state.needsRender = true;
 }
 
+// ---------------------------------------------------------------- directions & guided tour
+// Opened with ?building=<name>&room=<name>&label=<course>&lang=ar, or by a parent page posting
+// {type: 'epnu:route', building, room, label, lang, roomLabel?, buildingLabel?} / {type: 'epnu:clear'}.
+// building/room are matched against data/room_index.json; the *Label fields are only displayed.
+const TOUR_TEXT = {
+  en: { step: (i, n) => `Step ${i} of ${n}`, pause: 'Pause', play: 'Play', replay: 'Replay', skip: 'Skip to the room', steps: 'All steps', close: 'Close' },
+  ar: { step: (i, n) => `الخطوة ${i} من ${n}`, pause: 'إيقاف مؤقت', play: 'تشغيل', replay: 'إعادة', skip: 'تخطَّ إلى القاعة', steps: 'كل الخطوات', close: 'إغلاق' },
+};
+let tourRes = null;
+
+function initRouting() {
+  if (!state.paths) return;
+  state.router = createRouter({
+    scene: state.scene, net: state.paths, index: state.roomIndex,
+    getItem: (id) => state.items.get(id), getInterior,
+  });
+  state.tour = createTour({
+    scene: state.scene, camera: state.camera, controls: state.controls,
+    onStep: showTourStep,
+    onFloor: (f) => {
+      const it = tourRes && state.items.get(tourRes.buildingId);
+      if (!it) return;
+      if (f < 0) exitInterior(); else enterFloor(it, f, { fly: false });
+    },
+    onProgress: (p) => { $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`; },
+    onEnd: () => syncTourButtons(),
+  });
+  $('route-close').addEventListener('click', () => togglePanel('route-panel', false));
+  $('tour-close').addEventListener('click', () => { clearRoute(); post({ type: 'epnu:cleared' }); });
+  $('tour-play').addEventListener('click', () => { state.tour.toggle(); syncTourButtons(); });
+  $('tour-replay').addEventListener('click', () => { state.tour.replay(); syncTourButtons(); });
+  $('tour-skip').addEventListener('click', () => { state.tour.skip(); syncTourButtons(); });
+  $('tour-steps').addEventListener('click', () => togglePanel('route-panel'));
+  // after arriving, any drag hands the camera back to the user
+  state.renderer.domElement.addEventListener('pointerdown', () => state.tour.release());
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin || !e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'epnu:route') showRoute(e.data);
+    else if (e.data.type === 'epnu:clear') clearRoute();
+  });
+  const building = params.get('building'), room = params.get('room');
+  if (building || room) showRoute({ building, room, label: params.get('label'), lang: params.get('lang'), roomLabel: params.get('room_label'), buildingLabel: params.get('building_label') });
+  post({ type: 'epnu:ready' });
+}
+
+function post(msg) { if (window.parent !== window) window.parent.postMessage(msg, location.origin); }
+
+async function showRoute({ building, room, label, lang, roomLabel, buildingLabel }) {
+  if (!state.router) return;
+  lang = lang === 'ar' ? 'ar' : 'en';
+  state.tour.stop();
+  exitInterior();
+  if (state.selected) clearSelection();
+  ['list-panel', 'help'].forEach((p) => togglePanel(p, false));
+  const res = await state.router.show({ building, room, lang, roomLabel: roomLabel || room });
+  tourRes = res.ok ? res : null;
+  const tt = TOUR_TEXT[lang];
+  for (const id of ['route-panel', 'tour-card']) { $(id).dir = lang === 'ar' ? 'rtl' : 'ltr'; $(id).lang = lang; }
+  const title = label || roomLabel || room || building || '';
+  const where = [roomLabel || room, buildingLabel || building].filter(Boolean).join(' · ');
+  $('route-title').textContent = title;
+  $('route-sub').textContent = res.ok ? where : '';
+  $('route-summary').textContent = res.summary || '';
+  $('route-steps').innerHTML = res.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join('');
+  $('route-notes').innerHTML = (res.notes || []).map((s) => `<p>${escapeHtml(s)}</p>`).join('');
+  for (const [id, key] of [['tour-play', 'pause'], ['tour-replay', 'replay'], ['tour-skip', 'skip'], ['tour-steps', 'steps'], ['tour-close', 'close']]) {
+    $(id).title = tt[key]; $(id).setAttribute('aria-label', tt[key]);
+  }
+  if (res.ok) {
+    $('tour-title').textContent = title;
+    $('tour-where').textContent = [where, res.summary].filter(Boolean).join(' · ');
+    togglePanel('route-panel', false);
+    $('tour-card').classList.remove('hidden');
+    document.documentElement.classList.add('touring');
+    state.anim = null;
+    state.tour.start(res);
+    showTourStep(0);   // fill the caption now; the tour updates it from the next frame
+    syncTourButtons();
+  } else {
+    $('tour-card').classList.add('hidden');
+    togglePanel('route-panel', true);
+  }
+  state.needsRender = true;
+  post({ type: 'epnu:route-result', ok: res.ok, building, room, steps: res.steps, summary: res.summary || '' });
+}
+
+function showTourStep(i) {
+  if (!tourRes) return;
+  const tt = TOUR_TEXT[tourRes.lang];
+  $('tour-num').textContent = String(i + 1);
+  $('tour-count').textContent = tt.step(i + 1, tourRes.steps.length);
+  const el = $('tour-step');
+  el.textContent = tourRes.steps[i] || '';
+  el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
+  document.querySelectorAll('#route-steps li').forEach((li, k) => li.classList.toggle('current', k === i));
+}
+
+function syncTourButtons() {
+  const tt = TOUR_TEXT[tourRes?.lang || 'en'];
+  const playing = state.tour.playing;
+  $('tour-play').classList.toggle('is-playing', playing);
+  $('tour-play').title = playing ? tt.pause : tt.play;
+  $('tour-play').setAttribute('aria-label', playing ? tt.pause : tt.play);
+}
+
+function clearRoute() {
+  if (state.router) state.router.clear();
+  if (state.tour) state.tour.stop();
+  tourRes = null;
+  exitInterior();
+  document.documentElement.classList.remove('touring');
+  togglePanel('route-panel', false);
+  $('tour-card').classList.add('hidden');
+  flyTo(state.overview.pos, state.overview.target);
+  state.needsRender = true;
+}
+
 // ---------------------------------------------------------------- loop
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 function loop(now) {
@@ -441,6 +570,8 @@ function loop(now) {
     if (t >= 1) state.anim = null;
     state.needsRender = true;
   }
+  const dt = Math.min(0.1, (now - (state.lastNow ?? now)) / 1000); state.lastNow = now;
+  if (state.tour && state.tour.update(dt)) state.needsRender = true;
   const changed = state.controls.update();
   if (changed) state.needsRender = true;
   const az = state.controls.getAzimuthalAngle();
@@ -471,7 +602,8 @@ async function main() {
     requestAnimationFrame(loop);
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior };   // QA / integration hook
+    initRouting();
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour };   // QA / integration hook
   } catch (err) {
     console.error(err);
     showError(`Loading failed: ${err && err.message ? err.message : err}. Check your connection and try again.`);

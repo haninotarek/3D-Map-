@@ -1,0 +1,53 @@
+{
+  "_note": "Indicative walking network for directions, in local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Drawn by hand along the open corridors between building footprints on the site plan. NOT surveyed: paths, door positions and distances are approximate. Doors marked estimated: true are not confirmed by any source.",
+  "start": "gate_in",
+  "start_name_en": "Gate No. 1 (Main Gate)",
+  "start_name_ar": "البوابة رقم ١ (البوابة الرئيسية)",
+  "nodes": {
+    "gate_out": [-216, -52],
+    "gate_in": [-198, -52],
+    "forecourt": [-180, -52],
+    "main_nw": [-180, -14],
+    "gap_n": [-97, -14],
+    "hub_w": [-97, -45],
+    "main_sw": [-180, -88],
+    "gap_s": [-97, -88],
+    "w2_s": [-58, -45],
+    "s1_n": [-57, -45],
+    "mid_w": [-20, -45],
+    "mid_c": [25, -45],
+    "south_w": [25, -78],
+    "s2_n": [14, -78],
+    "s3_n": [85, -78],
+    "south_e": [115, -78],
+    "e2_mouth": [118, -62.5],
+    "north_w": [25, -12],
+    "garden_s": [80, -9],
+    "north_e": [115, -8],
+    "w1_w": [-97, 75],
+    "h_s": [-127, 90]
+  },
+  "edges": [
+    ["gate_out", "gate_in"], ["gate_in", "forecourt"],
+    ["forecourt", "main_nw"], ["main_nw", "gap_n"], ["gap_n", "hub_w"],
+    ["forecourt", "main_sw"], ["main_sw", "gap_s"], ["gap_s", "hub_w"],
+    ["hub_w", "w2_s"], ["w2_s", "s1_n"], ["s1_n", "mid_w"], ["mid_w", "mid_c"],
+    ["mid_c", "south_w"], ["south_w", "s2_n"], ["south_w", "s3_n"], ["s3_n", "south_e"], ["south_e", "e2_mouth"],
+    ["mid_c", "north_w"], ["north_w", "garden_s"], ["garden_s", "north_e"],
+    ["gap_n", "w1_w"], ["w1_w", "h_s"]
+  ],
+  "doors": {
+    "bld_main": { "node": "forecourt", "at": [-165, -49], "name_en": "west entrance", "name_ar": "المدخل الغربي" },
+    "bld_e2": { "node": "e2_mouth", "at": [160.17, -62.3], "name_en": "main entrance, at the end of the west courtyard", "name_ar": "المدخل الرئيسي في آخر الفناء الغربي" },
+    "bld_e1": { "node": "north_e", "at": [122, 5], "estimated": true, "name_en": "west side", "name_ar": "الواجهة الغربية" },
+    "bld_w1": { "node": "w1_w", "at": [-91, 75], "estimated": true, "name_en": "west side", "name_ar": "الواجهة الغربية" },
+    "bld_w2": { "node": "w2_s", "at": [-58, -24], "estimated": true, "name_en": "south side", "name_ar": "الواجهة الجنوبية" },
+    "bld_s1": { "node": "s1_n", "at": [-57, -66], "estimated": true, "name_en": "north side", "name_ar": "الواجهة الشمالية" },
+    "bld_s2": { "node": "s2_n", "at": [14, -92], "estimated": true, "name_en": "north side", "name_ar": "الواجهة الشمالية" },
+    "bld_s3": { "node": "s3_n", "at": [85, -92], "estimated": true, "name_en": "north side", "name_ar": "الواجهة الشمالية" },
+    "bld_h1": { "node": "h_s", "at": [-143, 100], "estimated": true, "name_en": "south side", "name_ar": "الواجهة الجنوبية" },
+    "bld_h2": { "node": "h_s", "at": [-111, 100], "estimated": true, "name_en": "south side", "name_ar": "الواجهة الجنوبية" },
+    "lm_gazebo_garden": { "node": "garden_s", "at": [80, 8], "name_en": "central garden", "name_ar": "الحديقة المركزية" },
+    "lm_sports_pitch": { "node": "mid_c", "at": [38, -42], "name_en": "pitch gate", "name_ar": "بوابة الملعب" }
+  }
+}
