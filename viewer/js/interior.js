@@ -42,18 +42,33 @@ function floorPatch(group, [x0, y0, x1, y1], color) {
   group.add(m);
 }
 
-// a flight of steps along the long side of the stair rect
-function stairs(group, [x0, y0, x1, y1], h) {
-  const n = 10; const alongX = (x1 - x0) >= (y1 - y0);
-  const run = (alongX ? x1 - x0 : y1 - y0) / n; const width = (alongX ? y1 - y0 : x1 - x0) * 0.45;
+// A flight of steps along the long side of the stair rect.
+// The step layout is shared with route.js (stairProfile) so the walked path follows the drawn steps exactly.
+export function stairProfile(rect, rise) {
+  const [x0, y0, x1, y1] = rect;
+  const n = Math.max(8, Math.round(Math.abs(rise) / 0.22));          // ~22 cm per step
+  const alongX = (x1 - x0) >= (y1 - y0);
+  const run = (alongX ? x1 - x0 : y1 - y0) / n;
+  const width = (alongX ? y1 - y0 : x1 - x0) * 0.45;
+  const lane = (alongX ? y0 : x0) + width / 2 + 0.3;                  // the walked lane inside the stairwell
+  const steps = [];
   for (let i = 0; i < n; i++) {
-    const sh = (h * (i + 1)) / n;
-    const g = new THREE.BoxGeometry(alongX ? run : width, sh, alongX ? width : run);
-    const s = new THREE.Mesh(g, mat(0xcfc6b6));
-    const cx = alongX ? x0 + run * (i + 0.5) : x0 + width / 2 + 0.3;
-    const cy = alongX ? y0 + width / 2 + 0.3 : y0 + run * (i + 0.5);
-    s.position.set(cx, sh / 2, -cy); s.receiveShadow = true;
-    group.add(s);
+    const h = (rise * (i + 1)) / n;                                   // walking surface of step i+1
+    const along = (alongX ? x0 : y0) + run * (i + 0.5);
+    steps.push({ x: alongX ? along : lane, y: alongX ? lane : along, h });
+  }
+  return { steps, alongX, n, run, width };
+}
+
+function stairs(group, rect, rise) {
+  const { steps, alongX, run, width } = stairProfile(rect, rise);
+  for (const s of steps) {
+    const tread = new THREE.Mesh(
+      new THREE.BoxGeometry(alongX ? run : width, Math.abs(s.h), alongX ? width : run),
+      mat(0xcfc6b6)
+    );
+    tread.position.set(s.x, s.h / 2, -s.y); tread.receiveShadow = true;
+    group.add(tread);
   }
 }
 
@@ -130,7 +145,13 @@ export function buildInterior(data) {
           if (w) g.add(w);
         }
       }
-      if (r.kind === 'stair') stairs(g, r.rect, h * 0.85);
+      if (r.kind === 'stair') {
+        // the flight rises to the next floor's real level (architecturally consistent with the model)
+        const rise = fi < data.floors.length - 1
+          ? data.floors[fi + 1].level - f.level
+          : (data.floors.length > 1 ? data.floors[1].level - data.floors[0].level : h * 0.85);
+        stairs(g, r.rect, rise);
+      }
       if (r.kind === 'locker' || r.kind === 'lift') {   // solid blocks: locker rows, lift shafts
         const bh = r.kind === 'locker' ? 1.8 : h;
         const b = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, bh, y1 - y0), mat(KIND_COLOR[r.kind]));

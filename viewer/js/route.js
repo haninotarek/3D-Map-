@@ -3,6 +3,7 @@
 // Input coordinates are local ENU metres (x = East, y = North); three.js uses x = East, z = -North, y = up.
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { stairProfile } from './interior.js';
 
 const ROUTE_COLOR = 0xff7a1a;
 const GROUND_Y = 0.9;
@@ -30,7 +31,7 @@ const T = {
     lobby: 'ادخل من المدخل إلى اللوبي.',
     stairs: (s, f) => `اطلع ${s} إلى ${f}.`,
     ground: (r) => `${r} في الدور الأرضي.`,
-    room: (r) => `${r} أمامك. وصلت.`,
+    room: (r) => `${r} أمامك. لقد وصلت إلى وجهتك بنجاح.`,
     noRoom: (r) => `${r} غير موجودة على الخريطة الداخلية بعد. اسأل في لوبي المبنى.`,
     noInterior: 'الخريطة الداخلية لهذا المبنى غير متاحة بعد.',
     estimated: 'مكان المدخل تقديري.',
@@ -161,17 +162,40 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
         add(entrance.at, gy, lobbyStep, 0, 'in');
         if (gLobby) add(centre(gLobby.rect), gy, lobbyStep, 0, 'in');
         if (floorIndex > 0) {
+          // Progressive multi-floor traversal: approach the stairwell, climb each flight
+          // step by step along the drawn treads (stairProfile), land on every intermediate
+          // floor and continue — never a single vertical jump between floors.
           const north = ty > (gLobby ? centre(gLobby.rect)[1] : entrance.at[1]);
-          const stair = ground.rooms.find((x) => x.id === (north ? 'stair_n' : 'stair_s'));
-          const [sx, sy] = centre(stair.rect);
+          const stairId = north ? 'stair_n' : 'stair_s';
           const fy = f.level + 0.3;
-          const stairName = lang === 'ar' ? stair.name_ar : stair.name_en.toLowerCase();
-          const stairStep = steps.length; steps.push(t.stairs(stairName, lang === 'ar' ? f.name_ar : f.name_en.toLowerCase()));
-          add([stair.rect[2] + 1, sy], gy, stairStep, 0, 'in');
-          add([sx, sy], gy, stairStep, 0, 'in');
-          add([sx, sy], fy, stairStep, floorIndex, 'stair');
+          let blocked = false;
+          for (let k = 0; k < floorIndex && !blocked; k++) {
+            const fk = data.floors[k], fk1 = data.floors[k + 1];
+            const stair = fk.rooms.find((x) => x.id === stairId);
+            if (!stair) { blocked = true; break; }
+            const [sx, sy] = centre(stair.rect);
+            const stairName = lang === 'ar' ? stair.name_ar : stair.name_en.toLowerCase();
+            const nextName = lang === 'ar' ? fk1.name_ar : fk1.name_en.toLowerCase();
+            // 1) approach this flight's entry on floor k
+            const upStep = steps.length;
+            steps.push(k === 0 ? t.toStairs(stairName, nextName) : t.continueUp(stairName, nextName));
+            if (k === 0 && gLobby) add(centre(gLobby.rect), gy, upStep, 0, 'in');
+            add([stair.rect[2] + 1, sy], fk.level + 0.3, upStep, k, 'in');
+            add([sx, sy], fk.level + 0.3, upStep, k, 'in');
+            // 2) climb the flight along the actual treads
+            const rise = fk1.level - fk.level;
+            for (const s of stairProfile(stair.rect, rise)) add([s.x, s.y], fk.level + s.h, upStep, k, 'stair');
+            // 3) land on floor k+1
+            const landY = fk1.level + 0.3;
+            add([stair.rect[2] + 1, sy], landY, upStep, k + 1, 'in');
+            if (k + 1 < floorIndex) {
+              const reached = steps.length; steps.push(t.floorReached(nextName));
+              const lobbyUp = fk1.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
+              if (lobbyUp) add(centre(lobbyUp.rect), landY, reached, k + 1, 'in');
+            }
+          }
+          if (blocked) notes.push(t.noStairs);
           const arriveStep = steps.length; steps.push(t.room(roomName));
-          add([stair.rect[2] + 1, sy], fy, arriveStep, floorIndex, 'in');
           const lobby = f.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
           if (lobby) add(centre(lobby.rect), fy, arriveStep, floorIndex, 'in');
           const foyer = f.rooms.find((x) => x.id === `${target.id}_foyer`);

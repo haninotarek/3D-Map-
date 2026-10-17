@@ -468,3 +468,17 @@ html.touring #legend, html.touring #view-tabs { display: none; }
 .attrib .osm::before { content: "·"; margin-inline-end: 12px; }
 .attrib a { color: inherit; }
 @media (max-width: 720px) { .attrib > span:first-child, .attrib .osm::before { display: none; } .attrib { justify-content: center; } }
+
+/* ---- voice guidance row + navigation state badge (tour card) ---- */
+#voice-row { position: relative; display: flex; gap: 8px; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line, #e6e2da); }
+#voice-pick { font: inherit; font-size: 0.85rem; color: var(--ink, #26241f); background: transparent; border: 1px solid var(--line, #d8d3c8); border-radius: 8px; padding: 3px 10px; cursor: pointer; }
+#voice-pick:hover { background: #f4f1ea; }
+#voice-menu { position: absolute; bottom: calc(100% + 6px); right: 0; z-index: 30; background: #fff; border: 1px solid #d8d3c8; border-radius: 12px; box-shadow: 0 10px 28px rgba(20,16,8,.16); min-width: 240px; max-height: 220px; overflow: auto; padding: 6px; }
+#voice-menu.hidden { display: none; }
+.voice-opt { display: flex; flex-direction: column; gap: 1px; width: 100%; text-align: right; background: transparent; border: 0; border-radius: 8px; padding: 7px 10px; cursor: pointer; font: inherit; }
+.voice-opt:hover { background: #f4f1ea; }
+.voice-opt.selected { background: #fdeadd; }
+.voice-opt span { font-size: 0.88rem; color: var(--ink, #26241f); }
+.voice-opt small { font-size: 0.72rem; color: #8b8577; direction: ltr; text-align: right; }
+.voice-none { margin: 0; padding: 10px 12px; font-size: 0.85rem; color: #8b8577; }
+.nav-state { font-size: 0.72rem; font-weight: 600; color: #b35a00; background: #fdeadd; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }

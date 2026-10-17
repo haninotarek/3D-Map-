@@ -9,6 +9,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { buildInterior } from './interior.js';
 import { createRouter } from './route.js';
 import { createTour } from './tour.js';
+import { createVoice } from './voice.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -444,27 +445,44 @@ const TOUR_TEXT = {
 };
 let tourRes = null;
 
+// Navigation states as shown on the tour badge (Arabic first: the tour UI is Arabic by default).
+const NAV_STATE_AR = {
+  IDLE: 'الانتظار', ROUTE_PLANNING: 'تخطيط المسار', WALKING: 'المشي في الحرم',
+  ENTERING_DOOR: 'دخول المبنى', CORRIDOR_NAVIGATION: 'في الممر',
+  APPROACHING_STAIRS: 'الاقتراب من السلم', CLIMBING: 'الصعود', FLOOR_LANDING: 'الوصول للدور',
+  ARRIVED: 'وصلت',
+};
+
 function initRouting() {
   if (!state.paths) return;
   state.router = createRouter({
     scene: state.scene, net: state.paths, index: state.roomIndex,
     getItem: (id) => state.items.get(id), getInterior,
   });
+  state.voice = createVoice({ lang: 'ar' });
   state.tour = createTour({
     scene: state.scene, camera: state.camera, controls: state.controls,
     onStep: showTourStep,
     onFloor: (f) => {
       const it = tourRes && state.items.get(tourRes.buildingId);
+      // spoken floor milestones come from the synchronized step texts (floorReached steps sit on
+      // landing segments, i.e. after the transition is confirmed) — no separate speech to avoid overlap
       if (!it) return;
       if (f < 0) exitInterior(); else enterFloor(it, f, { fly: false });
     },
+    onState: (s) => { $('nav-state').textContent = NAV_STATE_AR[s] || s; },
     onProgress: (p) => { $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`; },
-    onEnd: () => syncTourButtons(),
+    onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive'); },
   });
+  initVoiceUI();
   $('route-close').addEventListener('click', () => togglePanel('route-panel', false));
   $('tour-close').addEventListener('click', () => { clearRoute(); post({ type: 'epnu:cleared' }); });
-  $('tour-play').addEventListener('click', () => { state.tour.toggle(); syncTourButtons(); });
-  $('tour-replay').addEventListener('click', () => { state.tour.replay(); syncTourButtons(); });
+  $('tour-play').addEventListener('click', () => {
+    state.tour.toggle();
+    if (state.voice) { if (state.tour.playing) state.voice.resume(); else state.voice.pause(); }
+    syncTourButtons();
+  });
+  $('tour-replay').addEventListener('click', () => { if (state.voice) state.voice.reset(); state.tour.replay(); syncTourButtons(); });
   $('tour-skip').addEventListener('click', () => { state.tour.skip(); syncTourButtons(); });
   $('tour-steps').addEventListener('click', () => togglePanel('route-panel'));
   // after arriving, any drag hands the camera back to the user
@@ -529,6 +547,37 @@ function showTourStep(i) {
   el.textContent = tourRes.steps[i] || '';
   el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
   document.querySelectorAll('#route-steps li').forEach((li, k) => li.classList.toggle('current', k === i));
+  // spoken equivalent of the on-screen instruction (Arabic tours)
+  if (tourRes.lang === 'ar' && state.voice) state.voice.speak(tourRes.steps[i] || '', 'step:' + i);
+}
+
+// Voice guidance controls: mute, and a picker listing only voices that exist in this runtime.
+function initVoiceUI() {
+  const v = state.voice;
+  const mute = $('voice-mute'), pick = $('voice-pick'), menu = $('voice-menu');
+  if (!mute || !pick || !menu) return;
+  const renderMute = () => {
+    mute.textContent = v.muted ? '🔇' : '🔊';
+    mute.title = v.muted ? 'تشغيل الصوت' : 'كتم الصوت';
+    mute.setAttribute('aria-label', mute.title);
+  };
+  renderMute();
+  mute.addEventListener('click', () => { v.toggleMute(); renderMute(); });
+  const renderMenu = () => {
+    if (!v.supported || !v.voices.length) { menu.innerHTML = `<p class="voice-none">${v.unavailableText}</p>`; return; }
+    menu.innerHTML = '';
+    for (const vo of v.voices.slice(0, 12)) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'voice-opt' + (vo.voiceURI === v.selectedURI ? ' selected' : '');
+      b.innerHTML = `<span>${escapeHtml(vo.name)}</span><small>${escapeHtml(vo.lang)}${vo.lang.toLowerCase().startsWith('ar') ? ' · عربي' : ''}</small>`;
+      b.addEventListener('click', () => { v.setVoiceByURI(vo.voiceURI); v.preview(vo); renderMenu(); });
+      menu.appendChild(b);
+    }
+  };
+  pick.addEventListener('click', (e) => { e.stopPropagation(); renderMenu(); menu.classList.toggle('hidden'); });
+  document.addEventListener('click', (e) => { if (!menu.contains(e.target)) menu.classList.add('hidden'); });
+  v.onVoicesChanged(() => { if (!menu.classList.contains('hidden')) renderMenu(); });
 }
 
 function syncTourButtons() {
@@ -542,6 +591,7 @@ function syncTourButtons() {
 function clearRoute() {
   if (state.router) state.router.clear();
   if (state.tour) state.tour.stop();
+  if (state.voice) state.voice.cancel();
   tourRes = null;
   exitInterior();
   document.documentElement.classList.remove('touring');
