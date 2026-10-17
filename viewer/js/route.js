@@ -192,7 +192,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             add([sx, sy], fk.level + 0.3, upStep, k, 'in');
             // 2) climb the flight along the actual treads
             const rise = fk1.level - fk.level;
-            for (const s of stairProfile(stair.rect, rise)) add([s.x, s.y], fk.level + s.h, upStep, k, 'stair');
+            for (const s of stairProfile(stair.rect, rise).steps) add([s.x, s.y], fk.level + s.h, upStep, k, 'stair');
             // 3) land on floor k+1
             const landY = fk1.level + 0.3;
             add([stair.rect[2] + 1, sy], landY, upStep, k + 1, 'in');
