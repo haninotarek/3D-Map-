@@ -24,17 +24,17 @@
   {
    "name": "navigation reaches ARRIVED",
    "ok": true,
-   "detail": "130s"
+   "detail": "123s"
   },
   {
    "name": "state machine used (explicit states)",
-   "ok": false,
+   "ok": true,
    "detail": "['WALKING', 'ENTERING_DOOR', 'CORRIDOR_NAVIGATION', 'APPROACHING_STAIRS', 'CLIMBING', 'FLOOR_LANDING']"
   },
   {
    "name": "three separate climbing flights (G→1→2→3)",
    "ok": true,
-   "detail": "flights: 56"
+   "detail": "flights: 3"
   },
   {
    "name": "every flight ends in a floor landing",
@@ -109,56 +109,48 @@
    "y": 0.9
   },
   {
-   "state": "CORRIDOR_NAVIGATION",
-   "y": 0.9
-  },
-  {
    "state": "APPROACHING_STAIRS",
    "y": 0.9
   },
   {
    "state": "CLIMBING",
-   "y": 0.88
+   "y": 0.86
   },
   {
    "state": "CLIMBING",
-   "y": 2.36
+   "y": 2.23
   },
   {
    "state": "CLIMBING",
-   "y": 4.86
+   "y": 4.61
   },
   {
    "state": "CORRIDOR_NAVIGATION",
    "y": 5.4
   },
   {
-   "state": "APPROACHING_STAIRS",
+   "state": "CLIMBING",
    "y": 5.4
   },
   {
    "state": "CLIMBING",
-   "y": 5.38
+   "y": 6.28
   },
   {
    "state": "CLIMBING",
-   "y": 6.04
+   "y": 6.98
   },
   {
    "state": "CLIMBING",
-   "y": 6.74
+   "y": 7.69
   },
   {
    "state": "CLIMBING",
-   "y": 7.45
+   "y": 8.39
   },
   {
    "state": "CLIMBING",
-   "y": 8.16
-  },
-  {
-   "state": "CLIMBING",
-   "y": 8.86
+   "y": 9.1
   },
   {
    "state": "CORRIDOR_NAVIGATION",
@@ -170,39 +162,35 @@
   },
   {
    "state": "CLIMBING",
-   "y": 9.39
+   "y": 9.38
   },
   {
    "state": "CLIMBING",
-   "y": 9.37
+   "y": 9.36
   },
   {
    "state": "CLIMBING",
-   "y": 9.34
+   "y": 9.33
   },
   {
    "state": "CLIMBING",
-   "y": 9.67
+   "y": 9.91
   },
   {
    "state": "CLIMBING",
-   "y": 10.38
+   "y": 10.62
   },
   {
    "state": "CLIMBING",
-   "y": 11.09
+   "y": 11.32
   },
   {
    "state": "CLIMBING",
-   "y": 11.79
+   "y": 12.03
   },
   {
    "state": "CLIMBING",
-   "y": 12.5
-  },
-  {
-   "state": "FLOOR_LANDING",
-   "y": 13.22
+   "y": 12.73
   },
   {
    "state": "CORRIDOR_NAVIGATION",
@@ -215,6 +203,6 @@
  ],
  "summary": {
   "total": 19,
-  "failed": 1
+  "failed": 0
  }
 }
