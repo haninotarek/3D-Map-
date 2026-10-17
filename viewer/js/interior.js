@@ -107,7 +107,7 @@ export function buildInterior(data) {
   const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: SLAB, bevelEnabled: false });
   slabGeo.rotateX(-Math.PI / 2);   // (E, N, z) -> (E, z, -N)
 
-  const floors = data.floors.map((f) => {
+  const floors = data.floors.map((f, fi) => {
     const g = new THREE.Group(); g.name = `floor_${f.id}`; g.position.y = f.level;
     // rooms of kind "void" are holes in this floor's slab (double-height space), fenced by a railing
     const voids = f.rooms.filter((r) => r.kind === 'void');
