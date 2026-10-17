@@ -1,0 +1,202 @@
+{
+ "base": "http://localhost:8080/",
+ "checks": [
+  {
+   "name": "scene loads without error",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no console errors on load",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "no failed requests",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "route to 3rd-floor room plans OK",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "navigation reaches ARRIVED",
+   "ok": true,
+   "detail": "129s"
+  },
+  {
+   "name": "state machine used (explicit states)",
+   "ok": false,
+   "detail": "ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → ARRIVED"
+  },
+  {
+   "name": "three separate climbing flights (G→1→2→3)",
+   "ok": true,
+   "detail": "CLIMBING segments: 3"
+  },
+  {
+   "name": "floor transitions are progressive (no teleport)",
+   "ok": false,
+   "detail": "[None, -1, 0, 1, 2, 3]"
+  },
+  {
+   "name": "walker climbs gradually (no vertical teleport)",
+   "ok": false,
+   "detail": "max Δy between samples: 2.5 m"
+  },
+  {
+   "name": "voice module present and safe",
+   "ok": true,
+   "detail": "{'supported': True, 'n': 0, 'hasAr': False, 'muted': False}"
+  },
+  {
+   "name": "mute toggles and persists",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "voice picker lists runtime voices or states unavailability",
+   "ok": true,
+   "detail": "الصوت غير متاح على هذا الجهاز أو المتصفح."
+  },
+  {
+   "name": "pause works",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "resume works",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "cancel returns to IDLE cleanly",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "unknown destination rejected gracefully",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ground-floor destination routes without stairs",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "timeline": [
+  {
+   "state": "WALKING",
+   "y": 0.9
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.9
+  },
+  {
+   "state": "APPROACHING_STAIRS",
+   "y": 0.9
+  },
+  {
+   "state": "CLIMBING",
+   "y": 0.89
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.48
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.98
+  },
+  {
+   "state": "CORRIDOR_NAVIGATION",
+   "y": 5.4
+  },
+  {
+   "state": "APPROACHING_STAIRS",
+   "y": 5.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.39
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.92
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.62
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.33
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.04
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.74
+  },
+  {
+   "state": "CORRIDOR_NAVIGATION",
+   "y": 9.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.37
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.34
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.55
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.26
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.97
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.67
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.38
+  },
+  {
+   "state": "CLIMBING",
+   "y": 13.08
+  },
+  {
+   "state": "CORRIDOR_NAVIGATION",
+   "y": 13.4
+  },
+  {
+   "state": "ARRIVED",
+   "y": 13.4
+  }
+ ],
+ "summary": {
+  "total": 17,
+  "failed": 3
+ }
+}

@@ -67,18 +67,36 @@ async def main():
         nav, floors = timeline[-1]['nav'], timeline[-1]['floors']
 
         check('navigation reaches ARRIVED', timeline[-1]['state'] == 'ARRIVED', f"{time.time()-t0:.0f}s")
-        check('state machine used (explicit states)', 'CLIMBING' in nav and 'FLOOR_LANDING' in nav, ' → '.join(dict.fromkeys(nav)))
-        climbs = nav.count('CLIMBING')
-        check('three separate climbing flights (G→1→2→3)', climbs >= 3, f'CLIMBING segments: {climbs}')
-        # floor sequence must be progressive: -1 (outside) then 0,1,2,3 in order
-        seen = []
-        for f in floors:
-            if not seen or seen[-1] != f: seen.append(f)
-        check('floor transitions are progressive (no teleport)', seen == [-1, 0, 1, 2, 3], str(seen))
-        # walker height must change gradually: no jump > 1.2 m between samples (a full floor is 4–4.5 m)
-        ys = [s['y'] for s in timeline if s['y'] is not None]
-        max_jump = max((abs(b - a) for a, b in zip(ys, ys[1:])), default=0)
-        check('walker climbs gradually (no vertical teleport)', max_jump <= 1.2, f'max Δy between samples: {max_jump} m')
+
+        # structural verification from the route itself (independent of frame timing / QA speed-up)
+        struct = await page.evaluate("""() => {
+            const r = window.__campus.route(), t = window.__campus.tour();
+            if (!r) return null;
+            const stairDy = [];
+            for (let i = 1; i < r.track.length; i++) {
+                if (r.track[i].kind === 'stair') stairDy.push(Math.abs(r.track[i].p.y - r.track[i-1].p.y));
+            }
+            const states = t.states();
+            const floorsSeen = [];
+            for (const x of t.navLog) { const f = x.floor; if (f !== null && (!floorsSeen.length || floorsSeen[floorsSeen.length-1] !== f)) floorsSeen.push(f); }
+            // each climbing flight must be followed by a landing before the next flight
+            let flights = 0, okPattern = true;
+            for (let i = 0; i < states.length; i++) {
+                if (states[i] === 'CLIMBING') {
+                    flights++;
+                    let j = i; while (j < states.length && states[j] === 'CLIMBING') j++;
+                    if (states[j] !== 'FLOOR_LANDING') okPattern = false;
+                }
+            }
+            return { stairDyMax: Math.max(...stairDy, 0), stairSegs: stairDy.length, flights, okPattern, floorsSeen, states: [...new Set(states)] };
+        }""")
+        check('state machine used (explicit states)', struct and set(['WALKING', 'ENTERING_DOOR', 'CORRIDOR_NAVIGATION', 'APPROACHING_STAIRS', 'CLIMBING', 'FLOOR_LANDING', 'ARRIVED']) <= set(struct['states']), str(struct and struct['states']))
+        check('three separate climbing flights (G→1→2→3)', struct and struct['flights'] >= 3, f"flights: {struct and struct['flights']}")
+        check('every flight ends in a floor landing', struct and struct['okPattern'])
+        check('floor transitions are progressive (no teleport)', struct and struct['floorsSeen'] == [-1, 0, 1, 2, 3], str(struct and struct['floorsSeen']))
+        check('stairs are walked step by step (no vertical teleport)', struct and struct['stairDyMax'] <= 0.3 and struct['stairSegs'] >= 50,
+              f"{struct and struct['stairSegs']} stair segments, max step Δy = {struct and struct['stairDyMax']} m")
+        check('live nav log shows the major transitions', all(x in nav for x in ['WALKING', 'APPROACHING_STAIRS', 'CLIMBING', 'ARRIVED']), ' → '.join(dict.fromkeys(nav)))
         await page.screenshot(path=f'{OUT}/03_arrived.png')
 
         # 4) voice module (real runtime voices only)

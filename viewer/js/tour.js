@@ -152,5 +152,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     start, update, skip, replay, toggle, stop, release,
     get active() { return active; }, get playing() { return playing && !ended; },
     get state() { return state; }, navLog,
+    /** per-segment navigation states (QA: the full precomputed sequence, independent of frame timing) */
+    states: () => segs.map((x) => x.nav),
   };
 }

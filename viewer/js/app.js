@@ -646,7 +646,7 @@ async function main() {
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     initRouting();
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour,
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
     window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
   } catch (err) {
