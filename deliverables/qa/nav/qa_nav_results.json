@@ -24,27 +24,37 @@
   {
    "name": "navigation reaches ARRIVED",
    "ok": true,
-   "detail": "129s"
+   "detail": "130s"
   },
   {
    "name": "state machine used (explicit states)",
    "ok": false,
-   "detail": "ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → ARRIVED"
+   "detail": "['WALKING', 'ENTERING_DOOR', 'CORRIDOR_NAVIGATION', 'APPROACHING_STAIRS', 'CLIMBING', 'FLOOR_LANDING']"
   },
   {
    "name": "three separate climbing flights (G→1→2→3)",
    "ok": true,
-   "detail": "CLIMBING segments: 3"
+   "detail": "flights: 56"
+  },
+  {
+   "name": "every flight ends in a floor landing",
+   "ok": true,
+   "detail": ""
   },
   {
    "name": "floor transitions are progressive (no teleport)",
-   "ok": false,
-   "detail": "[None, -1, 0, 1, 2, 3]"
+   "ok": true,
+   "detail": "[-1, 0, 1, 2, 3]"
   },
   {
-   "name": "walker climbs gradually (no vertical teleport)",
-   "ok": false,
-   "detail": "max Δy between samples: 2.5 m"
+   "name": "stairs are walked step by step (no vertical teleport)",
+   "ok": true,
+   "detail": "56 stair segments, max step Δy = 0.22500000000000053 m"
+  },
+  {
+   "name": "live nav log shows the major transitions",
+   "ok": true,
+   "detail": "ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → FLOOR_LANDING → ARRIVED"
   },
   {
    "name": "voice module present and safe",
@@ -99,20 +109,24 @@
    "y": 0.9
   },
   {
+   "state": "CORRIDOR_NAVIGATION",
+   "y": 0.9
+  },
+  {
    "state": "APPROACHING_STAIRS",
    "y": 0.9
   },
   {
    "state": "CLIMBING",
-   "y": 0.89
+   "y": 0.88
   },
   {
    "state": "CLIMBING",
-   "y": 1.48
+   "y": 2.36
   },
   {
    "state": "CLIMBING",
-   "y": 3.98
+   "y": 4.86
   },
   {
    "state": "CORRIDOR_NAVIGATION",
@@ -124,35 +138,39 @@
   },
   {
    "state": "CLIMBING",
-   "y": 5.39
+   "y": 5.38
   },
   {
    "state": "CLIMBING",
-   "y": 5.92
+   "y": 6.04
   },
   {
    "state": "CLIMBING",
-   "y": 6.62
+   "y": 6.74
   },
   {
    "state": "CLIMBING",
-   "y": 7.33
+   "y": 7.45
   },
   {
    "state": "CLIMBING",
-   "y": 8.04
+   "y": 8.16
   },
   {
    "state": "CLIMBING",
-   "y": 8.74
+   "y": 8.86
   },
   {
    "state": "CORRIDOR_NAVIGATION",
    "y": 9.4
   },
   {
-   "state": "CLIMBING",
+   "state": "APPROACHING_STAIRS",
    "y": 9.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.39
   },
   {
    "state": "CLIMBING",
@@ -164,27 +182,27 @@
   },
   {
    "state": "CLIMBING",
-   "y": 9.55
+   "y": 9.67
   },
   {
    "state": "CLIMBING",
-   "y": 10.26
+   "y": 10.38
   },
   {
    "state": "CLIMBING",
-   "y": 10.97
+   "y": 11.09
   },
   {
    "state": "CLIMBING",
-   "y": 11.67
+   "y": 11.79
   },
   {
    "state": "CLIMBING",
-   "y": 12.38
+   "y": 12.5
   },
   {
-   "state": "CLIMBING",
-   "y": 13.08
+   "state": "FLOOR_LANDING",
+   "y": 13.22
   },
   {
    "state": "CORRIDOR_NAVIGATION",
@@ -196,7 +214,7 @@
   }
  ],
  "summary": {
-  "total": 17,
-  "failed": 3
+  "total": 19,
+  "failed": 1
  }
 }

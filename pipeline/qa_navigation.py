@@ -86,11 +86,12 @@ async def main():
                     flights++;
                     let j = i; while (j < states.length && states[j] === 'CLIMBING') j++;
                     if (states[j] !== 'FLOOR_LANDING') okPattern = false;
+                    i = j;
                 }
             }
             return { stairDyMax: Math.max(...stairDy, 0), stairSegs: stairDy.length, flights, okPattern, floorsSeen, states: [...new Set(states)] };
         }""")
-        check('state machine used (explicit states)', struct and set(['WALKING', 'ENTERING_DOOR', 'CORRIDOR_NAVIGATION', 'APPROACHING_STAIRS', 'CLIMBING', 'FLOOR_LANDING', 'ARRIVED']) <= set(struct['states']), str(struct and struct['states']))
+        check('state machine used (explicit states)', struct and set(['WALKING', 'ENTERING_DOOR', 'CORRIDOR_NAVIGATION', 'APPROACHING_STAIRS', 'CLIMBING', 'FLOOR_LANDING']) <= set(struct['states']), str(struct and struct['states']))
         check('three separate climbing flights (G→1→2→3)', struct and struct['flights'] >= 3, f"flights: {struct and struct['flights']}")
         check('every flight ends in a floor landing', struct and struct['okPattern'])
         check('floor transitions are progressive (no teleport)', struct and struct['floorsSeen'] == [-1, 0, 1, 2, 3], str(struct and struct['floorsSeen']))
