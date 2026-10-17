@@ -22,6 +22,8 @@ const EMBED = params.get('embed') === '1';
 if (EMBED) document.documentElement.classList.add('embed');
 
 // Display order of interactive items (stable IDs shared with the .blend / .glb / buildings.json)
+// Buildings that get a name label and a hover tooltip: Engineering 1 & 2, the Main Building and Gate No. 1
+const LABELLED = new Set(['bld_e2', 'bld_e1', 'bld_main', 'gate_1']);
 const ORDER = ['gate_1', 'bld_main', 'bld_w2', 'bld_w1', 'bld_h1', 'bld_h2', 'bld_e1', 'bld_e2', 'bld_s3', 'bld_s2', 'bld_s1', 'lm_gazebo_garden', 'lm_sports_pitch'];
 
 const state = {
@@ -168,7 +170,8 @@ function registerItems(root) {
       evidence: ud.evidence || js.evidence || '', storeys: ud.storeys || js.storeys || null,
       height: ud.height_m || null, sfm: ud.sfm_height || js.sfm_height_m || '', osm: ud.osm_way || '',
     };
-    // label
+    // label: only the places students need (the rest of the campus stays unlabelled)
+    if (!LABELLED.has(it.id)) continue;
     const el = document.createElement('div');
     el.className = 'label3d'; el.dataset.id = it.id;
     el.textContent = it.info.name_en; el.title = `${it.info.name_en} — ${it.info.name_ar}`;
@@ -383,7 +386,7 @@ function initPointer() {
     hoverRaf = requestAnimationFrame(() => {
       const id = pickId(e.clientX, e.clientY);
       const tip = $('tooltip');
-      if (id) {
+      if (id && LABELLED.has(id)) {
         const it = state.items.get(id);
         tip.textContent = it.info.name_en; tip.style.left = e.offsetX + 'px'; tip.style.top = e.offsetY + 'px';
         tip.classList.remove('hidden'); el.style.cursor = 'pointer';

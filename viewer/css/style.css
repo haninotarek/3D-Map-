@@ -467,4 +467,4 @@ html.touring #legend, html.touring #view-tabs { display: none; }
 .attrib .osm { flex: none; }
 .attrib .osm::before { content: "·"; margin-inline-end: 12px; }
 .attrib a { color: inherit; }
-@media (max-width: 720px) { .attrib > span:first-child { display: none; } .attrib { justify-content: center; } }
+@media (max-width: 720px) { .attrib > span:first-child, .attrib .osm::before { display: none; } .attrib { justify-content: center; } }
