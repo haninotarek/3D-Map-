@@ -613,7 +613,8 @@ function loop(now) {
     state.needsRender = true;
   }
   const dt = Math.min(0.1, (now - (state.lastNow ?? now)) / 1000); state.lastNow = now;
-  if (state.tour && state.tour.update(dt)) state.needsRender = true;
+  // QA hook: tests on software WebGL can speed the tour clock (no effect in normal use)
+  if (state.tour && state.tour.update(dt * (window.__TOUR_SPEED || 1))) state.needsRender = true;
   const changed = state.controls.update();
   if (changed) state.needsRender = true;
   const az = state.controls.getAzimuthalAngle();

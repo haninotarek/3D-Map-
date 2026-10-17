@@ -35,10 +35,11 @@ async def main():
         await page.screenshot(path=f'{OUT}/01_loaded.png')
 
         # 2) start a route to a 3rd-floor room (Hall 3 -> floor 3 of bld_e2)
-        ok = await page.evaluate("""async () => {
-            const r = await window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Hall 3', lang: 'ar', roomLabel: 'قاعة 3' });
-            return r && r.ok;
-        }""")
+        # software WebGL renders slowly: speed the tour clock so the QA run finishes in real time
+        await page.evaluate("() => { window.__TOUR_SPEED = 10; }")
+        await page.evaluate("() => window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Hall 3', lang: 'ar', roomLabel: 'قاعة 3' })")
+        await page.wait_for_timeout(1500)
+        ok = await page.evaluate("() => window.__campus.tour().active && document.querySelectorAll('#route-steps li').length > 0")
         check('route to 3rd-floor room plans OK', ok)
 
         # 3) watch the tour: states, floors, walker height (progressive climb), until ARRIVED
@@ -107,9 +108,13 @@ async def main():
         check('cancel returns to IDLE cleanly', cancelled)
 
         # 6) edge cases
-        bad = await page.evaluate("""async () => (await window.__campus.showRoute({ building: 'مبنى غير موجود', room: 'X', lang: 'ar' })).ok""")
-        check('unknown destination rejected gracefully', bad is False)
-        same = await page.evaluate("""async () => { const r = await window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Room 105', lang: 'ar' }); return r.ok; }""")
+        await page.evaluate("() => window.__campus.showRoute({ building: 'مبنى غير موجود', room: 'X', lang: 'ar' })")
+        await page.wait_for_timeout(800)
+        bad = await page.evaluate("() => !window.__campus.tour().active && !document.getElementById('route-panel').classList.contains('hidden')")
+        check('unknown destination rejected gracefully', bad is True)
+        await page.evaluate("() => window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Room 105', lang: 'ar' })")
+        await page.wait_for_timeout(800)
+        same = await page.evaluate("() => window.__campus.tour().active")
         check('ground-floor destination routes without stairs', same is True)
         await page.evaluate("() => window.__campus.clearRoute()")
 
