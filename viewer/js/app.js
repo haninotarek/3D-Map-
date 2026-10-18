@@ -475,6 +475,14 @@ function initRouting() {
     onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive'); },
   });
   initVoiceUI();
+  // minimize the tour card to a slim bar (the route and stairs stay fully visible)
+  const tourCard = $('tour-card');
+  let tourMin = false;
+  const syncMin = () => { tourCard.classList.toggle('min', tourMin); $('tour-min').textContent = tourMin ? '+' : '–'; $('tour-min').title = tourMin ? 'توسيع' : 'تصغير'; };
+  $('tour-min').addEventListener('click', () => { tourMin = !tourMin; syncMin(); });
+  const _showRoute = showRoute;
+  showRoute = function (o) { tourMin = false; syncMin(); return _showRoute(o); };
+  syncMin();
   $('route-close').addEventListener('click', () => togglePanel('route-panel', false));
   $('tour-close').addEventListener('click', () => { clearRoute(); post({ type: 'epnu:cleared' }); });
   $('tour-play').addEventListener('click', () => {

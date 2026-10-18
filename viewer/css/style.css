@@ -482,3 +482,20 @@ html.touring #legend, html.touring #view-tabs { display: none; }
 .voice-opt small { font-size: 0.72rem; color: #8b8577; direction: ltr; text-align: right; }
 .voice-none { margin: 0; padding: 10px 12px; font-size: 0.85rem; color: #8b8577; }
 .nav-state { font-size: 0.72rem; font-weight: 600; color: #b35a00; background: #fdeadd; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+
+/* ---- collapsible tour card: minimized to a slim bar so the route stays fully visible ---- */
+#tour-card.min { padding: 0; }
+#tour-card.min .tour-head { padding: 8px 12px; }
+#tour-card.min .tour-titles #tour-where,
+#tour-card.min .tour-body,
+#tour-card.min #voice-row,
+#tour-card.min .tour-actions { display: none; }
+#tour-card.min .tour-head #tour-title { font-size: 0.95rem; }
+#tour-card.min #tour-num { display: inline-flex; }
+#tour-card #tour-min { border: 0; background: transparent; cursor: pointer; padding: 4px 6px; line-height: 1; color: #8b8577; border-radius: 8px; }
+#tour-card #tour-min:hover { background: #f4f1ea; color: var(--ink, #26241f); }
+html.touring #tour-card.min { box-shadow: 0 4px 14px rgba(20,16,8,.18); }
+html.touring #tour-card.min .tour-progress { height: 3px; }
+@media (max-width: 720px) {
+  #tour-card.min { left: 10px; right: 10px; transform: none; width: auto; bottom: 10px; }
+}
