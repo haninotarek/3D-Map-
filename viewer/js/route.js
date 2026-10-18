@@ -113,9 +113,10 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
   }
 
   /**
-   * Builds the route and returns {ok, buildingId, floorIndex, steps[], notes[], summary, bounds, track} (or ok: false).
+   * Builds the route and returns {ok, buildingId, floorIndex, steps[], notes[], summary, bounds, track, cues[]} (or ok: false).
    * track: the walk as points with, for each point, the step being followed while walking to it, the interior floor
    * shown (-1 = outside) and the segment kind ('out' | 'in' | 'stair'); used by the guided tour.
+   * cues: parallel to steps — pre-rendered voice cue id per step (null = dynamic text only).
    */
   async function show({ building, room, lang = 'en', roomLabel }) {
     clear();
@@ -127,11 +128,13 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     const bName = lang === 'ar' ? (it.info.name_ar || it.info.name_en) : it.info.name_en;
     const door = net.doors[r.buildingId];
     const steps = [];
+    const cues = [];
     const track = [];
     const notes = [];
+    const addStep = (text, cue = null) => { steps.push(text); cues.push(cue); };
     const add = (p, h, step, floor, kind) => track.push({ p: v3(p, h), step, floor, kind });
     const startName = lang === 'ar' ? net.start_name_ar : net.start_name_en;
-    steps.push(t.start(startName));
+    addStep(t.start(startName), 'gate');
 
     // outdoor leg
     let outdoorM = 0;
@@ -140,12 +143,12 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
       const seq = [net.nodes.gate_out, ...nodes.map((n) => net.nodes[n]), door.at];
       for (let i = 1; i < seq.length; i++) outdoorM += Math.hypot(seq[i][0] - seq[i - 1][0], seq[i][1] - seq[i - 1][1]);
       seq.forEach((p, i) => add(p, GROUND_Y, i < 2 ? 0 : 1, -1, 'out'));
-      steps.push(t.walk(Math.round(outdoorM / 10) * 10, bName, lang === 'ar' ? door.name_ar : door.name_en));
+      addStep(t.walk(Math.round(outdoorM / 10) * 10, bName, lang === 'ar' ? door.name_ar : door.name_en), 'approach');
       if (door.estimated) notes.push(t.estimated);
     } else {
       add(net.nodes.gate_out, GROUND_Y, 0, -1, 'out');
       add([it.center.x, -it.center.z], GROUND_Y, 1, -1, 'out');
-      steps.push(t.walkNoDoor(Math.round(Math.hypot(it.center.x - net.nodes.gate_out[0], -it.center.z - net.nodes.gate_out[1]) / 10) * 10, bName));
+      addStep(t.walkNoDoor(Math.round(Math.hypot(it.center.x - net.nodes.gate_out[0], -it.center.z - net.nodes.gate_out[1]) / 10) * 10, bName), 'gen_out');
     }
     if (r.assumed) notes.push(t.assumed);
 
@@ -166,7 +169,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
         const [tx, ty] = centre(target.rect);
         const gLobby = ground.rooms.find((x) => x.id === 'lobby');
         const gy = ground.level + 0.3;
-        const lobbyStep = steps.length; steps.push(t.lobby);
+        const lobbyStep = steps.length; addStep(t.lobby, 'enter');
         add(entrance.at, gy, lobbyStep, 0, 'in');
         if (gLobby) add(centre(gLobby.rect), gy, lobbyStep, 0, 'in');
         if (floorIndex > 0) {
@@ -186,7 +189,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             const nextName = lang === 'ar' ? fk1.name_ar : fk1.name_en.toLowerCase();
             // 1) approach this flight's entry on floor k
             const upStep = steps.length;
-            steps.push(k === 0 ? t.toStairs(stairName, nextName) : t.continueUp(stairName, nextName));
+            addStep(k === 0 ? t.toStairs(stairName, nextName) : t.continueUp(stairName, nextName), k === 0 ? 'to_stairs' : 'climb_1');
             if (k === 0 && gLobby) add(centre(gLobby.rect), gy, upStep, 0, 'in');
             add([stair.rect[2] + 1, sy], fk.level + 0.3, upStep, k, 'in');
             add([sx, sy], fk.level + 0.3, upStep, k, 'in');
@@ -196,21 +199,23 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             // 3) land on floor k+1
             const landY = fk1.level + 0.3;
             add([stair.rect[2] + 1, sy], landY, upStep, k + 1, 'in');
-            if (k + 1 < floorIndex) {
-              const reached = steps.length; steps.push(t.floorReached(nextName));
+            if (k + 1 <= floorIndex) {
+              // announce every landing: intermediate floors and the destination floor itself
+              const cue = k + 1 === floorIndex ? 'floor_3' : (k === 0 ? 'floor_1' : 'floor_2');
+              const reached = steps.length; addStep(t.floorReached(nextName), cue);
               const lobbyUp = fk1.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
               if (lobbyUp) add(centre(lobbyUp.rect), landY, reached, k + 1, 'in');
             }
           }
           if (blocked) notes.push(t.noStairs);
-          const arriveStep = steps.length; steps.push(t.room(roomName));
+          const arriveStep = steps.length; addStep(t.room(roomName), 'gen_room');
           const lobby = f.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
           if (lobby) add(centre(lobby.rect), fy, arriveStep, floorIndex, 'in');
           const foyer = f.rooms.find((x) => x.id === `${target.id}_foyer`);
           if (foyer) add(centre(foyer.rect), fy, arriveStep, floorIndex, 'in');
           add([tx, ty], fy, arriveStep, floorIndex, 'in');
         } else {
-          const arriveStep = steps.length; steps.push(t.ground(roomName));
+          const arriveStep = steps.length; addStep(t.ground(roomName), 'gen_room');
           add([tx, ty], gy, arriveStep, 0, 'in');
         }
       } else {
@@ -245,7 +250,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     const bounds = new THREE.Box3().setFromPoints(pts);
     const totalM = Math.round(length / 10) * 10;
     return {
-      ok: true, buildingId: r.buildingId, floorIndex, steps, notes, bounds, track, lang,
+      ok: true, buildingId: r.buildingId, floorIndex, steps, cues, notes, bounds, track, lang,
       summary: t.total(totalM, Math.max(1, Math.round(length / 75))),
     };
   }

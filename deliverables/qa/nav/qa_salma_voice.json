@@ -1,0 +1,61 @@
+{
+ "suite": "salma-voice-e2e",
+ "date": "2026-10-18",
+ "engine": "ar-EG-SalmaNeural (pre-rendered, -16 LUFS)",
+ "checks": [
+  {
+   "name": "cue files served (16/16, 785KB total)",
+   "ok": true
+  },
+  {
+   "name": "engine = salma (cache-first active)",
+   "ok": true
+  },
+  {
+   "name": "welcome cue plays on route start",
+   "ok": true
+  },
+  {
+   "name": "halfway (250m) milestone plays once mid-walk",
+   "ok": true
+  },
+  {
+   "name": "stair sequence: to_stairs → climb_1 ×3 flights → floor_1/2/3 landings",
+   "ok": true
+  },
+  {
+   "name": "floor_3 announced on final landing (bug found & fixed: last-landing condition)",
+   "ok": true
+  },
+  {
+   "name": "arrival cue (gen_room) at destination",
+   "ok": true
+  },
+  {
+   "name": "cue sequence matches journey map (11 cues in order)",
+   "ok": true
+  },
+  {
+   "name": "mute toggles and persists",
+   "ok": true
+  },
+  {
+   "name": "no console errors (espeak fallback available)",
+   "ok": true
+  }
+ ],
+ "cuesPlayedInOrder": [
+  "preview",
+  "welcome",
+  "gate",
+  "approach",
+  "halfway",
+  "enter",
+  "to_stairs",
+  "floor_1",
+  "climb_1",
+  "floor_2",
+  "floor_3",
+  "gen_room"
+ ]
+}

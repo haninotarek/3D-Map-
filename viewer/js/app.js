@@ -465,6 +465,7 @@ const TOUR_TEXT = {
   ar: { step: (i, n) => `الخطوة ${i} من ${n}`, pause: 'إيقاف مؤقت', play: 'تشغيل', replay: 'إعادة', skip: 'تخطَّ إلى القاعة', steps: 'كل الخطوات', close: 'إغلاق' },
 };
 let tourRes = null;
+let milestoneSpoken = false;
 
 // Navigation states as shown on the tour badge (Arabic first: the tour UI is Arabic by default).
 const NAV_STATE_AR = {
@@ -492,10 +493,18 @@ function initRouting() {
       if (f < 0) exitInterior(); else enterFloor(it, f, { fly: false });
     },
     onState: (s) => { $('nav-state').textContent = NAV_STATE_AR[s] || s; },
-    onProgress: (p) => { $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`; },
+    onProgress: (p) => {
+      $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`;
+      // halfway milestone: fired once, roughly at the middle of the outdoor walk (Arabic tours)
+      if (p > 0.18 && !milestoneSpoken && tourRes?.lang === 'ar' && state.voice) {
+        milestoneSpoken = true;
+        state.voice.speak('', 'milestone:250m', { cue: 'halfway' });
+      }
+    },
     onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive'); },
   });
   initVoiceUI();
+  state.voice.initCues?.();   // probe pre-rendered Salma cues once
   // minimize the tour card to a slim bar (the route and stairs stay fully visible)
   const tourCard = $('tour-card');
   let tourMin = false;
@@ -558,6 +567,10 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
     state.anim = null;
     state.tour.start(res);
     showTourStep(0);   // fill the caption now; the tour updates it from the next frame
+    // opening narration: the full welcome cue (real distances from this route)
+    if (lang === 'ar' && state.voice) {
+      state.voice.speak(res.summary || '', 'welcome', { force: true, cue: 'welcome' });
+    }
     syncTourButtons();
   } else {
     $('tour-card').classList.add('hidden');
@@ -576,8 +589,11 @@ function showTourStep(i) {
   el.textContent = tourRes.steps[i] || '';
   el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
   document.querySelectorAll('#route-steps li').forEach((li, k) => li.classList.toggle('current', k === i));
-  // spoken equivalent of the on-screen instruction (Arabic tours)
-  if (tourRes.lang === 'ar' && state.voice) state.voice.speak(tourRes.steps[i] || '', 'step:' + i);
+  // spoken equivalent of the on-screen instruction (Arabic tours) — pre-rendered cue when available
+  if (tourRes.lang === 'ar' && state.voice) {
+    const cue = tourRes.cues?.[i] ?? null;
+    state.voice.speak(tourRes.steps[i] || '', 'step:' + i, { cue });
+  }
 }
 
 // Voice guidance controls: mute, and a picker listing only voices that exist in this runtime.
