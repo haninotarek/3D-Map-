@@ -175,7 +175,11 @@ function registerItems(root) {
     if (!LABELLED.has(it.id)) continue;
     const el = document.createElement('div');
     el.className = 'label3d'; el.dataset.id = it.id;
-    el.textContent = it.info.name_en; el.title = `${it.info.name_en} — ${it.info.name_ar}`;
+    // bilingual label: English name with the Arabic name beside it (falls back cleanly if Arabic is empty)
+    el.innerHTML = it.info.name_ar
+      ? `<span>${escapeHtml(it.info.name_en)}</span><span class="lar" lang="ar">${escapeHtml(it.info.name_ar)}</span>`
+      : escapeHtml(it.info.name_en);
+    el.title = `${it.info.name_en} — ${it.info.name_ar}`;
     el.addEventListener('click', (e) => { e.stopPropagation(); select(it.id, true); });
     const lab = new CSS2DObject(el);
     lab.position.set(it.center.x, it.box.max.y + 4, it.center.z);
@@ -302,6 +306,7 @@ async function enterFloor(it, idx, { fly = true } = {}) {
 
 function exitInterior(refly) {
   if (!state.inside) return;
+  ensureLabels();
   const it = state.items.get(state.inside.id);
   const interior = state.interiors.get(state.inside.id);
   if (interior) interior.group.visible = false;
@@ -404,14 +409,30 @@ function togglePanel(id, show) {
   p.classList.toggle('hidden', !vis);
 }
 
-function toggleLabels() {
-  state.labelsOn = !state.labelsOn;
+function toggleLabels(force) {
+  state.labelsOn = force !== undefined ? force : !state.labelsOn;
   $('canvas-host').classList.toggle('labels-off', !state.labelsOn);
+  const b = $('btn-labels');
+  if (b) { b.classList.toggle('is-off', !state.labelsOn); b.title = state.labelsOn ? 'إخفاء الأسماء' : 'إظهار الأسماء'; b.setAttribute('aria-label', b.title); }
+}
+
+/** Labels recovery: re-asserts every label's DOM state (defence against any lost/stuck state). */
+function ensureLabels() {
+  let fixed = 0;
+  for (const it of state.items.values()) {
+    if (!it.label) continue;
+    const shouldShow = state.labelsOn && (!state.inside || state.inside.id !== it.id);
+    if (it.label.visible !== shouldShow) { it.label.visible = shouldShow; fixed++; }
+    if (!it.label.element.isConnected) { state.scene.add(it.label); fixed++; }
+  }
+  return fixed;
 }
 
 // The bottom toolbar was removed; the top tabs (الحرم / مبنى 1 / مبنى 2) and the keyboard cover its jobs.
 function initUI() {
   $('floor-exit').addEventListener('click', () => exitInterior(true));
+  const bl = $('btn-labels');
+  if (bl) bl.addEventListener('click', () => toggleLabels());
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => {
     const id = b.dataset.close; if (id === 'info-panel') clearSelection(); else togglePanel(id, false);
   }));
@@ -600,6 +621,7 @@ function clearRoute() {
   if (state.router) state.router.clear();
   if (state.tour) state.tour.stop();
   if (state.voice) state.voice.cancel();
+  ensureLabels();
   tourRes = null;
   exitInterior();
   document.documentElement.classList.remove('touring');
@@ -654,6 +676,7 @@ async function main() {
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     initRouting();
+    setTimeout(ensureLabels, 1000);
     window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
     window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
