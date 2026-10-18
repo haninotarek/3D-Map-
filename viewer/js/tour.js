@@ -6,6 +6,7 @@
 // IDLE → ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING
 //      → FLOOR_LANDING → (APPROACHING_STAIRS → CLIMBING → FLOOR_LANDING)* → CORRIDOR_NAVIGATION → ARRIVED
 import * as THREE from 'three';
+import { createWalkerFigure } from './walker.js';
 
 const SPEED = { out: 30, in: 5.0, stair: 1.35 };       // m/s of tour time (outdoors sped up; stairs slow, human pace)
 const START_PAUSE = 2.4, END_PAUSE = 0.6;               // seconds
@@ -19,11 +20,16 @@ export const NAV_STATES = ['IDLE', 'ROUTE_PLANNING', 'WALKING', 'ENTERING_DOOR',
 
 export function createTour({ scene, camera, controls, onStep, onFloor, onProgress, onEnd, onState }) {
   const walker = new THREE.Group(); walker.name = 'tour-walker'; walker.visible = false;
-  const dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false }));
-  const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.4, 40), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.9, depthTest: false, side: THREE.DoubleSide }));
-  halo.rotation.x = -Math.PI / 2;
-  dot.renderOrder = halo.renderOrder = 30;
-  walker.add(dot, halo); scene.add(walker);
+  // human-scale figure (academic, minimal) + pacing animation; falls back to the classic marker if missing
+  const figure = createWalkerFigure ? createWalkerFigure() : null;
+  if (figure) walker.add(figure.group);
+  else {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false }));
+    const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.4, 40), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.9, depthTest: false, side: THREE.DoubleSide }));
+    halo.rotation.x = -Math.PI / 2; dot.renderOrder = halo.renderOrder = 30;
+    walker.add(dot, halo);
+  }
+  scene.add(walker);
 
   let segs = [], total = 0, time = 0, playing = false, active = false, ended = false;
   let step = -1, floor = null, inside = 0, climb = 0, orbit = 0;
@@ -106,7 +112,10 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
 
   function update(dt) {
     if (!active) return false;
-    halo.scale.setScalar(1 + 0.25 * Math.sin(performance.now() / 220));
+    if (figure) {
+      const speed = ended ? 0 : (playing ? (segAt(time).kind === 'stair' ? 0.45 : segAt(time).kind === 'in' ? 0.8 : 1) : 0);
+      figure.update(dt, speed);
+    }
     if (ended) {
       orbit += dt * 0.18;
       const r = THREE.MathUtils.lerp(70, 34, inside), h = THREE.MathUtils.lerp(48, 32, inside);
@@ -151,7 +160,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     finish();
   }
 
-  function replay() { if (walker.visible) { active = true; controls.enabled = false; time = 0; ended = false; playing = true; step = -1; floor = null; orbit = 0; navLog.length = 0; setState('ROUTE_PLANNING', 0); camPos = camera.position.clone(); camLook = controls.target.clone(); } }
+  function replay() { if (walker.visible) { active = true; controls.enabled = false; time = 0; ended = false; playing = true; step = -1; floor = null; orbit = 0; navLog.length = 0; setState('ROUTE_PLANNING', 0); camPos = camera.position.clone(); camLook = controls.target.clone(); figure?.reset(); } }
   function toggle() { if (!active) return; if (ended) replay(); else playing = !playing; return playing; }
   function stop() { active = false; playing = false; walker.visible = false; controls.enabled = true; setState('IDLE'); }
   function release() { if (active && ended) { active = false; controls.enabled = true; } }

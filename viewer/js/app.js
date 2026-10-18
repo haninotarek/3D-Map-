@@ -492,7 +492,13 @@ function initRouting() {
       if (!it) return;
       if (f < 0) exitInterior(); else enterFloor(it, f, { fly: false });
     },
-    onState: (s) => { $('nav-state').textContent = NAV_STATE_AR[s] || s; },
+    onState: (s) => {
+      $('nav-state').textContent = NAV_STATE_AR[s] || s;
+      // the "prepare to climb" cue fires once at the stairwell (Arabic tours)
+      if (s === 'APPROACHING_STAIRS' && tourRes?.lang === 'ar' && state.voice) {
+        state.voice.speak('', 'stairs-start', { cue: 'stairs_start' });
+      }
+    },
     onProgress: (p) => {
       $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`;
       // halfway milestone: fired once, roughly at the middle of the outdoor walk (Arabic tours)
@@ -501,7 +507,7 @@ function initRouting() {
         state.voice.speak('', 'milestone:250m', { cue: 'halfway' });
       }
     },
-    onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive'); },
+    onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive', { cue: 'arrived' }); },
   });
   initVoiceUI();
   state.voice.initCues?.();   // probe pre-rendered Salma cues once
@@ -566,11 +572,19 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
     document.documentElement.classList.add('touring');
     state.anim = null;
     state.tour.start(res);
-    showTourStep(0);   // fill the caption now; the tour updates it from the next frame
-    // opening narration: the full welcome cue (real distances from this route)
+    // opening narration first: the full welcome cue (real distances from this route).
+    // The first spoken step is suppressed until the welcome finishes (or 5s) so nothing
+    // talks over the greeting — the visual caption still shows step 1 immediately.
     if (lang === 'ar' && state.voice) {
       state.voice.speak(res.summary || '', 'welcome', { force: true, cue: 'welcome' });
+      window.__voiceHoldUntil = performance.now() + 5000;
+      try { const el = new Audio('audio/cues/welcome.mp3');
+        el.addEventListener('loadedmetadata', () => {
+          window.__voiceHoldUntil = performance.now() + el.duration * 1000 + 300;
+        }, { once: true });
+      } catch (e) { /* hold stays at 5s */ }
     }
+    showTourStep(0, { silent: true });   // caption only — voice comes after the welcome
     syncTourButtons();
   } else {
     $('tour-card').classList.add('hidden');
@@ -580,7 +594,7 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
   post({ type: 'epnu:route-result', ok: res.ok, building, room, steps: res.steps, summary: res.summary || '' });
 }
 
-function showTourStep(i) {
+function showTourStep(i, { silent = false } = {}) {
   if (!tourRes) return;
   const tt = TOUR_TEXT[tourRes.lang];
   $('tour-num').textContent = String(i + 1);
@@ -589,10 +603,12 @@ function showTourStep(i) {
   el.textContent = tourRes.steps[i] || '';
   el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
   document.querySelectorAll('#route-steps li').forEach((li, k) => li.classList.toggle('current', k === i));
-  // spoken equivalent of the on-screen instruction (Arabic tours) — pre-rendered cue when available
-  if (tourRes.lang === 'ar' && state.voice) {
+  // spoken equivalent of the on-screen instruction (Arabic tours) — pre-rendered cue when available.
+  // While the welcome narration holds the line, queue (don't kill) the first spoken step.
+  if (!silent && tourRes.lang === 'ar' && state.voice) {
     const cue = tourRes.cues?.[i] ?? null;
-    state.voice.speak(tourRes.steps[i] || '', 'step:' + i, { cue });
+    const held = window.__voiceHoldUntil && performance.now() < window.__voiceHoldUntil;
+    state.voice.speak(tourRes.steps[i] || '', 'step:' + i, { cue, interrupt: !held });
   }
 }
 

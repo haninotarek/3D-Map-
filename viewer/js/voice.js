@@ -1,18 +1,15 @@
-// Arabic voice guidance for the campus tour.
-// Engine priority (both are real, no fictional voices):
-//   1. Browser Web Speech voices (best quality; needs system voices on the device)
-//   2. Local espeak-ng bridge at /tts (TTT_BASE, served by tts_server.py) when the
-//      browser has no voices at all (headless QA, bare Linux) — real Arabic audio.
-// If neither is available, guidance stays visual and the picker says so honestly.
-// - One instruction at a time: a new speak() cancels the previous one (no overlap).
-// - speak() is idempotent by id, so repeated events do not re-announce.
-// - Selection & mute persist in localStorage.
+// Arabic voice guidance for the campus tour — Salma edition.
+// Playback policy that fixes mid-sentence cut-offs:
+//   • a small speak QUEUE: a new instruction never kills the one playing; it waits (or
+//     interrupts only when explicitly urgent, e.g. stairs/doors/floors/arrival).
+//   • coalescing: if a queued cue becomes obsolete before playing, it is skipped.
+// Engine priority: pre-rendered Salma cues (cache-first) → browser Web Speech → local espeak bridge.
+// - speak() stays idempotent by id (no per-frame repeats).
+// - Selection & mute persist in localStorage; mute fades out instead of hard-cutting.
 const LS_VOICE = 'epnu.voice.uri';
 const LS_MUTED = 'epnu.voice.muted';
-const TTS_BASE = (import.meta.env && import.meta.env.VITE_TTS_URL) || '';  // e.g. http://host:8081 — empty = same-origin proxy disabled
+const TTS_BASE = (import.meta.env && import.meta.env.VITE_TTS_URL) || '';
 
-// Pre-rendered neural cues (ar-EG Salma, -16 LUFS): cueId -> file. Played cache-first for the
-// exact journey script; anything dynamic falls back to browser voices / espeak bridge.
 const CUE_FILES = {
   welcome: 'audio/cues/welcome.mp3',
   gate: 'audio/cues/gate.mp3',
@@ -31,7 +28,10 @@ const CUE_FILES = {
   gen_room: 'audio/cues/gen_room.mp3',
   preview: 'audio/cues/preview.mp3',
 };
-// probe once: cues exist in this deployment → the rendered Salma track is the default engine
+// cues that may interrupt whatever is playing (spatially critical moments)
+const INTERRUPT_CUES = new Set(['enter', 'to_stairs', 'stairs_start', 'floor_1', 'floor_2', 'floor_3', 'arrived', 'gen_room']);
+const MAX_QUEUE = 2;                    // drop queue overflow instead of stacking stale speech
+const MAX_WAIT_MS = 25000;              // a queued item that waited too long is skipped
 let cuesAvailable = null;
 
 const FALLBACK_TEXTS = {
@@ -47,12 +47,81 @@ export function createVoice({ lang = 'ar' } = {}) {
   let muted = false;
   let lastId = null;
   const listeners = [];
-  let audio = null;                       // HTMLAudioElement for the bridge engine
-  let engine = 'none';                    // 'webspeech' | 'bridge' | 'none'
 
+  // ---- playback queue -------------------------------------------------
+  let nowPlaying = null;                   // { el, fadeTimer, isPreview }
+  const queue = [];                     // [{ cue, text, id, enqueuedAt }]
+  const FADE_MS = 380;                  // soft fade — no audible click on interruption
+
+  function stopCurrent(fade = true) {
+    if (!nowPlaying) return;
+    const { el, fadeTimer } = nowPlaying;
+    if (fadeTimer) clearInterval(fadeTimer);
+    if (fade && el.volume > 0.01) {
+      const v0 = el.volume; const t0 = performance.now();
+      const ft = setInterval(() => {
+        const k = (performance.now() - t0) / FADE_MS;
+        if (k >= 1) { el.volume = 0; el.pause(); clearInterval(ft); }
+        else el.volume = v0 * (1 - k);
+      }, 20);
+      nowPlaying = { ...nowPlaying, fadeTimer: ft };
+      setTimeout(() => { try { el.pause(); } catch (e) { /* */ } }, FADE_MS + 40);
+    } else {
+      try { el.pause(); } catch (e) { /* */ }
+    }
+    nowPlaying = null;
+  }
+
+  function pump() {
+    if (nowPlaying || muted) return;
+    // drop stale queued items (waited too long or superseded)
+    const now = performance.now();
+    while (queue.length && now - queue[0].enqueuedAt > MAX_WAIT_MS) queue.shift();
+    const item = queue.shift();
+    if (!item) return;
+    playItem(item);
+  }
+
+  function playItem({ cue, text }) {
+    const file = cue && CUE_FILES[cue];
+    if (file && cuesAvailable) {
+      const el = new Audio(file);
+      el.volume = 1;
+      nowPlaying = { el };
+      el.addEventListener('ended', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
+      el.addEventListener('pause', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
+      el.play().catch(() => { nowPlaying = null; pump(); });
+      return true;
+    }
+    // fallback engines speak synchronously; keep the queue moving via utterance end
+    if (engine === 'webspeech' && synth && text) {
+      try {
+        const u = utter(text);
+        const wrap = { el: { pause: () => { try { synth.cancel(); } catch (e) { /* */ } }, volume: 1 } };
+        nowPlaying = wrap;
+        u.onend = u.onerror = () => { if (nowPlaying === wrap) { nowPlaying = null; pump(); } };
+        synth.cancel(); synth.speak(u);
+        return true;
+      } catch (e) { /* fall to bridge */ }
+    }
+    if (text) return speakBridge(text);
+    return false;
+  }
+
+  function enqueue(cue, text, { interrupt = false } = {}) {
+    if (muted) return false;
+    if (interrupt) { queue.length = 0; stopCurrent(true); }
+    else if (queue.length >= MAX_QUEUE) queue.shift();
+    queue.push({ cue, text, enqueuedAt: performance.now() });
+    if (!nowPlaying) pump();
+    return true;
+  }
+
+  // ---------------------------------------------------------------------
   try { muted = localStorage.getItem(LS_MUTED) === '1'; } catch (e) { /* private mode */ }
   try { uri = localStorage.getItem(LS_VOICE) || null; } catch (e) { /* ignore */ }
 
+  let engine = 'none';
   const arFirst = (a, b) => {
     const A = a.lang.toLowerCase().startsWith('ar'), B = b.lang.toLowerCase().startsWith('ar');
     if (A !== B) return A ? -1 : 1;
@@ -70,24 +139,29 @@ export function createVoice({ lang = 'ar' } = {}) {
   }
   if (synth) { refresh(); synth.addEventListener?.('voiceschanged', refresh); }
 
-  function current() { return voices.find((v) => v.voiceURI === uri) || null; }
+  function currentVoice() { return voices.find((v) => v.voiceURI === uri) || null; }
 
-  /** Real Arabic audio via the local espeak-ng bridge. */
+  function utter(text) {
+    const u = new SpeechSynthesisUtterance(text);
+    const v = currentVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = lang === 'ar' ? 'ar-EG' : lang; }
+    u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
+    return u;
+  }
+
   function speakBridge(text) {
     try {
-      if (audio) { audio.pause(); audio.src = ''; }
       const u = new URL('tts', TTS_BASE || location.origin);
-      u.protocol = TTS_BASE ? u.protocol : location.protocol;
-      if (TTS_BASE) { /* absolute base already */ }
       u.pathname = (TTS_BASE ? new URL(TTS_BASE).pathname.replace(/\/$/, '') : '') + '/tts';
       u.searchParams.set('text', text);
-      audio = new Audio(u.toString());
-      audio.play().catch(() => { /* autoplay policy or bridge down */ });
+      const el = new Audio(u.toString());
+      nowPlaying = { el };
+      el.addEventListener('ended', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
+      el.play().catch(() => { nowPlaying = null; pump(); });
       return true;
     } catch (e) { return false; }
   }
 
-  /** Pre-rendered neural cue (Salma). Played only if the file shipped with this deployment. */
   async function cuesReady() {
     if (cuesAvailable !== null) return cuesAvailable;
     try {
@@ -96,42 +170,21 @@ export function createVoice({ lang = 'ar' } = {}) {
     } catch (e) { cuesAvailable = false; }
     return cuesAvailable;
   }
-  function speakCue(cueId) {
-    const file = CUE_FILES[cueId];
-    if (!file) return false;
-    try {
-      if (audio) { audio.pause(); audio.src = ''; }
-      audio = new Audio(file);
-      audio.play().catch(() => { /* autoplay */ });
-      return true;
-    } catch (e) { return false; }
-  }
 
-  function utter(text) {
-    const u = new SpeechSynthesisUtterance(text);
-    const v = current();
-    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = lang === 'ar' ? 'ar-EG' : lang; }
-    u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
-    return u;
-  }
-
-  /** Speaks one instruction; id makes it fire once (idempotent), force overrides the guard.
-   *  cue (optional) = pre-rendered Salma cue id — played cache-first when available. */
-  function speak(text, id, { force = false, preview = false, cue } = {}) {
+  /** Speaks one instruction. id = idempotency key; cue = pre-rendered Salma cue id. */
+  function speak(text, id, { force = false, preview = false, cue, interrupt } = {}) {
     if (!preview) {
       if (muted) return false;
       if (id != null && id === lastId && !force) return false;
       if (id != null) lastId = id;
     }
     if (!text && !cue) return false;
-    if (cue && cuesAvailable) return speakCue(cue);
-    if (engine === 'webspeech' && synth && text) {
-      try { synth.cancel(); synth.speak(utter(text)); return true; } catch (e) { /* fall through */ }
-    }
-    return text ? speakBridge(text) : false;
+    // previews always interrupt (user explicitly asked to hear this voice)
+    if (preview) { queue.length = 0; stopCurrent(true); return playItem({ cue: 'preview', text: FALLBACK_TEXTS.preview }); }
+    const doInterrupt = interrupt !== undefined ? !!interrupt : !!(cue && INTERRUPT_CUES.has(cue));
+    return enqueue(cue, text, { interrupt: doInterrupt });
   }
 
-  /** Async speak: probes rendered cues on first call, then speaks (cue preferred). */
   async function speakA(text, id, { cue, ...opts } = {}) {
     if (!muted && id != null && id === lastId && !opts.force) return false;
     await cuesReady();
@@ -141,29 +194,21 @@ export function createVoice({ lang = 'ar' } = {}) {
   return {
     speak,
     speakA,
-    preview: (vo) => {
-      // rendered Salma preview first (it is the production voice)
-      if (cuesAvailable) { const ok = speakCue('preview'); if (ok) return true; }
-      if (vo && synth) { try { synth.cancel(); const x = utter(FALLBACK_TEXTS.preview); x.voice = vo; x.lang = vo.lang; synth.speak(x); return true; } catch (e) { /* fall */ } }
-      if (!synth) return speakBridge(FALLBACK_TEXTS.preview) || false;
-      try { synth.cancel(); synth.speak(utter(FALLBACK_TEXTS.preview)); return true; } catch (e) { return false; }
+    preview: () => {
+      if (muted) return false;
+      queue.length = 0; stopCurrent(true);
+      return playItem(cuesAvailable ? { cue: 'preview' } : { text: FALLBACK_TEXTS.preview });
     },
-    cancel: () => {
-      lastId = null;
-      try { synth?.cancel(); } catch (e) { /* ignore */ }
-      try { if (audio) { audio.pause(); audio.src = ''; } } catch (e) { /* ignore */ }
-    },
+    cancel: () => { lastId = null; queue.length = 0; stopCurrent(true); },
     reset: () => { lastId = null; },
-    pause: () => { try { synth?.pause(); audio?.pause(); } catch (e) { /* ignore */ } },
-    resume: () => { try { synth?.resume(); audio?.play().catch(() => {}); } catch (e) { /* ignore */ } },
-    setVoiceByURI: (u) => {
-      uri = u;
-      try { localStorage.setItem(LS_VOICE, u || ''); } catch (e) { /* ignore */ }
-    },
+    pause: () => { try { nowPlaying?.el.pause?.(); synth?.pause(); } catch (e) { /* */ } },
+    resume: () => { try { nowPlaying?.el.play?.().catch(() => {}); synth?.resume(); } catch (e) { /* */ } },
+    setVoiceByURI: (u) => { uri = u; try { localStorage.setItem(LS_VOICE, u || ''); } catch (e) { /* */ } },
     toggleMute: () => {
       muted = !muted;
-      if (muted) { try { synth?.cancel(); audio?.pause(); } catch (e) { /* ignore */ } }
-      try { localStorage.setItem(LS_MUTED, muted ? '1' : '0'); } catch (e) { /* ignore */ }
+      if (muted) { queue.length = 0; stopCurrent(true); }
+      else pump();
+      try { localStorage.setItem(LS_MUTED, muted ? '1' : '0'); } catch (e) { /* */ }
       return muted;
     },
     onVoicesChanged: (fn) => { listeners.push(fn); fn(voices); },
@@ -176,6 +221,7 @@ export function createVoice({ lang = 'ar' } = {}) {
     get hasArabic() { return voices.some((v) => v.lang.toLowerCase().startsWith('ar')); },
     get cuesReady() { return !!cuesAvailable; },
     get engine() { return cuesAvailable ? 'salma' : engine; },
+    get queueLength() { return queue.length + (nowPlaying ? 1 : 0); },
     arriveText: FALLBACK_TEXTS.arrive,
     unavailableText: FALLBACK_TEXTS.unavailable,
   };
