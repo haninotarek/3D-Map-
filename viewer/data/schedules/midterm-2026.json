@@ -1,0 +1,19 @@
+{
+  "_note": "Midterm EXAM timetable (امتحانات الميدترم, term 1 2026-2027) — PLACEHOLDER, not published yet. Exam rows are objects, e.g.: {\"date\":\"2026-11-15\",\"from\":\"10:00\",\"to\":\"11:00\",\"course\":\"Mathematics I\",\"sections\":\"1:5\",\"room\":\"Hall 3\",\"building\":\"Engineering Building 1\"}. 'day' is derived from 'date'; 'sections' empty = whole level; 'building' empty = the level's default building. Rows with period (1-4) instead of from/to also work. Or upload a CSV from the panel with columns: level,date,day,from,to,course,room,building,sections.",
+  "term_ar": "امتحانات الميدترم — الترم الأول 2026-2027",
+  "term_en": "Midterm exams — Fall 2026-2027",
+  "kind": "exams",
+  "published": false,
+  "periods": [
+    { "n": 1, "from": "10:00", "to": "11:15" },
+    { "n": 2, "from": "11:20", "to": "12:30" },
+    { "n": 3, "from": "12:35", "to": "13:45" },
+    { "n": 4, "from": "13:50", "to": "15:00" }
+  ],
+  "levels": [
+    { "level": 1, "name_ar": "سنة أولى", "name_en": "Level One", "building": "Engineering Building 1", "sections": 10, "classes": [] },
+    { "level": 2, "name_ar": "سنة تانية", "name_en": "Level Two", "building": "Engineering Building 2", "sections": 8, "classes": [] },
+    { "level": 3, "name_ar": "سنة تالتة", "name_en": "Level Three", "building": "Engineering Building 2", "sections": 4, "classes": [] },
+    { "level": 4, "name_ar": "سنة رابعة", "name_en": "Level Four", "building": "Engineering Building 2", "sections": 0, "classes": [] }
+  ]
+}

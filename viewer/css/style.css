@@ -176,6 +176,11 @@ html.inside .label3d { opacity: 0.55; }
 .room-label.kind-locker { --k: #cbd5e1; }
 .room-label.entrance { background: var(--accent-2); color: #fff; --k: #c97a12; }
 .labels-off .room-label { display: none; }
+/* floor-name sign plate over each stairwell door — stays visible during the tour */
+.door-sign { background: #16305e; color: #fff; border-radius: 4px; padding: 3px 10px 4px;
+  font: 800 12.5px/1.3 "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif; white-space: nowrap;
+  pointer-events: none; user-select: none; border-bottom: 3px solid #ff7a1a;
+  box-shadow: 0 2px 7px rgba(10, 22, 48, 0.35); }
 
 /* ---------- loading / error ---------- */
 #loading, #error { position: absolute; inset: 0; display: grid; place-items: center; z-index: 10;
@@ -282,6 +287,10 @@ html.touring #info-panel, html.touring #list-panel { display: none !important; }
   display: grid; place-items: center; cursor: pointer; flex: none; padding: 0; }
 .tour-icon:hover { border-color: var(--blue); color: var(--blue); }
 .tour-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tour-speed { width: auto; min-width: 64px; border-radius: 999px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font: inherit; }
+.tour-speed svg { width: 17px; height: 17px; fill: currentColor; stroke: none; flex: none; }
+.tour-speed span { font-size: 0.82rem; font-weight: 800; line-height: 1; }
+.tour-speed[aria-pressed="true"] { background: #fdeadd; border-color: #ff7a1a; color: #c2540a; }
 .tour-icon.primary { background: var(--navy); color: #fff; border-color: var(--navy); width: 44px; height: 44px; }
 .tour-icon.primary svg { fill: currentColor; }
 .tour-icon.primary .i-pause { fill: none; stroke-width: 3; }
@@ -302,7 +311,7 @@ html.touring #route-panel { top: 16px; max-height: calc(100% - 260px); }
   --sched-w: 380px;
   --s-ink: #1f2430; --s-muted: #7a7f8a; --s-line: #ececec; --s-soft: #f6f6f5; --s-card: #f7f1e6; --s-card-2: #efe6d6;
   --s-accent: #3b6fe0;
-  --lec: #3b82f6; --sec: #22a06b; --lab: #f08a3c;
+  --lec: #3b82f6; --sec: #22a06b; --lab: #f08a3c; --mid: #e11d48;
 }
 #sched, #view-tabs, #legend, #floor-rail { font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
 #sched svg, #view-tabs svg { width: 17px; height: 17px; flex: none; }
@@ -329,6 +338,14 @@ html.sched-open #sched { display: flex; }
   cursor: pointer; display: grid; place-items: center; flex: none; }
 .sched-head .close:hover { color: var(--s-ink); }
 .sched-body { flex: 1; overflow-y: auto; padding: 8px 16px 18px; scrollbar-width: thin; }
+
+/* term tabs: الترم الأول / الترم التاني / الميدترم */
+.term-tabs { display: flex; gap: 4px; background: var(--s-soft); padding: 4px; border-radius: 14px; margin-bottom: 12px; }
+.term-tabs button { flex: 1; border: none; background: transparent; color: var(--s-muted); font: inherit; font-size: 0.84rem; font-weight: 700;
+  padding: 8px 4px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.term-tabs button:hover { color: var(--s-ink); }
+.term-tabs button.on { background: #fff; color: var(--s-ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); }
+.term-tabs button[data-term="midterm"].on { color: var(--mid); }
 
 .search { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 0 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06); border: 1px solid #f0f0f0; }
@@ -376,10 +393,19 @@ html.sched-open #sched { display: flex; }
 .ses.t-lecture { --c: var(--lec); }
 .ses.t-section { --c: var(--sec); }
 .ses.t-lab { --c: var(--lab); }
+.ses.t-midterm { --c: var(--mid); }
 .go { border: none; background: transparent; color: var(--s-accent); font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; padding: 2px 0;
   display: inline-flex; align-items: center; gap: 4px; }
 .go:hover { text-decoration: underline; }
 .empty { text-align: center; color: var(--s-muted); padding: 30px 10px; font-size: 0.9rem; line-height: 1.7; }
+
+/* "not published yet" card (term 2 / midterm placeholders) */
+.not-yet { background: var(--s-soft); border: 1.5px dashed #d9dce3; border-radius: 18px; padding: 26px 18px; text-align: center; margin-top: 18px; }
+.not-yet .ny-icon { font-size: 1.7rem; line-height: 1; }
+.not-yet h4 { margin: 10px 0 6px; font-size: 0.98rem; color: var(--s-ink); }
+.not-yet p { margin: 0 0 14px; font-size: 0.84rem; color: var(--s-muted); line-height: 1.7; }
+.not-yet button { border: none; background: var(--s-ink); color: #fff; border-radius: 12px; padding: 9px 16px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.not-yet button:hover { background: #374151; }
 
 /* footer: source + upload */
 .sched-foot { border-top: 1px solid var(--s-line); padding: 10px 16px 14px; background: #fff; }
@@ -471,16 +497,6 @@ html.touring #legend, html.touring #view-tabs { display: none; }
 
 /* ---- voice guidance row + navigation state badge (tour card) ---- */
 #voice-row { position: relative; display: flex; gap: 8px; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line, #e6e2da); }
-#voice-pick { font: inherit; font-size: 0.85rem; color: var(--ink, #26241f); background: transparent; border: 1px solid var(--line, #d8d3c8); border-radius: 8px; padding: 3px 10px; cursor: pointer; }
-#voice-pick:hover { background: #f4f1ea; }
-#voice-menu { position: absolute; bottom: calc(100% + 6px); right: 0; z-index: 30; background: #fff; border: 1px solid #d8d3c8; border-radius: 12px; box-shadow: 0 10px 28px rgba(20,16,8,.16); min-width: 240px; max-height: 220px; overflow: auto; padding: 6px; }
-#voice-menu.hidden { display: none; }
-.voice-opt { display: flex; flex-direction: column; gap: 1px; width: 100%; text-align: right; background: transparent; border: 0; border-radius: 8px; padding: 7px 10px; cursor: pointer; font: inherit; }
-.voice-opt:hover { background: #f4f1ea; }
-.voice-opt.selected { background: #fdeadd; }
-.voice-opt span { font-size: 0.88rem; color: var(--ink, #26241f); }
-.voice-opt small { font-size: 0.72rem; color: #8b8577; direction: ltr; text-align: right; }
-.voice-none { margin: 0; padding: 10px 12px; font-size: 0.85rem; color: #8b8577; }
 .nav-state { font-size: 0.72rem; font-weight: 600; color: #b35a00; background: #fdeadd; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
 
 /* ---- collapsible tour card: minimized to a slim bar so the route stays fully visible ---- */
@@ -502,6 +518,15 @@ html.touring #tour-card.min .tour-progress { height: 3px; }
 
 
 /* ---- labels toggle button + bilingual label text ---- */
+#btn-labels { position: absolute; top: 16px; left: 16px; z-index: 7; width: 42px; height: 42px; border-radius: 12px;
+  border: 1px solid #d8d3c8; background: rgba(255,255,255,.92); font-size: 18px; cursor: pointer; line-height: 1;
+  box-shadow: 0 3px 10px rgba(17,37,89,.18); }
+#btn-labels:hover { background: #fff; }
+#btn-labels.is-off { opacity: .55; background: #f1ede4; }
+.label3d .lar { color: var(--muted, #5b6472); font-weight: 500; font-size: 11px; }
+.label3d.active .lar { color: #dbe7f6; }
+@media (max-width: 720px) { #btn-labels { top: 10px; left: 10px; width: 38px; height: 38px; font-size: 16px; } }
+ls toggle button + bilingual label text ---- */
 #btn-labels { position: absolute; top: 16px; left: 16px; z-index: 7; width: 42px; height: 42px; border-radius: 12px;
   border: 1px solid #d8d3c8; background: rgba(255,255,255,.92); font-size: 18px; cursor: pointer; line-height: 1;
   box-shadow: 0 3px 10px rgba(17,37,89,.18); }

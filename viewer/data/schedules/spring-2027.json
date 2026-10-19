@@ -1,0 +1,19 @@
+{
+  "_note": "Term 2 (Spring 2026-2027) lecture timetable — PLACEHOLDER, not published yet. Same row shape as fall-2026.json: [day, period 1-4, course, type (lecture|section|lab), group, sections, room, building?]. Fill 'classes' here when the faculty publishes the table, or upload a CSV from the panel (stored in the visitor's browser only). Levels = سنة أولى/تانية/تالتة/رابعة; buildings and section counts are carried over from term 1 as defaults.",
+  "term_ar": "الفصل الدراسي التاني 2026-2027",
+  "term_en": "Spring 2026-2027",
+  "kind": "classes",
+  "published": false,
+  "periods": [
+    { "n": 1, "from": "10:00", "to": "11:15" },
+    { "n": 2, "from": "11:20", "to": "12:30" },
+    { "n": 3, "from": "12:35", "to": "13:45" },
+    { "n": 4, "from": "13:50", "to": "15:00" }
+  ],
+  "levels": [
+    { "level": 1, "name_ar": "سنة أولى", "name_en": "Level One", "building": "Engineering Building 1", "sections": 10, "classes": [] },
+    { "level": 2, "name_ar": "سنة تانية", "name_en": "Level Two", "building": "Engineering Building 2", "sections": 8, "classes": [] },
+    { "level": 3, "name_ar": "سنة تالتة", "name_en": "Level Three", "building": "Engineering Building 2", "sections": 4, "classes": [] },
+    { "level": 4, "name_ar": "سنة رابعة", "name_en": "Level Four", "building": "Engineering Building 2", "sections": 0, "classes": [] }
+  ]
+}

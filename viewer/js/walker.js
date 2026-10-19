@@ -37,6 +37,7 @@ export function createWalkerFigure() {
     new THREE.RingGeometry(0.42, 0.62, 40),
     new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.85, depthTest: false, side: THREE.DoubleSide })
   );
+  halo.name = 'walker-halo';
   halo.rotation.x = -Math.PI / 2;
   halo.position.y = 0.03;
   halo.renderOrder = 30;
@@ -60,6 +61,9 @@ export function createWalkerFigure() {
     head.position.y = H * 0.925 + Math.abs(Math.cos(t)) * 0.022 * (amp / 0.34);
   }
   function reset() { t = 0; legL.rotation.x = legR.rotation.x = 0; legL.position.z = legR.position.z = 0; }
+  /** The ground marker helps spot the walker from the campus drone view; indoors the shot is
+   *  framed on the walker, so the mark under his feet is removed for a clean picture. */
+  function setHalo(v) { halo.visible = !!v; }
 
-  return { group: g, update, reset };
+  return { group: g, update, reset, setHalo };
 }

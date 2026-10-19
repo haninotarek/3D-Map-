@@ -283,13 +283,21 @@ function syncFloorButtons() {
   document.documentElement.classList.toggle('inside', cur >= 0);
 }
 
+/** Building-only interior view: hide the entire campus model (and its labels) once inside. */
+function setBuildingOnly(on) {
+  if (state.root) state.root.visible = !on;
+  for (const item of state.items.values()) if (item.label) item.label.visible = !on && state.labelsOn;
+  if (highlight) highlight.visible = !on;
+  state.router?.setIndoorMode?.(on);   // the whole orange route line disappears indoors — the shot is on the walker
+}
+
 async function enterFloor(it, idx, { fly = true } = {}) {
   const interior = await getInterior(it);
   const wasInside = !!state.inside;
   state.inside = { id: it.id, floor: idx };
   interior.group.visible = true; interior.setFloor(idx);
-  it.object.visible = false; if (it.label) it.label.visible = false;
-  if (highlight) highlight.visible = false;
+  it.object.visible = false;
+  setBuildingOnly(true);
   togglePanel('info-panel', false);   // keep the floor plan clear; the rail stays
   syncFloorButtons();
   // look down into the floor from the plaza side; keep the user's view when only switching floors
@@ -306,13 +314,14 @@ async function enterFloor(it, idx, { fly = true } = {}) {
 
 function exitInterior(refly) {
   if (!state.inside) return;
-  ensureLabels();
   const it = state.items.get(state.inside.id);
   const interior = state.interiors.get(state.inside.id);
   if (interior) interior.group.visible = false;
-  if (it) { it.object.visible = true; if (it.label) it.label.visible = true; }
-  if (highlight) highlight.visible = true;
   state.inside = null;
+  setBuildingOnly(false);   // bring the whole campus (and the outdoor route leg) back
+  if (it) { it.object.visible = true; if (it.label) it.label.visible = state.labelsOn; }
+  if (highlight) highlight.visible = true;
+  ensureLabels();
   syncFloorButtons();
   if (refly && it) flyToItem(it);
   state.needsRender = true;
@@ -421,7 +430,7 @@ function ensureLabels() {
   let fixed = 0;
   for (const it of state.items.values()) {
     if (!it.label) continue;
-    const shouldShow = state.labelsOn && (!state.inside || state.inside.id !== it.id);
+    const shouldShow = state.labelsOn && !state.inside;   // no campus labels float over an isolated building
     if (it.label.visible !== shouldShow) { it.label.visible = shouldShow; fixed++; }
     if (!it.label.element.isConnected) { state.scene.add(it.label); fixed++; }
   }
@@ -461,11 +470,10 @@ function onResize() {
 // {type: 'epnu:route', building, room, label, lang, roomLabel?, buildingLabel?} / {type: 'epnu:clear'}.
 // building/room are matched against data/room_index.json; the *Label fields are only displayed.
 const TOUR_TEXT = {
-  en: { step: (i, n) => `Step ${i} of ${n}`, pause: 'Pause', play: 'Play', replay: 'Replay', skip: 'Skip to the room', steps: 'All steps', close: 'Close' },
-  ar: { step: (i, n) => `الخطوة ${i} من ${n}`, pause: 'إيقاف مؤقت', play: 'تشغيل', replay: 'إعادة', skip: 'تخطَّ إلى القاعة', steps: 'كل الخطوات', close: 'إغلاق' },
+  en: { step: (i, n) => `Step ${i} of ${n}`, pause: 'Pause', play: 'Play', replay: 'Replay', skip: 'Skip to the room', steps: 'All steps', close: 'Close', speed: (r) => `Movement speed: ${r}× — tap to change` },
+  ar: { step: (i, n) => `الخطوة ${i} من ${n}`, pause: 'إيقاف مؤقت', play: 'تشغيل', replay: 'إعادة', skip: 'تخطَّ إلى القاعة', steps: 'كل الخطوات', close: 'إغلاق', speed: (r) => `سرعة الحركة: ${r}× — اضغط للتغيير` },
 };
 let tourRes = null;
-let milestoneSpoken = false;
 
 // Navigation states as shown on the tour badge (Arabic first: the tour UI is Arabic by default).
 const NAV_STATE_AR = {
@@ -487,30 +495,16 @@ function initRouting() {
     onStep: showTourStep,
     onFloor: (f) => {
       const it = tourRes && state.items.get(tourRes.buildingId);
-      // spoken floor milestones come from the synchronized step texts (floorReached steps sit on
-      // landing segments, i.e. after the transition is confirmed) — no separate speech to avoid overlap
+      // only the destination floor is announced, by its synchronized route step — no separate speech here
       if (!it) return;
       if (f < 0) exitInterior(); else enterFloor(it, f, { fly: false });
     },
-    onState: (s) => {
-      $('nav-state').textContent = NAV_STATE_AR[s] || s;
-      // the "prepare to climb" cue fires once at the stairwell (Arabic tours)
-      if (s === 'APPROACHING_STAIRS' && tourRes?.lang === 'ar' && state.voice) {
-        state.voice.speak('', 'stairs-start', { cue: 'stairs_start' });
-      }
-    },
-    onProgress: (p) => {
-      $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`;
-      // halfway milestone: fired once, roughly at the middle of the outdoor walk (Arabic tours)
-      if (p > 0.18 && !milestoneSpoken && tourRes?.lang === 'ar' && state.voice) {
-        milestoneSpoken = true;
-        state.voice.speak('', 'milestone:250m', { cue: 'halfway' });
-      }
-    },
-    onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive', { cue: 'arrived' }); },
+    onState: (s) => { $('nav-state').textContent = NAV_STATE_AR[s] || s; },
+    onProgress: (p) => { $('tour-bar').style.width = `${Math.round(p * 1000) / 10}%`; },
+    onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive', { cue: 'arrived', interrupt: false }); },   // after the floor+turn sequence, never over it
   });
   initVoiceUI();
-  state.voice.initCues?.();   // probe pre-rendered Salma cues once
+  state.voice.initCues?.();   // probe pre-rendered voice cues once
   // minimize the tour card to a slim bar (the route and stairs stay fully visible)
   const tourCard = $('tour-card');
   let tourMin = false;
@@ -526,8 +520,16 @@ function initRouting() {
     if (state.voice) { if (state.tour.playing) state.voice.resume(); else state.voice.pause(); }
     syncTourButtons();
   });
-  $('tour-replay').addEventListener('click', () => { if (state.voice) state.voice.reset(); state.tour.replay(); syncTourButtons(); });
+  $('tour-replay').addEventListener('click', () => { if (state.voice) state.voice.cancel(); state.tour.replay(); syncTourButtons(); });
   $('tour-skip').addEventListener('click', () => { state.tour.skip(); syncTourButtons(); });
+  // movement-speed icon: 1× -> 1.5× -> 2× -> 1× (voice playback stays at its own slow pace)
+  $('tour-speed').addEventListener('click', () => {
+    const rates = [1, 1.5, 2];
+    const idx = rates.indexOf(state.tour.playbackRate);
+    state.tour.setPlaybackRate(rates[idx < 0 ? 1 : (idx + 1) % rates.length]);
+    syncTourSpeedButton();
+  });
+  syncTourSpeedButton();
   $('tour-steps').addEventListener('click', () => togglePanel('route-panel'));
   // after arriving, any drag hands the camera back to the user
   state.renderer.domElement.addEventListener('pointerdown', () => state.tour.release());
@@ -547,6 +549,7 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
   if (!state.router) return;
   lang = lang === 'ar' ? 'ar' : 'en';
   state.tour.stop();
+  if (state.voice) state.voice.cancel();   // never let a previous route keep talking
   exitInterior();
   if (state.selected) clearSelection();
   ['list-panel', 'help'].forEach((p) => togglePanel(p, false));
@@ -564,6 +567,7 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
   for (const [id, key] of [['tour-play', 'pause'], ['tour-replay', 'replay'], ['tour-skip', 'skip'], ['tour-steps', 'steps'], ['tour-close', 'close']]) {
     $(id).title = tt[key]; $(id).setAttribute('aria-label', tt[key]);
   }
+  syncTourSpeedButton();
   if (res.ok) {
     $('tour-title').textContent = title;
     $('tour-where').textContent = [where, res.summary].filter(Boolean).join(' · ');
@@ -572,19 +576,10 @@ async function showRoute({ building, room, label, lang, roomLabel, buildingLabel
     document.documentElement.classList.add('touring');
     state.anim = null;
     state.tour.start(res);
-    // opening narration first: the full welcome cue (real distances from this route).
-    // The first spoken step is suppressed until the welcome finishes (or 5s) so nothing
-    // talks over the greeting — the visual caption still shows step 1 immediately.
-    if (lang === 'ar' && state.voice) {
-      state.voice.speak(res.summary || '', 'welcome', { force: true, cue: 'welcome' });
-      window.__voiceHoldUntil = performance.now() + 5000;
-      try { const el = new Audio('audio/cues/welcome.mp3');
-        el.addEventListener('loadedmetadata', () => {
-          window.__voiceHoldUntil = performance.now() + el.duration * 1000 + 300;
-        }, { once: true });
-      } catch (e) { /* hold stays at 5s */ }
-    }
-    showTourStep(0, { silent: true });   // caption only — voice comes after the welcome
+    // No welcome narration: the first (and only outdoor) instruction speaks at once —
+    // «امشي على طول لحد ما توصل لمبنى…». speak() is idempotent per step, so the tour's
+    // own step-0 callback on the next frame does not repeat it.
+    showTourStep(0);
     syncTourButtons();
   } else {
     $('tour-card').classList.add('hidden');
@@ -603,20 +598,19 @@ function showTourStep(i, { silent = false } = {}) {
   el.textContent = tourRes.steps[i] || '';
   el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
   document.querySelectorAll('#route-steps li').forEach((li, k) => li.classList.toggle('current', k === i));
-  // spoken equivalent of the on-screen instruction (Arabic tours) — pre-rendered cue when available.
-  // While the welcome narration holds the line, queue (don't kill) the first spoken step.
+  // Spoken form of this leg's instruction (Arabic tours): one announcement per leg.
+  // The cue may be a composed sequence, e.g. [stairs_left, upto_floor_3] or [floor_3, turn_right].
   if (!silent && tourRes.lang === 'ar' && state.voice) {
-    const cue = tourRes.cues?.[i] ?? null;
-    const held = window.__voiceHoldUntil && performance.now() < window.__voiceHoldUntil;
-    state.voice.speak(tourRes.steps[i] || '', 'step:' + i, { cue, interrupt: !held });
+    state.voice.speak(tourRes.steps[i] || '', 'step:' + i, { cue: tourRes.cues?.[i] ?? null });
   }
 }
 
-// Voice guidance controls: mute, and a picker listing only voices that exist in this runtime.
+// Voice guidance control: the mute icon only — the runtime voice is chosen automatically,
+// with no voice-list picker in the tour card.
 function initVoiceUI() {
   const v = state.voice;
-  const mute = $('voice-mute'), pick = $('voice-pick'), menu = $('voice-menu');
-  if (!mute || !pick || !menu) return;
+  const mute = $('voice-mute');
+  if (!mute) return;
   const renderMute = () => {
     mute.textContent = v.muted ? '🔇' : '🔊';
     mute.title = v.muted ? 'تشغيل الصوت' : 'كتم الصوت';
@@ -624,21 +618,18 @@ function initVoiceUI() {
   };
   renderMute();
   mute.addEventListener('click', () => { v.toggleMute(); renderMute(); });
-  const renderMenu = () => {
-    if (!v.supported || !v.voices.length) { menu.innerHTML = `<p class="voice-none">${v.unavailableText}</p>`; return; }
-    menu.innerHTML = '';
-    for (const vo of v.voices.slice(0, 12)) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'voice-opt' + (vo.voiceURI === v.selectedURI ? ' selected' : '');
-      b.innerHTML = `<span>${escapeHtml(vo.name)}</span><small>${escapeHtml(vo.lang)}${vo.lang.toLowerCase().startsWith('ar') ? ' · عربي' : ''}</small>`;
-      b.addEventListener('click', () => { v.setVoiceByURI(vo.voiceURI); v.preview(vo); renderMenu(); });
-      menu.appendChild(b);
-    }
-  };
-  pick.addEventListener('click', (e) => { e.stopPropagation(); renderMenu(); menu.classList.toggle('hidden'); });
-  document.addEventListener('click', (e) => { if (!menu.contains(e.target)) menu.classList.add('hidden'); });
-  v.onVoicesChanged(() => { if (!menu.classList.contains('hidden')) renderMenu(); });
+}
+
+function syncTourSpeedButton() {
+  const btn = $('tour-speed'), label = $('tour-speed-label');
+  if (!btn || !label) return;
+  const rate = state.tour?.playbackRate || 1;
+  const fmt = Number.isInteger(rate) ? String(rate) : String(rate).replace(/0$/, '');
+  const title = TOUR_TEXT[tourRes?.lang || 'ar'].speed(fmt);
+  label.textContent = `${fmt}×`;
+  btn.title = title;
+  btn.setAttribute('aria-label', title);
+  btn.setAttribute('aria-pressed', String(rate > 1));
 }
 
 function syncTourButtons() {

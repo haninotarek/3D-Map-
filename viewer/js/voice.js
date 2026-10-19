@@ -1,9 +1,9 @@
-// Arabic voice guidance for the campus tour — Salma edition.
+// Arabic voice guidance for the campus tour — Egyptian colloquial edition (short & slow).
 // Playback policy that fixes mid-sentence cut-offs:
 //   • a small speak QUEUE: a new instruction never kills the one playing; it waits (or
 //     interrupts only when explicitly urgent, e.g. stairs/doors/floors/arrival).
 //   • coalescing: if a queued cue becomes obsolete before playing, it is skipped.
-// Engine priority: pre-rendered Salma cues (cache-first) → browser Web Speech → local espeak bridge.
+// Engine priority: pre-rendered colloquial cues (cache-first) → browser Web Speech → local espeak bridge.
 // - speak() stays idempotent by id (no per-frame repeats).
 // - Selection & mute persist in localStorage; mute fades out instead of hard-cutting.
 const LS_VOICE = 'epnu.voice.uri';
@@ -22,6 +22,24 @@ const CUE_FILES = {
   floor_1: 'audio/cues/floor_1.mp3',
   floor_2: 'audio/cues/floor_2.mp3',
   floor_3: 'audio/cues/floor_3.mp3',
+  // directional cues composed per route: greeting/building -> direct stair climb -> floor + turn
+  greeting_gate: 'audio/cues/greeting_gate.mp3',
+  go_eng1: 'audio/cues/go_eng1.mp3',
+  go_eng2: 'audio/cues/go_eng2.mp3',
+  stairs_right_floor_1: 'audio/cues/stairs_right_floor_1.mp3',
+  stairs_right_floor_2: 'audio/cues/stairs_right_floor_2.mp3',
+  stairs_right_floor_3: 'audio/cues/stairs_right_floor_3.mp3',
+  stairs_left_floor_1: 'audio/cues/stairs_left_floor_1.mp3',
+  stairs_left_floor_2: 'audio/cues/stairs_left_floor_2.mp3',
+  stairs_left_floor_3: 'audio/cues/stairs_left_floor_3.mp3',
+  stairs_right: 'audio/cues/stairs_right.mp3',
+  stairs_left: 'audio/cues/stairs_left.mp3',
+  upto_floor_1: 'audio/cues/upto_floor_1.mp3',
+  upto_floor_2: 'audio/cues/upto_floor_2.mp3',
+  upto_floor_3: 'audio/cues/upto_floor_3.mp3',
+  turn_right: 'audio/cues/turn_right.mp3',
+  turn_left: 'audio/cues/turn_left.mp3',
+  go_straight: 'audio/cues/go_straight.mp3',
   corridor: 'audio/cues/corridor.mp3',
   arrived: 'audio/cues/arrived.mp3',
   gen_out: 'audio/cues/gen_out.mp3',
@@ -29,16 +47,18 @@ const CUE_FILES = {
   preview: 'audio/cues/preview.mp3',
 };
 // cues that may interrupt whatever is playing (spatially critical moments)
-const INTERRUPT_CUES = new Set(['enter', 'to_stairs', 'stairs_start', 'floor_1', 'floor_2', 'floor_3', 'arrived', 'gen_room']);
-const MAX_QUEUE = 2;                    // drop queue overflow instead of stacking stale speech
+const INTERRUPT_CUES = new Set(['enter', 'stairs_right', 'stairs_left', 'stairs_right_floor_1', 'stairs_right_floor_2', 'stairs_right_floor_3', 'stairs_left_floor_1', 'stairs_left_floor_2', 'stairs_left_floor_3', 'upto_floor_1', 'upto_floor_2', 'upto_floor_3', 'floor_1', 'floor_2', 'floor_3', 'turn_right', 'turn_left', 'go_straight', 'arrived']);
+const MAX_QUEUE = 4;                    // drop queue overflow instead of stacking stale speech (a cue sequence counts as one instruction)
 const MAX_WAIT_MS = 25000;              // a queued item that waited too long is skipped
 let cuesAvailable = null;
 
 const FALLBACK_TEXTS = {
-  arrive: 'لقد وصلت إلى وجهتك بنجاح. يمكنك الآن التوقف واستكشاف المكان.',
-  preview: 'مرحبًا بك. هذا مثال على الصوت المرشد داخل الحرم الجامعي.',
-  unavailable: 'الصوت غير متاح على هذا الجهاز أو المتصفح.',
+  arrive: 'خلاص، وصلت. بالتوفيق!',
+  preview: 'أهلاً بيك. ده صوت المرشد بتاعك في الجامعة.',
+  unavailable: 'الصوت مش شغال على الجهاز ده.',
 };
+// pre-rendered cues play a touch slower than recorded (pitch preserved) — clear, unhurried guidance
+const CUE_RATE = 0.9;
 
 export function createVoice({ lang = 'ar' } = {}) {
   const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
@@ -79,17 +99,17 @@ export function createVoice({ lang = 'ar' } = {}) {
     while (queue.length && now - queue[0].enqueuedAt > MAX_WAIT_MS) queue.shift();
     const item = queue.shift();
     if (!item) return;
-    playItem(item);
+    if (!playItem(item)) pump();   // e.g. a later fragment of a sequence whose first fragment already spoke the fallback text
   }
 
   function playItem({ cue, text }) {
     const file = cue && CUE_FILES[cue];
     if (file && cuesAvailable) {
       const el = new Audio(file);
-      el.volume = 1;
+      el.volume = 1; el.playbackRate = CUE_RATE; el.preservesPitch = true;
       nowPlaying = { el };
       el.addEventListener('ended', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
-      el.addEventListener('pause', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
+      el.addEventListener('pause', () => { if (nowPlaying && nowPlaying.el === el && !nowPlaying.paused) { nowPlaying = null; pump(); } });
       el.play().catch(() => { nowPlaying = null; pump(); });
       return true;
     }
@@ -108,11 +128,15 @@ export function createVoice({ lang = 'ar' } = {}) {
     return false;
   }
 
+  /** cue may be one cue id or an ordered sequence of fragments spoken as one instruction. */
   function enqueue(cue, text, { interrupt = false } = {}) {
     if (muted) return false;
+    const list = (Array.isArray(cue) ? cue : cue ? [cue] : []).filter(Boolean);
     if (interrupt) { queue.length = 0; stopCurrent(true); }
-    else if (queue.length >= MAX_QUEUE) queue.shift();
-    queue.push({ cue, text, enqueuedAt: performance.now() });
+    else while (queue.length && queue.length + Math.max(1, list.length) > MAX_QUEUE) queue.shift();
+    const enqueuedAt = performance.now();
+    if (!list.length) queue.push({ cue: null, text, enqueuedAt });
+    else list.forEach((c, i) => queue.push({ cue: c, text: i === 0 ? text : '', enqueuedAt }));
     if (!nowPlaying) pump();
     return true;
   }
@@ -145,7 +169,7 @@ export function createVoice({ lang = 'ar' } = {}) {
     const u = new SpeechSynthesisUtterance(text);
     const v = currentVoice();
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = lang === 'ar' ? 'ar-EG' : lang; }
-    u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
+    u.rate = 0.8; u.pitch = 1.0; u.volume = 1;   // بطيء وواضح
     return u;
   }
 
@@ -154,7 +178,7 @@ export function createVoice({ lang = 'ar' } = {}) {
       const u = new URL('tts', TTS_BASE || location.origin);
       u.pathname = (TTS_BASE ? new URL(TTS_BASE).pathname.replace(/\/$/, '') : '') + '/tts';
       u.searchParams.set('text', text);
-      const el = new Audio(u.toString());
+      const el = new Audio(u.toString()); el.playbackRate = CUE_RATE; el.preservesPitch = true;
       nowPlaying = { el };
       el.addEventListener('ended', () => { if (nowPlaying && nowPlaying.el === el) { nowPlaying = null; pump(); } });
       el.play().catch(() => { nowPlaying = null; pump(); });
@@ -171,18 +195,19 @@ export function createVoice({ lang = 'ar' } = {}) {
     return cuesAvailable;
   }
 
-  /** Speaks one instruction. id = idempotency key; cue = pre-rendered Salma cue id. */
+  /** Speaks one instruction. id = idempotency key; cue = pre-rendered cue id. */
   function speak(text, id, { force = false, preview = false, cue, interrupt } = {}) {
     if (!preview) {
       if (muted) return false;
       if (id != null && id === lastId && !force) return false;
       if (id != null) lastId = id;
     }
-    if (!text && !cue) return false;
+    const cueList = (Array.isArray(cue) ? cue : cue ? [cue] : []).filter(Boolean);
+    if (!text && !cueList.length) return false;
     // previews always interrupt (user explicitly asked to hear this voice)
     if (preview) { queue.length = 0; stopCurrent(true); return playItem({ cue: 'preview', text: FALLBACK_TEXTS.preview }); }
-    const doInterrupt = interrupt !== undefined ? !!interrupt : !!(cue && INTERRUPT_CUES.has(cue));
-    return enqueue(cue, text, { interrupt: doInterrupt });
+    const doInterrupt = interrupt !== undefined ? !!interrupt : cueList.some((c) => INTERRUPT_CUES.has(c));
+    return enqueue(cueList, text, { interrupt: doInterrupt });
   }
 
   async function speakA(text, id, { cue, ...opts } = {}) {
@@ -201,8 +226,8 @@ export function createVoice({ lang = 'ar' } = {}) {
     },
     cancel: () => { lastId = null; queue.length = 0; stopCurrent(true); },
     reset: () => { lastId = null; },
-    pause: () => { try { nowPlaying?.el.pause?.(); synth?.pause(); } catch (e) { /* */ } },
-    resume: () => { try { nowPlaying?.el.play?.().catch(() => {}); synth?.resume(); } catch (e) { /* */ } },
+    pause: () => { if (nowPlaying) nowPlaying.paused = true; try { nowPlaying?.el.pause?.(); synth?.pause(); } catch (e) { /* */ } },
+    resume: () => { if (nowPlaying) nowPlaying.paused = false; try { nowPlaying?.el.play?.().catch(() => {}); synth?.resume(); } catch (e) { /* */ } },
     setVoiceByURI: (u) => { uri = u; try { localStorage.setItem(LS_VOICE, u || ''); } catch (e) { /* */ } },
     toggleMute: () => {
       muted = !muted;
@@ -220,7 +245,7 @@ export function createVoice({ lang = 'ar' } = {}) {
     get selectedURI() { return uri; },
     get hasArabic() { return voices.some((v) => v.lang.toLowerCase().startsWith('ar')); },
     get cuesReady() { return !!cuesAvailable; },
-    get engine() { return cuesAvailable ? 'salma' : engine; },
+    get engine() { return cuesAvailable ? 'cues' : engine; },
     get queueLength() { return queue.length + (nowPlaying ? 1 : 0); },
     arriveText: FALLBACK_TEXTS.arrive,
     unavailableText: FALLBACK_TEXTS.unavailable,
