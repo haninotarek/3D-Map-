@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
 """Render the Arabic navigation voice cues with a neural voice (edge-tts) and normalize loudness.
 
+Style (Oct 2026): SHORT Egyptian-colloquial lines («عامية شعبية»), spoken slowly — one announcement
+per leg and no repetition: (1) «صباح الخير يا هندسة» at the main gate, then walk straight to the named
+building, (2) take the right/left stair for this room straight to its floor (every intermediate floor,
+including the first, stays silent), (3) on that floor, turn right/left to the room. route.js composes
+these from cues (greeting_gate + go_eng*, stairs_<side>_floor_*, floor_* + turn_*), choosing
+the sides from the interior geometry. The older welcome/gate/halfway/approach cues below are retained
+only as generic fallbacks / voice-picker preview and are not spoken during a normal tour. The shipped
+MP3s were rendered with the colloquial voice chosen by the project owner (33 files). This script keeps
+the full text sheet as the source of truth for re-rendering with any ar-EG voice.
 Each cue = one instruction from the journey script. Output: viewer/audio/cues/<cueId>.mp3
 Loudness is normalized to -16 LUFS so every instruction plays at the same level.
-Usage: python3 tts_render.py [--voice ar-EG-SalmaNeural] [--outdir ../viewer/audio/cues]
+Usage: python3 tts_render.py [--voice ar-EG-ShakirNeural] [--outdir ../viewer/audio/cues]
 """
 import asyncio, json, os, subprocess, sys, tempfile
 
@@ -11,44 +20,61 @@ import edge_tts
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTDIR = os.path.abspath(os.path.join(HERE, '..', 'viewer', 'audio', 'cues'))
-VOICE = 'ar-EG-SalmaNeural'          # سلمى — نبرة أكاديمية هادئة
-RATE = '-10%'                        # أهدأ قليلاً من الافتراضي: وضوح ونبرة مرشدة
+VOICE = 'ar-EG-ShakirNeural'         # صوت مصري — بديل edge-tts لإعادة التوليد (الملفات المشحونة بصوت عامي مختار)
+RATE = '-25%'                        # بطيء وواضح: المرشد يتكلم على مهله
 TARGET_LUFS = -16                    # معيار البودكاست/الإرشاد الصوتي
 
-# The full cue sheet: id -> spoken Arabic text.
-# Numbers follow the real measured geometry (491 m walk, 20+18+18 stairs, floors G/1/2/3).
+# The full cue sheet: id -> spoken Arabic text. Short & colloquial on purpose — the welcome is
+# generic (it used to hardcode one destination), and no cue recites distances or stair counts.
 CUES = {
-    # 3 — opening, after «وديني»
-    'welcome':       'مرحبًا بك. سنرشدك الآن إلى وجهتك: قاعة 3 في مبنى هندسة 1، الدور الثالث. المسافة الإجمالية حوالي 490 مترًا، وتستغرق قرابة ست دقائق سيرًا. اتبع التعليمات خطوة بخطوة.',
-    # 4 — outdoor walk
-    'gate':          'ادخل الحرم من البوابة الرئيسية، ثم تابع السير في الممر المركزي باتجاه مبنى هندسة 1.',
-    # 5 — progress milestone (half of the outdoor distance)
-    'halfway':       'قطعت حتى الآن حوالي 250 مترًا. أنت تسير في الاتجاه الصحيح، وبقي نحو 240 مترًا حتى مدخل المبنى.',
-    # 6 — approaching the entrance
-    'approach':      'مبنى هندسة 1 أمامك الآن. اقترب من المدخل الرئيسي.',
-    # 7 — crossing the door
-    'enter':         'اعبر من المدخل إلى اللوبي.',
-    # 8 — heading to the stairwell
-    'to_stairs':     'اتجه داخل اللوبي نحو بئر السلم.',
-    # 9 — at the stairwell, first flight
-    'stairs_start':  'لقد وصلت إلى بداية السلم. توقف لحظة، وتهيأ للصعود إلى الدور الأول. عشرون درجة تفصلك عنه.',
-    # 10a — first flight
-    'climb_1':       'ابدأ الصعود بهدوء، درجةً درجة.',
-    # 10b — first floor landing
-    'floor_1':       'أنت الآن في الدور الأول. أكمل الصعود عبر الجزء التالي من السلم. ثماني عشرة درجة.',
-    # 10c — second floor landing
-    'floor_2':       'وصلت إلى الدور الثاني. بقيت رحلة أخيرة، ثماني عشرة درجة إلى الدور الثالث.',
-    # 10d — third floor reached
-    'floor_3':       'أنت الآن في الدور الثالث.',
-    # 11 — corridor
-    'corridor':      'اتجه نحو الممر، وتابع السير حتى قاعة 3.',
-    # 12 — arrival
-    'arrived':       'لقد وصلت إلى وجهتك بنجاح: قاعة 3. يمكنك الآن التوقف واستكشاف المكان.',
-    # extra — generic fallbacks used for other destinations (templated at runtime)
-    'gen_out':       'تابع السير في الاتجاه المحدد.',
-    'gen_room':      'لقد وصلت إلى وجهتك بنجاح. يمكنك الآن التوقف واستكشاف المكان.',
+    # opening, after «وديني»
+    'welcome':       'أهلاً بيك. يلا بينا. هوصّلك لحد قاعتك. امشي معايا، واحدة، واحدة.',
+    # outdoor walk
+    'gate':          'ادخل من البوابة. وامشي على طول.',
+    # progress milestone (half of the outdoor walk)
+    'halfway':       'انت كده في نص الطريق. كمّل على طول.',
+    # approaching the entrance
+    'approach':      'المبنى قدامك. قرّب من الباب.',
+    # crossing the door
+    'enter':         'ادخل جوّه. ده اللوبي.',
+    # heading to the stairwell
+    'to_stairs':     'روح عند السلم. واطلع على مهلك.',
+    # at the stairwell
+    'stairs_start':  'وصلت عند السلم. اطلع على مهلك.',
+    # climbing the next flight
+    'climb_1':       'كمّل طالع. واحدة، واحدة.',
+    # floor landings (1 / 2 / 3)
+    'floor_1':       'انت كده في الدور الأول.',
+    'floor_2':       'انت كده في الدور التاني.',
+    'floor_3':       'انت كده في الدور التالت.',
+    # corridor
+    'corridor':      'امشي في الممر، على طول.',
+    # arrival
+    'arrived':       'خلاص، وصلت. بالتوفيق!',
+    # generic fallbacks for other destinations
+    'gen_out':       'كمّل ماشي على طول.',
+    'gen_room':      'خلاص، وصلت. بالتوفيق!',
     # voice-picker preview
-    'preview':       'مرحبًا بك. هذا مثال على الصوت المرشد داخل الحرم الجامعي.',
+    'preview':       'أهلاً بيك. ده صوت المرشد بتاعك في الجامعة.',
+    # --- directional cues composed by route.js (the normal tour narration) ---
+    'greeting_gate': 'صباح الخير يا هندسة. عدّي البوابة الرئيسية،',
+    'go_eng1':       'امشي على طول، لحد ما توصل لمبنى هندسة واحد.',
+    'go_eng2':       'امشي على طول، لحد ما توصل لمبنى هندسة اتنين.',
+    'stairs_right':  'اطلع من السلم اليمين،',
+    'stairs_left':   'اطلع من السلم الشمال،',
+    'upto_floor_1':  'لحد الدور الأول.',
+    'upto_floor_2':  'لحد الدور التاني.',
+    'upto_floor_3':  'لحد الدور التالت.',
+    'turn_right':    'خش يمين.',
+    'turn_left':     'خش شمال.',
+    'go_straight':   'كمّل على طول.',
+    # direct climb recordings (no intermediate-floor announcements during the climb)
+    'stairs_right_floor_1': 'اطلع من السلم اللي على اليمين، لحد الدور الأول على طول.',
+    'stairs_right_floor_2': 'اطلع من السلم اللي على اليمين، لحد الدور التاني على طول.',
+    'stairs_right_floor_3': 'اطلع من السلم اللي على اليمين، لحد الدور التالت على طول.',
+    'stairs_left_floor_1':  'اطلع من السلم اللي على الشمال، لحد الدور الأول على طول.',
+    'stairs_left_floor_2':  'اطلع من السلم اللي على الشمال، لحد الدور التاني على طول.',
+    'stairs_left_floor_3':  'اطلع من السلم اللي على الشمال، لحد الدور التالت على طول.',
 }
 
 

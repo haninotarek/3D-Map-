@@ -10,17 +10,15 @@ const GROUND_Y = 0.9;
 
 const T = {
   en: {
-    start: (g) => `Enter the campus through ${g}.`,
-    walk: (m, b, d) => `Walk about ${m} m to ${b} (${d}).`,
-    walkNoDoor: (m, b) => `Walk about ${m} m to ${b}.`,
-    lobby: 'Go through the entrance into the lobby.',
-    toStairs: (s, f) => `Head to the ${s} to climb to the ${f}.`,
-    continueUp: (s, f) => `Continue up the ${s} to the ${f}.`,
-    floorReached: (f) => `You are now on the ${f}.`,
+    toBuilding: (b) => `Walk straight to ${b}.`,
+    stairsTo: (s, f) => `Enter, and take the ${s} straight up to the ${f}.`,
+    nowFloor: (f, side, r) => side === 'straight'
+      ? `You are now on the ${f}. Continue straight for ${r}.`
+      : `You are now on the ${f}. Turn ${side} for ${r}.`,
+    groundTurn: (side, r) => side === 'straight'
+      ? `Enter, and continue straight. ${r} is on the ground floor.`
+      : `Enter, and turn ${side}. ${r} is on the ground floor.`,
     noStairs: 'A staircase is missing from the indoor map on the way; the climb is shown as estimated.',
-    stairs: (s, f) => `Take the ${s} up to the ${f}.`,
-    ground: (r) => `${r} is on the ground floor.`,
-    room: (r) => `${r} is ahead. You have arrived.`,
     noRoom: (r) => `${r} is not on the indoor map yet. Ask at the building lobby.`,
     noInterior: 'The inside of this building is not mapped yet.',
     estimated: 'The entrance position is estimated.',
@@ -28,23 +26,22 @@ const T = {
     notFound: (b) => `“${b}” is not on the campus map yet.`,
     total: (m, min) => `About ${m} m · ${min} min walk`,
   },
+  // One short colloquial instruction per leg — no repetition between legs.
   ar: {
-    start: (g) => `ادخل الحرم من ${g}.`,
-    walk: (m, b, d) => `امشِ حوالي ${m} م إلى ${b} (${d}).`,
-    walkNoDoor: (m, b) => `امشِ حوالي ${m} م إلى ${b}.`,
-    lobby: 'ادخل من المدخل إلى اللوبي.',
-    toStairs: (s, f) => `اتجه إلى ${s} للصعود إلى ${f}.`,
-    continueUp: (s, f) => `أكمل الصعود عبر ${s} حتى تصل إلى ${f}.`,
-    floorReached: (f) => `أنت الآن في ${f}.`,
-    noStairs: 'السلم غير مرسوم في الخريطة الداخلية في أحد الأدوار؛ سيظهر الصعود بشكل تقديري.',
-    stairs: (s, f) => `اطلع ${s} إلى ${f}.`,
-    ground: (r) => `${r} في الدور الأرضي.`,
-    room: (r) => `${r} أمامك. لقد وصلت إلى وجهتك بنجاح.`,
-    noRoom: (r) => `${r} غير موجودة على الخريطة الداخلية بعد. اسأل في لوبي المبنى.`,
-    noInterior: 'الخريطة الداخلية لهذا المبنى غير متاحة بعد.',
-    estimated: 'مكان المدخل تقديري.',
-    assumed: 'الجدول لا يذكر المبنى، فتم تحديده من اسم القاعة.',
-    notFound: (b) => `«${b}» غير موجود على الخريطة بعد.`,
+    toBuilding: (b) => `صباح الخير يا هندسة. عدّي البوابة الرئيسية، وامشي لحد ما توصل عند ${b}.`,
+    stairsTo: (s, f) => `ادخل، واطلع من ${s} لحد ${f} على طول.`,
+    nowFloor: (f, side, r) => side === 'straight'
+      ? `انت كده في ${f}. كمّل على طول، هتلاقي ${r}.`
+      : `انت كده في ${f}. خش ${side === 'left' ? 'شمال' : 'يمين'}، هتلاقي ${r}.`,
+    groundTurn: (side, r) => side === 'straight'
+      ? `ادخل، وكمّل على طول. ${r} هنا في الأرضي.`
+      : `ادخل، وخش ${side === 'left' ? 'شمال' : 'يمين'}. ${r} هنا في الأرضي.`,
+    noStairs: 'السلم مش مرسوم هنا، الطلوع تقريبي.',
+    noRoom: (r) => `${r} لسه مش على الخريطة. اسأل في اللوبي.`,
+    noInterior: 'المبنى ده لسه ملوش خريطة من جوّه.',
+    estimated: 'مكان الباب تقريبي.',
+    assumed: 'المبنى اتحدد من اسم القاعة.',
+    notFound: (b) => `«${b}» لسه مش على الخريطة.`,
     total: (m, min) => `حوالي ${m} م · ${min} دقيقة مشي`,
   },
 };
@@ -52,6 +49,25 @@ const T = {
 const v3 = ([x, y], h = GROUND_Y) => new THREE.Vector3(x, h, -y);
 const centre = ([x0, y0, x1, y1]) => [(x0 + x1) / 2, (y0 + y1) / 2];
 const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+/** ENU turn at `via` while walking from -> via -> to: positive cross product = left. */
+function turnSide(from, via, to) {
+  const hx = via[0] - from[0], hy = via[1] - from[1];
+  const vx = to[0] - via[0], vy = to[1] - via[1];
+  const den = Math.hypot(hx, hy) * Math.hypot(vx, vy);
+  if (!den) return 'straight';
+  const sin = (hx * vy - hy * vx) / den, cos = (hx * vx + hy * vy) / den;
+  if (sin > 0.15) return 'left';
+  if (sin < -0.15) return 'right';
+  return cos < 0 ? (sin >= 0 ? 'left' : 'right') : 'straight';
+}
+const turnCue = (side) => side === 'left' ? 'turn_left' : side === 'right' ? 'turn_right' : 'go_straight';
+/** The interior data names its stairs ("Left stair" / «السلم الشمال»); fall back to the north/south choice. */
+function stairSide(stair, north) {
+  const name = `${stair?.name_en || ''} ${stair?.name_ar || ''}`;
+  if (/left|شمال/i.test(name)) return 'left';
+  if (/right|يمين/i.test(name)) return 'right';
+  return north ? 'left' : 'right';
+}
 
 function shortestPath(net, from, to) {
   const dist = new Map([[from, 0]]); const prev = new Map(); const todo = new Set(Object.keys(net.nodes));
@@ -79,14 +95,21 @@ function shortestPath(net, from, to) {
 
 export function createRouter({ scene, getItem, getInterior, net, index }) {
   const group = new THREE.Group(); group.name = 'route'; scene.add(group);
-  let curve = null, length = 0;
+  let curve = null, length = 0, outdoorTube = null, indoorTube = null;
 
   function clear() {
     for (const o of [...group.children]) {
       group.remove(o);
       o.traverse((c) => { c.geometry?.dispose(); c.material?.dispose?.(); if (c.element) c.element.remove(); });
     }
-    curve = null; length = 0;
+    curve = null; length = 0; outdoorTube = null; indoorTube = null;
+  }
+
+  /** Once the walker is inside, the whole route line disappears: the camera is framed on the
+   *  walker himself, and the glowing destination room is the only marker left on screen. */
+  function setIndoorMode(on) {
+    if (outdoorTube) outdoorTube.visible = !on;
+    if (indoorTube) indoorTube.visible = !on;
   }
 
   /** Resolves timetable names to {buildingId, assumed, roomKey, floorId, roomId}. */
@@ -116,7 +139,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
    * Builds the route and returns {ok, buildingId, floorIndex, steps[], notes[], summary, bounds, track, cues[]} (or ok: false).
    * track: the walk as points with, for each point, the step being followed while walking to it, the interior floor
    * shown (-1 = outside) and the segment kind ('out' | 'in' | 'stair'); used by the guided tour.
-   * cues: parallel to steps — pre-rendered voice cue id per step (null = dynamic text only).
+   * cues: parallel to steps — a pre-rendered cue id, or an ordered fragment sequence, per step (null = dynamic text only).
    */
   async function show({ building, room, lang = 'en', roomLabel }) {
     clear();
@@ -133,22 +156,18 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     const notes = [];
     const addStep = (text, cue = null) => { steps.push(text); cues.push(cue); };
     const add = (p, h, step, floor, kind) => track.push({ p: v3(p, h), step, floor, kind });
-    const startName = lang === 'ar' ? net.start_name_ar : net.start_name_en;
-    addStep(t.start(startName), 'gate');
-
-    // outdoor leg
-    let outdoorM = 0;
+    // Outdoor leg = ONE instruction: greeting at the main gate, then walk straight to the named building.
+    // Model ids run opposite to the building names: bld_e2 is Engineering Building 1, bld_e1 is Building 2.
+    const buildingCue = { bld_e2: 'go_eng1', bld_e1: 'go_eng2' }[r.buildingId] || 'gate';
+    addStep(t.toBuilding(bName), ['greeting_gate', buildingCue]);
     const nodes = door ? shortestPath(net, net.start, door.node) : null;
     if (nodes) {
       const seq = [net.nodes.gate_out, ...nodes.map((n) => net.nodes[n]), door.at];
-      for (let i = 1; i < seq.length; i++) outdoorM += Math.hypot(seq[i][0] - seq[i - 1][0], seq[i][1] - seq[i - 1][1]);
-      seq.forEach((p, i) => add(p, GROUND_Y, i < 2 ? 0 : 1, -1, 'out'));
-      addStep(t.walk(Math.round(outdoorM / 10) * 10, bName, lang === 'ar' ? door.name_ar : door.name_en), 'approach');
+      seq.forEach((p) => add(p, GROUND_Y, 0, -1, 'out'));
       if (door.estimated) notes.push(t.estimated);
     } else {
       add(net.nodes.gate_out, GROUND_Y, 0, -1, 'out');
-      add([it.center.x, -it.center.z], GROUND_Y, 1, -1, 'out');
-      addStep(t.walkNoDoor(Math.round(Math.hypot(it.center.x - net.nodes.gate_out[0], -it.center.z - net.nodes.gate_out[1]) / 10) * 10, bName), 'gen_out');
+      add([it.center.x, -it.center.z], GROUND_Y, 0, -1, 'out');
     }
     if (r.assumed) notes.push(t.assumed);
 
@@ -169,71 +188,110 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
         const [tx, ty] = centre(target.rect);
         const gLobby = ground.rooms.find((x) => x.id === 'lobby');
         const gy = ground.level + 0.3;
-        const lobbyStep = steps.length; addStep(t.lobby, 'enter');
-        add(entrance.at, gy, lobbyStep, 0, 'in');
-        if (gLobby) add(centre(gLobby.rect), gy, lobbyStep, 0, 'in');
         if (floorIndex > 0) {
-          // Progressive multi-floor traversal: approach the stairwell, climb each flight
-          // step by step along the drawn treads (stairProfile), land on every intermediate
-          // floor and continue — never a single vertical jump between floors.
+          // Direct climb: choose the stair side for this room and go straight to its floor.
+          // Every intermediate floor (including the first) is passed silently.
           const north = ty > (gLobby ? centre(gLobby.rect)[1] : entrance.at[1]);
           const stairId = north ? 'stair_n' : 'stair_s';
+          const groundStair = ground.rooms.find((x) => x.id === stairId);
+          const side = stairSide(groundStair, north);
+          const stairName = lang === 'ar'
+            ? `السلم اللي على ${side === 'left' ? 'الشمال' : 'اليمين'}`
+            : (groundStair ? groundStair.name_en.toLowerCase() : `${side} stair`);
+          const floorName = lang === 'ar' ? f.name_ar : f.name_en.toLowerCase();
           const fy = f.level + 0.3;
+          const floorLobby = f.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
+          const foyer = f.rooms.find((x) => x.id === `${target.id}_foyer`);
+          const topStair = data.floors[floorIndex - 1]?.rooms.find((x) => x.id === stairId) || groundStair;
+          const turn = turnSide(
+            topStair ? [topStair.rect[2] + 1, centre(topStair.rect)[1]] : entrance.at,
+            floorLobby ? centre(floorLobby.rect) : [tx, ty],
+            foyer ? centre(foyer.rect) : [tx, ty]);
+          const climbStep = steps.length;
+          const directStairCue = floorIndex >= 1 && floorIndex <= 3
+            ? `stairs_${side}_floor_${floorIndex}`
+            : [`stairs_${side}`, `upto_floor_${floorIndex}`];
+          addStep(t.stairsTo(stairName, floorName), directStairCue);
+          const floorStep = steps.length;
+          addStep(t.nowFloor(floorName, turn, roomName),
+            [floorIndex >= 1 && floorIndex <= 3 ? `floor_${floorIndex}` : 'gen_room', turnCue(turn)]);
+          add(entrance.at, gy, climbStep, 0, 'in');
+          if (gLobby) add(centre(gLobby.rect), gy, climbStep, 0, 'in');
           let blocked = false;
           for (let k = 0; k < floorIndex && !blocked; k++) {
             const fk = data.floors[k], fk1 = data.floors[k + 1];
             const stair = fk.rooms.find((x) => x.id === stairId);
             if (!stair) { blocked = true; break; }
             const [sx, sy] = centre(stair.rect);
-            const stairName = lang === 'ar' ? stair.name_ar : stair.name_en.toLowerCase();
-            const nextName = lang === 'ar' ? fk1.name_ar : fk1.name_en.toLowerCase();
-            // 1) approach this flight's entry on floor k
-            const upStep = steps.length;
-            addStep(k === 0 ? t.toStairs(stairName, nextName) : t.continueUp(stairName, nextName), k === 0 ? 'to_stairs' : 'climb_1');
-            if (k === 0 && gLobby) add(centre(gLobby.rect), gy, upStep, 0, 'in');
-            add([stair.rect[2] + 1, sy], fk.level + 0.3, upStep, k, 'in');
-            add([sx, sy], fk.level + 0.3, upStep, k, 'in');
-            // 2) climb the flight along the actual treads
             const rise = fk1.level - fk.level;
-            for (const s of stairProfile(stair.rect, rise).steps) add([s.x, s.y], fk.level + s.h, upStep, k, 'stair');
-            // 3) land on floor k+1
+            const prof = stairProfile(stair.rect, rise);
+            const [rx0, ry0, rx1, ry1] = stair.rect;
+            const pt = (along, cross) => prof.alongX ? [along, cross] : [cross, along];
+            const along1 = prof.alongX ? rx1 : ry1;
+            const doorOut = prof.alongX ? [rx1 + 1, sy] : [sx, ry1 + 1];   // just outside that floor's stair door
+            if (k === 0) {
+              // in through the open ground-floor stair door, onto the first flight
+              add(doorOut, fk.level + 0.3, climbStep, k, 'in');
+              add(pt(along1 - 0.65, prof.laneA), fk.level + 0.3, climbStep, k, 'in');
+            }
+            // one switchback storey: up flight A, turn on the half-landing, up flight B —
+            // the walked points follow the drawn treads exactly (stairProfile.walk)
+            for (const st of prof.walk) add([st.x, st.y], fk.level + st.h, climbStep, k, 'stair');
             const landY = fk1.level + 0.3;
-            add([stair.rect[2] + 1, sy], landY, upStep, k + 1, 'in');
-            if (k + 1 <= floorIndex) {
-              // announce every landing: intermediate floors and the destination floor itself
-              const cue = k + 1 === floorIndex ? 'floor_3' : (k === 0 ? 'floor_1' : 'floor_2');
-              const reached = steps.length; addStep(t.floorReached(nextName), cue);
-              const lobbyUp = fk1.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
-              if (lobbyUp) add(centre(lobbyUp.rect), landY, reached, k + 1, 'in');
+            if (k + 1 < floorIndex) {
+              // Arrive on the next floor's landing and pass its named door without entering
+              // the floor: cross in front of the door to the next flight and climb straight
+              // on — one continuous, realistic ascent to the destination floor.
+              add(pt(along1 - 0.65, prof.laneB), landY, climbStep, k + 1, 'in');
+              add(pt(along1 - 0.65, prof.laneA), landY, climbStep, k + 1, 'in');
+            } else {
+              // destination floor: out through its open stair door towards the room
+              add(doorOut, landY, climbStep, k + 1, 'in');
             }
           }
           if (blocked) notes.push(t.noStairs);
-          const arriveStep = steps.length; addStep(t.room(roomName), 'gen_room');
-          const lobby = f.rooms.find((x) => x.id === (north ? 'lobby_n' : 'lobby_s'));
-          if (lobby) add(centre(lobby.rect), fy, arriveStep, floorIndex, 'in');
-          const foyer = f.rooms.find((x) => x.id === `${target.id}_foyer`);
-          if (foyer) add(centre(foyer.rect), fy, arriveStep, floorIndex, 'in');
-          add([tx, ty], fy, arriveStep, floorIndex, 'in');
+          // the destination-floor instruction starts as the walker leaves the stairwell for the room
+          if (floorLobby) add(centre(floorLobby.rect), fy, floorStep, floorIndex, 'in');
+          if (foyer) add(centre(foyer.rect), fy, floorStep, floorIndex, 'in');
+          add([tx, ty], fy, floorStep, floorIndex, 'in');
         } else {
-          const arriveStep = steps.length; addStep(t.ground(roomName), 'gen_room');
-          add([tx, ty], gy, arriveStep, 0, 'in');
+          const turn = turnSide(entrance.at, gLobby ? centre(gLobby.rect) : entrance.at, [tx, ty]);
+          const groundStep = steps.length;
+          addStep(t.groundTurn(turn, roomName), ['enter', turnCue(turn)]);
+          add(entrance.at, gy, groundStep, 0, 'in');
+          if (gLobby) add(centre(gLobby.rect), gy, groundStep, 0, 'in');
+          add([tx, ty], gy, groundStep, 0, 'in');
         }
       } else {
-        steps.push(t.noRoom(roomName));
+        addStep(t.noRoom(roomName), null);
       }
     } else if (room) {
       notes.push(t.noInterior);
     }
 
-    // draw: one calm line for the whole way
+    // Draw one calm line, split at the door: both tubes vanish once the walker is inside,
+    // leaving only the entered building, the walker and the destination room on screen.
     const pts = track.map((x) => x.p);
     const path = new THREE.CurvePath();
     for (let i = 1; i < pts.length; i++) if (pts[i].distanceTo(pts[i - 1]) > 0.01) path.add(new THREE.LineCurve3(pts[i - 1], pts[i]));
     curve = path; length = path.getLength();
-    const segs = Math.max(64, Math.round(length / 2));
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(path, segs, 0.45, 8, false),
-      new THREE.MeshBasicMaterial({ color: ROUTE_COLOR, transparent: true, opacity: 0.85, depthTest: false }));
-    tube.renderOrder = 20; group.add(tube);
+    const makeTube = (points, name) => {
+      const sub = new THREE.CurvePath();
+      for (let i = 1; i < points.length; i++) if (points[i].distanceTo(points[i - 1]) > 0.01) sub.add(new THREE.LineCurve3(points[i - 1], points[i]));
+      if (!sub.curves.length) return null;
+      const mesh = new THREE.Mesh(new THREE.TubeGeometry(sub, Math.max(32, Math.round(sub.getLength() / 2)), 0.45, 8, false),
+        new THREE.MeshBasicMaterial({ color: ROUTE_COLOR, transparent: true, opacity: 0.85, depthTest: false }));
+      mesh.name = name; mesh.renderOrder = 20; group.add(mesh); return mesh;
+    };
+    const firstIndoor = track.findIndex((x) => x.kind !== 'out');
+    if (firstIndoor > 0) {
+      outdoorTube = makeTube(track.slice(0, firstIndoor + 1).map((x) => x.p), 'route-outdoor');
+      indoorTube = makeTube(track.slice(firstIndoor).map((x) => x.p), 'route-indoor');
+    } else if (firstIndoor === 0) {
+      indoorTube = makeTube(pts, 'route-indoor');
+    } else {
+      outdoorTube = makeTube(pts, 'route-outdoor');
+    }
 
     // destination: the room itself glows, with one label
     const end = pts[pts.length - 1];
@@ -255,5 +313,5 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     };
   }
 
-  return { show, clear, resolve, get active() { return !!curve; } };
+  return { show, clear, resolve, setIndoorMode, get active() { return !!curve; } };
 }
