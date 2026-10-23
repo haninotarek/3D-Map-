@@ -60,6 +60,388 @@ function mulberry32(seed) {
   };
 }
 
+function pointInPoly(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if (((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi + 1e-12) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Determines whether a staircase's east wall is blocked on any floor by an elevator core or room
+ * (as in `bld_e2`, where `lifts_n` & `lifts_s` stand at `[158.2 .. 162.2]` directly east of `[148 .. 158]`).
+ */
+function stairEastBlocked(interiorData, rect) {
+  if (!interiorData?.floors) return false;
+  const [, y0, x1, y1] = rect;
+  const px = x1 + 1.0, py = (y0 + y1) / 2;
+  for (const fl of interiorData.floors) {
+    for (const rm of fl.rooms || []) {
+      if (rm.open || rm.kind === 'locker') continue;
+      const [rx0, ry0, rx1, ry1] = rm.rect;
+      if (px >= rx0 - 0.15 && px <= rx1 + 0.15 && py >= ry0 - 0.15 && py <= ry1 + 0.15) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Authoritative stairwell doorway specification shared across 3D wall cutouts, fire doors, floor name signs,
+ * 3D OBB colliders, and multi-floor navigation path planning (`route.js`).
+ */
+export function stairDoorSpec(interiorData, stairRoom) {
+  const [x0, y0, x1, y1] = stairRoom.rect;
+  const alongX = (x1 - x0) >= (y1 - y0);
+  if (alongX && stairEastBlocked(interiorData, stairRoom.rect)) {
+    // East wall borders lift shafts on upper floors (`bld_e2`): open directly from the 1.65 m East Landing
+    // onto the 3.0 m North Corridor (`stair_n`) or 3.0 m South Corridor (`stair_s`).
+    const eastLanding = 1.65;
+    const doorX = x1 - 0.85;
+    const doorW = 1.50;
+    const isNorth = stairRoom.id === 'stair_n' || ((y0 + y1) / 2 > -62.5);
+    const side = isNorth ? 'n' : 's';
+    const wallY = isNorth ? y1 : y0;
+    const outSign = isNorth ? 1 : -1;
+    return {
+      side,
+      doorW,
+      eastLanding,
+      at: [doorX, wallY],
+      outside: [doorX, wallY + outSign * 1.35],
+      landingMid: [doorX, wallY - outSign * 1.15],
+      signPos: [doorX, wallY + outSign * 0.42],
+    };
+  }
+  const eastLanding = 1.50;
+  const doorW = 1.60;
+  if (alongX) {
+    const midY = (y0 + y1) / 2;
+    return {
+      side: 'e',
+      doorW,
+      eastLanding,
+      at: [x1, midY],
+      outside: [x1 + 1.35, midY],
+      landingMid: [x1 - 0.85, midY],
+      signPos: [x1 + 0.42, midY],
+    };
+  }
+  const midX = (x0 + x1) / 2;
+  return {
+    side: 'n',
+    doorW,
+    eastLanding,
+    at: [midX, y1],
+    outside: [midX, y1 + 1.35],
+    landingMid: [midX, y1 - 0.85],
+    signPos: [midX, y1 + 0.42],
+  };
+}
+
+/**
+ * Caches a 0.8 m 2D flood-fill grid per floor seeded from staircases & main spine/lobbies so inferred
+ * room doors (`resolveRoomDoor`) ALWAYS open onto the main reachable corridor network (never into a
+ * sealed fire-exit alcove like `end_lobby_s` behind `big_room_s` on Floor 1 of `bld_e2`!).
+ */
+function getMainCorridorReachable(interiorData, floorData) {
+  if (!floorData) return () => true;
+  if (floorData._corridorReachFn) return floorData._corridorReachFn;
+  const fp = interiorData?.footprint || [];
+  if (!fp.length) {
+    floorData._corridorReachFn = () => true;
+    return floorData._corridorReachFn;
+  }
+  const STEP = 0.8;
+  const xs = fp.map((p) => p[0]), ys = fp.map((p) => p[1]);
+  const minX = Math.floor(Math.min(...xs)) - 1, maxX = Math.ceil(Math.max(...xs)) + 1;
+  const minY = Math.floor(Math.min(...ys)) - 1, maxY = Math.ceil(Math.max(...ys)) + 1;
+  const nx = Math.round((maxX - minX) / STEP) + 1;
+  const ny = Math.round((maxY - minY) / STEP) + 1;
+  const blocked = new Uint8Array(nx * ny);
+
+  const extEdges = [];
+  for (let i = 0; i < fp.length; i++) {
+    for (const seg of edgeWithGaps(fp[i], fp[(i + 1) % fp.length], floorData.entrances || [])) {
+      extEdges.push(seg);
+    }
+  }
+  const distSeg = (px, py, ax, ay, bx, by) => {
+    const dx = bx - ax, dy = by - ay;
+    const l2 = dx * dx + dy * dy;
+    if (l2 < 1e-9) return Math.hypot(px - ax, py - ay);
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  };
+
+  for (let iy = 0; iy < ny; iy++) {
+    const wy = minY + iy * STEP;
+    for (let ix = 0; ix < nx; ix++) {
+      const wx = minX + ix * STEP;
+      const inBld = pointInPoly(wx, wy, fp)
+        || (floorData.rooms || []).some((rm) => wx >= rm.rect[0] && wx <= rm.rect[2] && wy >= rm.rect[1] && wy <= rm.rect[3]);
+      if (!inBld) { blocked[iy * nx + ix] = 1; continue; }
+      const hitExtWall = extEdges.some(([ax, ay, bx, by]) => distSeg(wx, wy, ax, ay, bx, by) < 0.45);
+      if (hitExtWall) { blocked[iy * nx + ix] = 1; continue; }
+      const hitSolidRoom = (floorData.rooms || []).some((rm) => {
+        if (rm.open || rm.kind === 'locker') return false;
+        return wx >= rm.rect[0] - 0.30 && wx <= rm.rect[2] + 0.30 && wy >= rm.rect[1] - 0.30 && wy <= rm.rect[3] + 0.30;
+      });
+      if (hitSolidRoom) blocked[iy * nx + ix] = 1;
+    }
+  }
+
+  const visited = new Uint8Array(nx * ny);
+  const queue = [];
+  const trySeed = (wx, wy) => {
+    const sx = Math.round((wx - minX) / STEP), sy = Math.round((wy - minY) / STEP);
+    for (let rad = 0; rad <= 3; rad++) {
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          const ix = sx + dx, iy = sy + dy;
+          if (ix < 0 || iy < 0 || ix >= nx || iy >= ny) continue;
+          const idx = iy * nx + ix;
+          if (!blocked[idx] && !visited[idx]) {
+            visited[idx] = 1;
+            queue.push(idx);
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  for (const rm of floorData.rooms || []) {
+    if (rm.kind === 'stair') {
+      const sp = stairDoorSpec(interiorData, rm);
+      trySeed(sp.outside[0], sp.outside[1]);
+    } else if (rm.open && (rm.id === 'lobby' || rm.id === 'lobby_n' || rm.id === 'lobby_s' || rm.id === 'spine' || rm.id === 'gallery')) {
+      trySeed((rm.rect[0] + rm.rect[2]) / 2, (rm.rect[1] + rm.rect[3]) / 2);
+    }
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const cur = queue[head++];
+    const cx = cur % nx, cy = (cur / nx) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const tx = cx + dx, ty = cy + dy;
+      if (tx < 0 || ty < 0 || tx >= nx || ty >= ny) continue;
+      const nid = ty * nx + tx;
+      if (!blocked[nid] && !visited[nid]) {
+        visited[nid] = 1;
+        queue.push(nid);
+      }
+    }
+  }
+
+  floorData._corridorReachFn = (wx, wy) => {
+    const ix = Math.round((wx - minX) / STEP), iy = Math.round((wy - minY) / STEP);
+    if (ix < 0 || iy < 0 || ix >= nx || iy >= ny) return false;
+    return visited[iy * nx + ix] === 1;
+  };
+  return floorData._corridorReachFn;
+}
+
+/**
+ * Finds the best unobstructed corridor-facing doorway spans across all cells of room `r`.
+ * Handles both full corridor walls and end-of-corridor rooms (such as `drawing_hall_3` at the west end of
+ * `bld_e2`'s south corridor, where `[137.0, -81.2 .. -78.2]` faces the open corridor while `-89.0 .. -81.2`
+ * shares a party wall with `cls_s_out`).
+ */
+export function resolveRoomDoors(interiorData, floorData, r) {
+  if (!r || r.open || r.kind === 'void' || r.kind === 'locker') return null;
+  if (r.kind === 'stair') {
+    const sp = stairDoorSpec(interiorData, r);
+    return { side: sp.side, points: [{ side: sp.side, at: sp.at }] };
+  }
+
+  const cells = roomCells(r);
+  const [x0, y0, x1, y1] = r.rect;
+  const isReachable = getMainCorridorReachable(interiorData, floorData);
+
+  const pointValidOutside = (ox, oy) => {
+    const inFootprint = interiorData?.footprint ? pointInPoly(ox, oy, interiorData.footprint) : true;
+    const inOpenRoom = (floorData?.rooms || []).some(
+      (rm) => rm !== r && rm.open && ox >= rm.rect[0] && ox <= rm.rect[2] && oy >= rm.rect[1] && oy <= rm.rect[3],
+    );
+    if (!inFootprint && !inOpenRoom) return null;
+    const blockedByRoom = (floorData?.rooms || []).some((rm) => {
+      if (rm === r || rm.open || rm.kind === 'locker') return false;
+      const [rx0, ry0, rx1, ry1] = rm.rect;
+      return ox >= rx0 - 0.05 && ox <= rx1 + 0.05 && oy >= ry0 - 0.05 && oy <= ry1 + 0.05;
+    });
+    if (blockedByRoom) return null;
+    return { reachable: isReachable(ox, oy), inOpenRoom };
+  };
+
+  const bestSpanOnEdge = (side, cell) => {
+    const [cx0, cy0, cx1, cy1] = cell;
+    const horiz = side === 'n' || side === 's';
+    const fixed = side === 'n' ? cy1 : side === 's' ? cy0 : side === 'e' ? cx1 : cx0;
+    const outerBoundary = side === 'n' ? y1 : side === 's' ? y0 : side === 'e' ? x1 : x0;
+    if (Math.abs(fixed - outerBoundary) > 0.03) return null;
+
+    const uMin = (horiz ? cx0 : cy0) + 0.72;
+    const uMax = (horiz ? cx1 : cy1) - 0.72;
+    if (uMax < uMin) {
+      const uMid = horiz ? (cx0 + cx1) / 2 : (cy0 + cy1) / 2;
+      const ox = horiz ? uMid : fixed + (side === 'e' ? 1.15 : -1.15);
+      const oy = horiz ? fixed + (side === 'n' ? 1.15 : -1.15) : uMid;
+      const st = pointValidOutside(ox, oy);
+      if (!st) return null;
+      return {
+        at: horiz ? [uMid, fixed] : [fixed, uMid],
+        spanLen: 1.0,
+        reachable: st.reachable,
+        inOpenRoom: st.inOpenRoom,
+      };
+    }
+
+    const SAMPLES = Math.max(3, Math.ceil((uMax - uMin) / 0.30) + 1);
+    let bestRun = null, curRun = null;
+    for (let i = 0; i < SAMPLES; i++) {
+      const u = SAMPLES === 1 ? (uMin + uMax) / 2 : uMin + ((uMax - uMin) * i) / (SAMPLES - 1);
+      const ox = horiz ? u : fixed + (side === 'e' ? 1.15 : -1.15);
+      const oy = horiz ? fixed + (side === 'n' ? 1.15 : -1.15) : u;
+      const st = pointValidOutside(ox, oy);
+      if (st) {
+        if (!curRun || curRun.reachable !== st.reachable) {
+          curRun = { u0: u, u1: u, reachable: st.reachable, inOpenRoom: st.inOpenRoom };
+        } else {
+          curRun.u1 = u;
+          curRun.inOpenRoom = curRun.inOpenRoom || st.inOpenRoom;
+        }
+        const curScore = (curRun.reachable ? 1000 : 0) + (curRun.u1 - curRun.u0);
+        const bestScore = bestRun ? ((bestRun.reachable ? 1000 : 0) + (bestRun.u1 - bestRun.u0)) : -1;
+        if (curScore > bestScore) bestRun = { ...curRun };
+      } else {
+        curRun = null;
+      }
+    }
+    if (!bestRun) return null;
+    const uMid = (bestRun.u0 + bestRun.u1) / 2;
+    return {
+      at: horiz ? [uMid, fixed] : [fixed, uMid],
+      spanLen: bestRun.u1 - bestRun.u0,
+      reachable: bestRun.reachable,
+      inOpenRoom: bestRun.inOpenRoom,
+    };
+  };
+
+  const candidateSides = r.door ? [r.door] : ['n', 's', 'e', 'w'];
+  let best = null;
+  for (const side of candidateSides) {
+    const pts = [];
+    let totalSpan = 0, anyReachable = false, anyOpen = false;
+    for (const cell of cells) {
+      const sp = bestSpanOnEdge(side, cell);
+      if (sp) {
+        pts.push({ side, at: sp.at });
+        totalSpan += sp.spanLen;
+        if (sp.reachable) anyReachable = true;
+        if (sp.inOpenRoom) anyOpen = true;
+      }
+    }
+    if (!pts.length) continue;
+    const score = (anyReachable ? 1000 : 0) + (anyOpen ? 10 : 4) + totalSpan * 0.5;
+    if (!best || score > best.score) {
+      best = { side, points: pts, score };
+    }
+  }
+
+  if (best) return { side: best.side, points: best.points };
+  const fallbackSide = r.door || 'n';
+  const pts = cells.map(([cx0, cy0, cx1, cy1]) => ({
+    side: fallbackSide,
+    at: {
+      s: [(cx0 + cx1) / 2, cy0],
+      n: [(cx0 + cx1) / 2, cy1],
+      e: [cx1, (cy0 + cy1) / 2],
+      w: [cx0, (cy0 + cy1) / 2],
+    }[fallbackSide],
+  }));
+  return { side: fallbackSide, points: pts };
+}
+
+/**
+ * Resolves the corridor-facing doorway side (`'n' | 's' | 'e' | 'w'`) for any enclosed room.
+ */
+export function resolveRoomDoor(interiorData, floorData, r) {
+  return resolveRoomDoors(interiorData, floorData, r)?.side || null;
+}
+
+/**
+ * Primary doorway threshold & unobstructed interior arrival coordinates for any room `r`.
+ */
+export function roomDoorPortal(interiorData, floorData, r) {
+  const [x0, y0, x1, y1] = r.rect;
+  if (r.open) {
+    // Open L-shaped lecture amphitheatres (`hall_1`, `hall_3` in `bld_e2`): approach via foyer into central aisle
+    const foyer = (floorData?.rooms || []).find((rm) => rm.id === `${r.id}_foyer`);
+    if (foyer) {
+      const fx = (foyer.rect[0] + foyer.rect[2]) / 2;
+      const fy = (foyer.rect[1] + foyer.rect[3]) / 2;
+      const aisleY = (y0 + y1) / 2 + 0.30;
+      return {
+        outside: [fx, fy],
+        threshold: [x0 + 0.85, aisleY],
+        inside: [Math.min(x1 - 2.2, x0 + 3.6), aisleY],
+      };
+    }
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return { outside: [cx, cy], threshold: [cx, cy], inside: [cx, cy] };
+  }
+
+  const resolved = resolveRoomDoors(interiorData, floorData, r);
+  const side = resolved?.side || 'n';
+  const [dx, dy] = resolved?.points?.[0]?.at || [(x0 + x1) / 2, (y0 + y1) / 2];
+  const cells = roomCells(r);
+  const cell = cells.find(([cx0, cy0, cx1, cy1]) => dx >= cx0 - 0.1 && dx <= cx1 + 0.1 && dy >= cy0 - 0.1 && dy <= cy1 + 0.1) || cells[0];
+  const [cx0, cy0, cx1, cy1] = cell;
+  if (side === 'n') return { outside: [dx, dy + 1.15], threshold: [dx, dy], inside: [dx, Math.max(cy0 + 1.3, dy - 2.1)] };
+  if (side === 's') return { outside: [dx, dy - 1.15], threshold: [dx, dy], inside: [dx, Math.min(cy1 - 1.3, dy + 2.1)] };
+  if (side === 'e') return { outside: [dx + 1.15, dy], threshold: [dx, dy], inside: [Math.max(cx0 + 1.3, dx - 2.1), dy] };
+  if (side === 'w') return { outside: [dx - 1.15, dy], threshold: [dx, dy], inside: [Math.min(cx1 - 1.3, dx + 2.1), dy] };
+  return { outside: [dx, dy], threshold: [dx, dy], inside: [dx, dy] };
+}
+
+/**
+ * Splits corridor locker banks cleanly around all nearby room & stairwell doorways so steel lockers stand
+ * along solid wall piers and NEVER block a room doorway.
+ */
+export function lockerSegments(interiorData, floorData, lockerRoom) {
+  const [x0, y0, x1, y1] = lockerRoom.rect;
+  const alongX = (x1 - x0) >= (y1 - y0);
+  const gaps = [];
+  for (const rm of floorData.rooms || []) {
+    if (rm === lockerRoom || rm.open || rm.kind === 'void' || rm.kind === 'locker' || rm.kind === 'lift') continue;
+    if (rm.kind === 'stair') {
+      const sp = stairDoorSpec(interiorData, rm);
+      gaps.push({ at: sp.at, width: sp.doorW + 0.70 });
+      continue;
+    }
+    const resolved = resolveRoomDoors(interiorData, floorData, rm);
+    if (!resolved) continue;
+    for (const pt of resolved.points) {
+      gaps.push({ at: pt.at, width: DOOR_W + 0.70 });
+    }
+  }
+  if (alongX) {
+    const cy = (y0 + y1) / 2;
+    return edgeWithGaps([x0, cy], [x1, cy], gaps)
+      .filter(([ax, , bx]) => bx - ax > 0.25)
+      .map(([ax, , bx]) => [ax, y0, bx, y1]);
+  }
+  const cx = (x0 + x1) / 2;
+  return edgeWithGaps([cx, y0], [cx, y1], gaps)
+    .filter(([, ay, , by]) => by - ay > 0.25)
+    .map(([, ay, , by]) => [x0, ay, x1, by]);
+}
+
 function getPlasterMaterial(tintHex = '#f2ece1', key = 'plaster_in') {
   if (texCache.has(key)) return texCache.get(key);
   const c = document.createElement('canvas');
@@ -110,8 +492,9 @@ function getTravertineMaterial() {
 }
 
 // Shared tiled floor materials (reused across all rooms so GPU texture memory stays < 2 MB total!)
-function getFloorMaterial(finish) {
-  if (texCache.has(`floor_${finish}`)) return texCache.get(`floor_${finish}`);
+function getFloorMaterial(finish, usePolyOffset = true) {
+  const cacheKey = `floor_${finish}_${usePolyOffset ? 1 : 0}`;
+  if (texCache.has(cacheKey)) return texCache.get(cacheKey);
   let m;
   if (finish === 'terrazzo') {
     const c = document.createElement('canvas');
@@ -136,7 +519,7 @@ function getFloorMaterial(finish) {
     tex.repeat.set(0.28, 0.28);
     m = new THREE.MeshStandardMaterial({
       map: tex, roughness: 0.36, metalness: 0.04,
-      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+      ...(usePolyOffset ? { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 } : {}),
     });
   } else if (finish === 'tile_cool' || finish === 'tile_warm' || finish === 'granite') {
     const cool = finish === 'tile_cool';
@@ -174,7 +557,7 @@ function getFloorMaterial(finish) {
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
     });
   }
-  texCache.set(`floor_${finish}`, m);
+  texCache.set(cacheKey, m);
   return m;
 }
 
@@ -329,29 +712,31 @@ function atriumBalustrade(B, [x0, y0, x1, y1]) {
   }
 }
 
-function rectWallsWithDoors(B, r, h, material, F) {
+function rectWallsWithDoors(B, r, dSide, h, material, F, doorPoints = null) {
   const [x0, y0, x1, y1] = r.rect;
   const edges = { s: [x0, y0, x1, y0], e: [x1, y0, x1, y1], n: [x1, y1, x0, y1], w: [x0, y1, x0, y0] };
   const doorW = Math.min(DOOR_W, Math.max(0.95, Math.min(x1 - x0, y1 - y0) * 0.55));
   const doorH = Math.min(DOOR_H, h - 0.45);
-  const doors = roomCells(r)
-    .map(([cx0, cy0, cx1, cy1]) => ({
-      s: [(cx0 + cx1) / 2, cy0],
-      n: [(cx0 + cx1) / 2, cy1],
-      e: [cx1, (cy0 + cy1) / 2],
-      w: [cx0, (cy0 + cy1) / 2],
-    })[r.door])
-    .filter(([x, y]) => (r.door === 'n' || r.door === 's')
-      ? Math.abs(y - (r.door === 'n' ? y1 : y0)) < 0.02
-      : Math.abs(x - (r.door === 'e' ? x1 : x0)) < 0.02);
+  const doors = (doorPoints && doorPoints.length)
+    ? doorPoints.map((p) => p.at)
+    : roomCells(r)
+      .map(([cx0, cy0, cx1, cy1]) => ({
+        s: [(cx0 + cx1) / 2, cy0],
+        n: [(cx0 + cx1) / 2, cy1],
+        e: [cx1, (cy0 + cy1) / 2],
+        w: [cx0, (cy0 + cy1) / 2],
+      })[dSide])
+      .filter(([x, y]) => (dSide === 'n' || dSide === 's')
+        ? Math.abs(y - (dSide === 'n' ? y1 : y0)) < 0.02
+        : Math.abs(x - (dSide === 'e' ? x1 : x0)) < 0.02);
 
   for (const [side, [a, b, c, d]] of Object.entries(edges)) {
-    const gaps = side === r.door ? doors.map((at) => ({ at, width: doorW })) : [];
+    const gaps = side === dSide ? doors.map((at) => ({ at, width: doorW })) : [];
     for (const [ax, ay, bx, by] of edgeWithGaps([a, b], [c, d], gaps)) {
       batchWall(B, ax, ay, bx, by, h, WALL_T, material, h / 2, true, 'wall');
     }
   }
-  const horiz = r.door === 'n' || r.door === 's';
+  const horiz = dSide === 'n' || dSide === 's';
   for (const at of doors) {
     const [ax, ay, bx, by] = horiz
       ? [at[0] - doorW / 2, at[1], at[0] + doorW / 2, at[1]]
@@ -361,7 +746,7 @@ function rectWallsWithDoors(B, r, h, material, F) {
     if (lin && lintelH > 0.55) {
       B.add(glassMat, lin.cx, doorH + 0.28, lin.cz, doorW - 0.12, 0.42, WALL_T + 0.03, 0, lin.ang, 0, false);
     }
-    doorLeaves(F, r.door, at, doorW, doorH);
+    doorLeaves(F, dSide, at, doorW, doorH);
   }
 }
 
@@ -387,13 +772,14 @@ function exteriorWindows(B, segs, clearH) {
 
 // Co-designed structural switchback stair geometry shared between interior.js, collision.js, and route.js.
 // Guarantees 100% open shaft headroom (`>= +2.00 m`) above every step & half-landing on all 4 floors.
-export function stairProfile(rect, rise) {
+export function stairProfile(rect, rise, interiorData = null) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
   const along0 = alongX ? x0 : y0, along1 = alongX ? x1 : y1;
   const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1;
   const L = along1 - along0, W = cross1 - cross0;
-  const eastLanding = Math.min(1.50, L * 0.16);
+  const eastBlocked = alongX && stairEastBlocked(interiorData, rect);
+  const eastLanding = eastBlocked ? 1.65 : Math.min(1.50, L * 0.16);
   const topApron = 0.35; // level bridge apron inside open shaft before slab rim
   const westLanding = Math.min(1.60, L * 0.17);
   const flightStart = along1 - eastLanding - topApron;
@@ -403,8 +789,12 @@ export function stairProfile(rect, rise) {
   const n = nF * 2;
   const run = runLen / nF;
   const width = W * 0.44;
-  const laneA = cross0 + width / 2 + 0.30;
-  const laneB = cross1 - width / 2 - 0.30;
+  // Choose `laneA` closest to the stairwell entrance side so entering Flight 1 is swift & direct
+  const isNorthDoor = eastBlocked && ((y0 + y1) / 2 > -62.5);
+  const lowLane = cross0 + width / 2 + 0.30;
+  const highLane = cross1 - width / 2 - 0.30;
+  const laneA = isNorthDoor ? highLane : lowLane;
+  const laneB = isNorthDoor ? lowLane : highLane;
   const stepRise = rise / n, half = rise / 2;
   const P = (along, cross, h, land) => alongX
     ? { x: along, y: cross, h, ...(land ? { land: true } : {}) }
@@ -421,10 +811,10 @@ export function stairProfile(rect, rise) {
     steps.push(p); walk.push(p);
   }
   // Level top apron step flush at `h = rise` inside shaft cutout before stepping onto East Floor Landing
-  walk.push(P(along1 - eastLanding - 0.10, laneB, rise, true));
+  walk.push(P(along1 - eastLanding - 0.22, laneB, rise, true));
 
   const landings = [
-    { alongC: along0 + westLanding / 2, crossC: (cross0 + cross1) / 2, alongSize: westLanding, crossSize: (laneB - laneA) + width, h: half },
+    { alongC: along0 + westLanding / 2, crossC: (cross0 + cross1) / 2, alongSize: westLanding, crossSize: Math.abs(laneB - laneA) + width, h: half },
     { alongC: along1 - eastLanding - topApron / 2, crossC: laneB, alongSize: topApron + 0.16, crossSize: width, h: rise },
   ];
   const flights = [
@@ -438,8 +828,8 @@ export function stairProfile(rect, rise) {
 }
 
 // Instanced structural reinforced-concrete switchback staircase (treads, nosings, risers, slanted stringers, landing, handrails)
-function stairs(B, rect, rise, collisionWorld = null, floorIndex = 0, levelY = 0) {
-  const prof = stairProfile(rect, rise);
+function stairs(B, rect, rise, interiorData = null, collisionWorld = null, floorIndex = 0, levelY = 0) {
+  const prof = stairProfile(rect, rise, interiorData);
   const { alongX, run, width, n } = prof;
   const stepRise = rise / n;
   const treadMat = mat(0xd8d0c1, 0.52, 0.02);
@@ -577,60 +967,66 @@ function doorSign(text_en, text_ar) {
   return new CSS2DObject(el);
 }
 
-function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr, collisionWorld = null, floorIndex = 0, levelY = 0) {
-  const [x0, y0, x1, y1] = rect;
-  const alongX = (x1 - x0) >= (y1 - y0);
-  const along0 = alongX ? x0 : y0, along1 = alongX ? x1 : y1;
-  const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1;
-  const mid = (cross0 + cross1) / 2;
-  const doorW = 1.60, doorH = 2.30;
-  const pt = (along, cross) => (alongX ? [along, cross] : [cross, along]);
+function stairDoor(group, B, interiorData, stairRoom, wallH, wallMat, floorEn, floorAr, collisionWorld = null, floorIndex = 0, levelY = 0) {
+  const [x0, y0, x1, y1] = stairRoom.rect;
+  const spec = stairDoorSpec(interiorData, stairRoom);
+  const doorW = spec.doorW, doorH = 2.30;
+  const edges = {
+    s: [x0, y0, x1, y0],
+    e: [x1, y0, x1, y1],
+    n: [x1, y1, x0, y1],
+    w: [x0, y1, x0, y0],
+  };
 
-  for (const [a, b] of [
-    [pt(along0, cross0), pt(along0, cross1)],
-    [pt(along0, cross0), pt(along1, cross0)],
-    [pt(along0, cross1), pt(along1, cross1)],
-    [pt(along1, cross0), pt(along1, mid - doorW / 2)],
-    [pt(along1, mid + doorW / 2), pt(along1, cross1)],
-  ]) {
-    batchWall(B, a[0], a[1], b[0], b[1], wallH, WALL_T, wallMat, wallH / 2, true, 'stair_wall');
+  for (const [side, [ax, ay, bx, by]] of Object.entries(edges)) {
+    const gaps = side === spec.side ? [{ at: spec.at, width: doorW }] : [];
+    for (const [sx0, sy0, sx1, sy1] of edgeWithGaps([ax, ay], [bx, by], gaps)) {
+      batchWall(B, sx0, sy0, sx1, sy1, wallH, WALL_T, wallMat, wallH / 2, true, 'stair_wall');
+    }
   }
 
-  const [la, lb] = [pt(along1, mid - doorW / 2), pt(along1, mid + doorW / 2)];
+  const horiz = spec.side === 'n' || spec.side === 's';
+  const [la, lb] = horiz
+    ? [[spec.at[0] - doorW / 2, spec.at[1]], [spec.at[0] + doorW / 2, spec.at[1]]]
+    : [[spec.at[0], spec.at[1] - doorW / 2], [spec.at[0], spec.at[1] + doorW / 2]];
   const lintelH = wallH - doorH;
   batchWall(B, la[0], la[1], lb[0], lb[1], lintelH, WALL_T, wallMat, doorH + lintelH / 2, false, 'door_frame');
 
-  // Double fire-rated oak door leaves folded 90 deg open outside jambs so full 1.60m opening & landing stay clear
+  // Double fire-rated oak door leaves held 180 deg open flush against corridor wall piers (magnetic hold-open)
   const leafW = doorW * 0.5 - 0.03;
   const doorGroup = new THREE.Group();
   doorGroup.name = 'floor-door';
   const woodLeafMat = mat(0x9b7650, 0.65);
   const handleMat = mat(0xadb5bd, 0.35, 0.7);
+  const flushDist = WALL_T * 0.5 + 0.055;
+  const alongOffset = doorW * 0.5 + leafW * 0.5 + 0.06;
   for (const sgn of [-1, 1]) {
-    const [hx, hy] = pt(along1 + WALL_T * 0.5 + leafW * 0.5 + 0.02, mid + sgn * (doorW * 0.5 + 0.04));
+    const hx = horiz ? spec.at[0] + sgn * alongOffset
+      : (spec.side === 'e' ? spec.at[0] + flushDist : spec.at[0] - flushDist);
+    const hy = horiz ? (spec.side === 'n' ? spec.at[1] + flushDist : spec.at[1] - flushDist)
+      : spec.at[1] + sgn * alongOffset;
     const leaf = new THREE.Group();
     leaf.position.set(hx, 0, -hy);
-    if (!alongX) leaf.rotation.y = Math.PI * 0.5;
+    if (!horiz) leaf.rotation.y = Math.PI * 0.5;
     const panel = new THREE.Mesh(new THREE.BoxGeometry(leafW, doorH, 0.055), woodLeafMat);
     panel.position.set(0, doorH / 2, 0);
     const vision = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.72, 0.065), glassMat);
-    vision.position.set(leafW * 0.14, doorH * 0.58, 0);
+    vision.position.set(sgn * leafW * 0.14, doorH * 0.58, 0);
     const handle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.07), handleMat);
-    handle.position.set(leafW * 0.34, 1.02, 0);
+    handle.position.set(sgn * leafW * 0.32, 1.02, 0);
     leaf.add(panel, vision, handle);
     doorGroup.add(leaf);
     if (collisionWorld) {
       collisionWorld.addSolidBox(
         floorIndex, hx, levelY, levelY + doorH, -hy,
-        alongX ? leafW : 0.06, alongX ? 0.06 : leafW, 0, 'door_frame',
+        horiz ? leafW : 0.07, horiz ? 0.07 : leafW, 0, 'door_frame',
       );
     }
   }
   group.add(doorGroup);
 
   const sign = doorSign(floorEn, floorAr);
-  const sp = pt(along1 + 0.42, mid);
-  sign.position.set(sp[0], doorH + 0.35, -sp[1]);
+  sign.position.set(spec.signPos[0], doorH + 0.35, -spec.signPos[1]);
   group.add(sign);
   return sign;
 }
@@ -642,7 +1038,7 @@ function buildLiftCore(B, r, clearH, wallMat) {
   // Solid inner core fill so overhead cutaways never show an empty pit inside the elevator shaft
   B.add(mat(LIFT_BODY, 0.78, 0.04), (x0 + x1) / 2, clearH / 2, -(y0 + y1) / 2, Math.max(0.2, x1 - x0 - 0.16), clearH - 0.04, Math.max(0.2, y1 - y0 - 0.16), 0, 0, 0, true, 'lift');
 
-  const face = r.door || 'e';
+  const face = r.door || ((y0 + y1) / 2 > -62.5 && x0 < 160 ? 'n' : x0 < 160 ? 's' : 'e');
   const steelMat = mat(0xbcc5ce, 0.28, 0.76);
   const frameMat = mat(0x4b535d, 0.42, 0.55);
   const Out = WALL_T / 2 + 0.028;
@@ -723,10 +1119,11 @@ function addCeilingLuminaires(B, f, clearH, ceilingHoleRects = []) {
   }
 }
 
-export function stairShaftHoleRect(rect) {
+export function stairShaftHoleRect(rect, interiorData = null) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
-  return alongX ? [x0 + 0.05, y0 + 0.05, x1 - 1.50, y1 - 0.05] : [x0 + 0.05, y0 + 0.05, x1 - 0.05, y1 - 1.50];
+  const landD = (alongX && stairEastBlocked(interiorData, rect)) ? 1.65 : 1.50;
+  return alongX ? [x0 + 0.05, y0 + 0.05, x1 - landD, y1 - 0.05] : [x0 + 0.05, y0 + 0.05, x1 - 0.05, y1 - landD];
 }
 
 function makeShapeWithHoles(footprint, holeRects) {
@@ -797,13 +1194,13 @@ export function buildInterior(data) {
     const floorHoleRects = f.rooms.filter((r) => r.kind === 'void').map((r) => r.rect);
     if (fi > 0) {
       for (const prevStair of data.floors[fi - 1].rooms.filter((r) => r.kind === 'stair')) {
-        floorHoleRects.push(stairShaftHoleRect(prevStair.rect));
+        floorHoleRects.push(stairShaftHoleRect(prevStair.rect, data));
       }
     }
     const slabShape = makeShapeWithHoles(data.footprint, floorHoleRects);
     const slabGeo = new THREE.ExtrudeGeometry(slabShape, { depth: SLAB, bevelEnabled: false });
     slabGeo.rotateX(-Math.PI / 2);
-    const slab = new THREE.Mesh(slabGeo, mat(0xe6dfd2, 0.85));
+    const slab = new THREE.Mesh(slabGeo, getFloorMaterial('terrazzo', false));
     slab.name = `slab_${f.id}`;
     slab.position.y = -SLAB;
     slab.receiveShadow = true;
@@ -813,7 +1210,7 @@ export function buildInterior(data) {
     const ceilingHoleRects = [];
     if (fi < data.floors.length - 1) {
       for (const curStair of f.rooms.filter((r) => r.kind === 'stair')) {
-        ceilingHoleRects.push(stairShaftHoleRect(curStair.rect));
+        ceilingHoleRects.push(stairShaftHoleRect(curStair.rect, data));
       }
       for (const nextVoid of data.floors[fi + 1].rooms.filter((r) => r.kind === 'void')) {
         ceilingHoleRects.push(nextVoid.rect);
@@ -850,9 +1247,15 @@ export function buildInterior(data) {
 
     for (const r of f.rooms) {
       const [x0, y0, x1, y1] = r.rect;
+      const resolvedDoors = resolveRoomDoors(data, f, r);
+      const inferredDoor = resolvedDoors?.side || null;
+      const roomForFurnish = resolvedDoors
+        ? { ...r, door: inferredDoor, doorPoints: resolvedDoors.points }
+        : r;
+
       if (r.kind === 'void') {
         atriumBalustrade(B, r.rect);
-      } else {
+      } else if (r.kind !== 'locker') {
         const w = x1 - x0, d = y1 - y0;
         if (w > 0.05 && d > 0.05) {
           B.add(
@@ -863,17 +1266,17 @@ export function buildInterior(data) {
         }
       }
 
-      if (!r.open && r.kind !== 'void' && r.kind !== 'lift') {
+      if (!r.open && r.kind !== 'void' && r.kind !== 'lift' && r.kind !== 'locker') {
         if (r.kind === 'stair') {
-          labels.push(stairDoor(g, B, r.rect, clearH, wallMat, f.name_en, f.name_ar, collisionWorld, fi, f.level));
-        } else if (r.door) {
-          rectWallsWithDoors(B, r, clearH, wallMat, furniture);
+          labels.push(stairDoor(g, B, data, r, clearH, wallMat, f.name_en, f.name_ar, collisionWorld, fi, f.level));
+        } else if (inferredDoor) {
+          rectWallsWithDoors(B, r, inferredDoor, clearH, wallMat, furniture, resolvedDoors?.points || null);
         } else {
           rectWalls(B, r.rect, clearH, wallMat, 'wall');
         }
       }
 
-      furnishRoom(furniture, r);
+      furnishRoom(furniture, roomForFurnish);
 
       if (r.split > 1 && r.kind !== 'lift') {
         const alongX = (x1 - x0) >= (y1 - y0);
@@ -889,12 +1292,18 @@ export function buildInterior(data) {
       }
 
       if (r.kind === 'stair' && fi < data.floors.length - 1) {
-        stairs(B, r.rect, rise, collisionWorld, fi, f.level);
+        stairs(B, r.rect, rise, data, collisionWorld, fi, f.level);
       }
       if (r.kind === 'lift') {
         buildLiftCore(B, r, clearH, wallMat);
       } else if (r.kind === 'locker') {
-        B.add(mat(LOCKER_BODY, 0.62, 0.12), (x0 + x1) / 2, 0.91, -(y0 + y1) / 2, x1 - x0, 1.82, y1 - y0, 0, 0, 0, true, 'furniture');
+        for (const [lx0, ly0, lx1, ly1] of lockerSegments(data, f, r)) {
+          B.add(
+            mat(LOCKER_BODY, 0.62, 0.12),
+            (lx0 + lx1) / 2, 0.91, -(ly0 + ly1) / 2,
+            lx1 - lx0, 1.82, ly1 - ly0, 0, 0, 0, true, 'furniture',
+          );
+        }
       }
 
       if (r.nolabel) continue;

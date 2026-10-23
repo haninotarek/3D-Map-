@@ -310,24 +310,54 @@ export function doorLeaves(F, side, at, w, h) {
   }
 }
 
-/** Furnishes a room cell-by-cell according to its academic function. */
+/** Furnishes a room cell-by-cell according to its academic function, keeping all doorways clear. */
 export function furnishRoom(F, r) {
   if (r.unfurnished) return;
   const defaultFront = r.door ? OPP[r.door] : ((r.rect[2] - r.rect[0]) >= (r.rect[3] - r.rect[1]) ? 'e' : 'n');
   const front = r.front || defaultFront;
-  for (const cell of roomCells(r)) {
+  const cells = roomCells(r);
+
+  // Compute doorway clearance zones (`1.45 m` clear vestibule inside each door) so benches/desks never block doors
+  const doorClearZones = Array.isArray(r.doorPoints) && r.doorPoints.length
+    ? r.doorPoints.map(({ side, at: [ax, ay] }) => ({
+      s: [ax, ay + 0.55],
+      n: [ax, ay - 0.55],
+      e: [ax - 0.55, ay],
+      w: [ax + 0.55, ay],
+    })[side])
+    : (r.door ? cells.map(([cx0, cy0, cx1, cy1]) => ({
+      s: [(cx0 + cx1) / 2, cy0 + 0.55],
+      n: [(cx0 + cx1) / 2, cy1 - 0.55],
+      e: [cx1 - 0.55, (cy0 + cy1) / 2],
+      w: [cx0 + 0.55, (cy0 + cy1) / 2],
+    })[r.door]) : []);
+
+  const guardedF = doorClearZones.length ? {
+    box(color, cx, cy, h0, sx, sy, sz, tag = 'furniture') {
+      if (tag !== 'door_frame' && color !== C.rug) {
+        for (const [dx, dy] of doorClearZones) {
+          if (Math.abs(cx - dx) < sx * 0.5 + 1.05 && Math.abs(cy - dy) < sy * 0.5 + 1.05) {
+            return;
+          }
+        }
+      }
+      F.box(color, cx, cy, h0, sx, sy, sz, tag);
+    },
+  } : F;
+
+  for (const cell of cells) {
     const fr = frame(cell, front);
-    if (r.tables) { studyHall(F, fr); continue; }
+    if (r.tables) { studyHall(guardedF, fr); continue; }
     switch (r.kind) {
-      case 'room': classroom(F, fr); break;
-      case 'lab': lab(F, fr); break;
-      case 'drawing': studyHall(F, fr); break;
-      case 'hall': hall(F, fr); break;
-      case 'wc': wc(F, fr); break;
-      case 'office': office(F, fr); break;
-      case 'cafe': cafe(F, fr); break;
-      case 'lobby': lobby(F, fr, r.desk ? frame(cell, OPP[r.desk] || 'e') : null); break;
-      case 'service': service(F, fr, r); break;
+      case 'room': classroom(guardedF, fr); break;
+      case 'lab': lab(guardedF, fr); break;
+      case 'drawing': studyHall(guardedF, fr); break;
+      case 'hall': hall(guardedF, fr); break;
+      case 'wc': wc(guardedF, fr); break;
+      case 'office': office(guardedF, fr); break;
+      case 'cafe': cafe(guardedF, fr); break;
+      case 'lobby': lobby(guardedF, fr, r.desk ? frame(cell, OPP[r.desk] || 'e') : null); break;
+      case 'service': service(guardedF, fr, r); break;
       default: break;
     }
   }

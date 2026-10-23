@@ -1,0 +1,76 @@
+{
+  "base": "http://127.0.0.1:8080/?qa=1",
+  "timestamp": "2026-10-23 14:14:32",
+  "checks": [
+    {
+      "name": "P1_bld_e2_exact_byte_identical_to_reference_branch",
+      "ok": true,
+      "detail": "bytes=14720 vs ref=14720, floorCounts=[14, 29, 25, 21]"
+    },
+    {
+      "name": "P1_bld_e2_floor_G_exact_room_names_ids_and_order",
+      "ok": true,
+      "detail": "floor=G count=14 first=lobby last=off_s_in_e"
+    },
+    {
+      "name": "P1_bld_e2_floor_1_exact_room_names_ids_and_order",
+      "ok": true,
+      "detail": "floor=1 count=29 first=stair_n last=big_room_s"
+    },
+    {
+      "name": "P1_bld_e2_floor_2_exact_room_names_ids_and_order",
+      "ok": true,
+      "detail": "floor=2 count=25 first=stair_n last=lockers_n"
+    },
+    {
+      "name": "P1_bld_e2_floor_3_exact_room_names_ids_and_order",
+      "ok": true,
+      "detail": "floor=3 count=21 first=stair_n last=lockers_s"
+    },
+    {
+      "name": "P1_bld_e1_u_shaped_footprint_and_G_1_verbatim_room_ordering",
+      "ok": true,
+      "detail": "footprintVerts=20, floorCounts=[19, 41, 21, 20]"
+    },
+    {
+      "name": "P2_navigation_data_integrity_and_zero_duplicates_or_orphans",
+      "ok": true,
+      "detail": "validation={'valid': True, 'errors': []}, dupes=[]"
+    },
+    {
+      "name": "P2_invalid_destination_requests_fail_gracefully_without_false_routing",
+      "ok": true,
+      "detail": "invalidRoom={'ok': False, 'unmappedRoom': True, 'buildingId': 'bld_e2', 'steps': ['NonExistentRoom 999 is not on the indoor map yet. Ask at the building lobby.'], 'notes': []}, invalidBuilding={'ok': False, 'steps': ['\u201cUnknown Building XYZ\u201d is not on the campus map yet.']}"
+    },
+    {
+      "name": "P2_P3_all_35_mapped_rooms_arrive_inside_polygon_with_zero_collision_and_full_headroom",
+      "ok": true,
+      "detail": "{'totalIndexRoutes': 35, 'passingIndexRoutes': 35, 'totalClasses': 114, 'verifiedClasses': 114, 'maxPenetration': 0, 'minOverheadClearance': 0.488}"
+    },
+    {
+      "name": "P2_all_114_fall_2026_timetable_classes_proven_navigable_end_to_end",
+      "ok": true,
+      "detail": "114/114 classes verified"
+    },
+    {
+      "name": "P6_P7_independent_camera_collision_blocks_walls_and_ceilings_without_affecting_character",
+      "ok": true,
+      "detail": "{'wallHitDist': 0.974, 'wallClampedZ': 78.726, 'ceilClampedY': 8.59, 'soffitY': 8.85, 'walkerMovedM': 0}"
+    },
+    {
+      "name": "Z01_zero_console_or_network_errors",
+      "ok": true,
+      "detail": "console=[] net=[]"
+    }
+  ],
+  "console_errors": [],
+  "failed_requests": [],
+  "route_audit": {
+    "totalIndexRoutes": 35,
+    "passingIndexRoutes": 35,
+    "totalClasses": 114,
+    "verifiedClasses": 114,
+    "maxPenetration": 0,
+    "minOverheadClearance": 0.488
+  }
+}
