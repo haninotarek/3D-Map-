@@ -24,6 +24,7 @@
     "north_w": [25, -12],
     "garden_s": [80, -9],
     "north_e": [115, -8],
+    "e1_mouth": [118, -1.09],
     "w1_w": [-97, 75],
     "h_s": [-127, 90]
   },
@@ -33,13 +34,13 @@
     ["forecourt", "main_sw"], ["main_sw", "gap_s"], ["gap_s", "hub_w"],
     ["hub_w", "w2_s"], ["w2_s", "s1_n"], ["s1_n", "mid_w"], ["mid_w", "mid_c"],
     ["mid_c", "south_w"], ["south_w", "s2_n"], ["south_w", "s3_n"], ["s3_n", "south_e"], ["south_e", "e2_mouth"],
-    ["mid_c", "north_w"], ["north_w", "garden_s"], ["garden_s", "north_e"],
+    ["mid_c", "north_w"], ["north_w", "garden_s"], ["garden_s", "north_e"], ["north_e", "e1_mouth"],
     ["gap_n", "w1_w"], ["w1_w", "h_s"]
   ],
   "doors": {
     "bld_main": { "node": "forecourt", "at": [-165, -49], "name_en": "west entrance", "name_ar": "المدخل الغربي" },
     "bld_e2": { "node": "e2_mouth", "at": [160.17, -62.3], "name_en": "main entrance, at the end of the west courtyard", "name_ar": "المدخل الرئيسي في آخر الفناء الغربي" },
-    "bld_e1": { "node": "north_e", "at": [122, 5], "estimated": true, "name_en": "west side", "name_ar": "الواجهة الغربية" },
+    "bld_e1": { "node": "e1_mouth", "at": [160.31, -1.09], "name_en": "main entrance, at the end of the west courtyard", "name_ar": "المدخل الرئيسي في آخر الفناء الغربي" },
     "bld_w1": { "node": "w1_w", "at": [-91, 75], "estimated": true, "name_en": "west side", "name_ar": "الواجهة الغربية" },
     "bld_w2": { "node": "w2_s", "at": [-58, -24], "estimated": true, "name_en": "south side", "name_ar": "الواجهة الجنوبية" },
     "bld_s1": { "node": "s1_n", "at": [-57, -66], "estimated": true, "name_en": "north side", "name_ar": "الواجهة الشمالية" },
