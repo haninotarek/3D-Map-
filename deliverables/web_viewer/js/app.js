@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { buildInterior } from './interior.js';
+import { createCollisionWorld } from './collision.js';
 import { createRouter } from './route.js';
 import { createTour } from './tour.js';
 import { createVoice } from './voice.js';
@@ -294,6 +295,7 @@ function setBuildingOnly(on) {
   }
   if (state.controls) {
     state.controls.minDistance = on ? 1.5 : 12;
+    state.controls.maxPolarAngle = on ? Math.PI * 0.88 : Math.PI * 0.495;
   }
   state.router?.setIndoorMode?.(on, state.inside ? state.inside.floor : null);   // hide route splines & off-floor highlights indoors
 }
@@ -302,7 +304,9 @@ async function enterFloor(it, idx, { fly = true } = {}) {
   const interior = state.interiors.get(it.id) || await getInterior(it);
   const wasInside = !!state.inside;
   state.inside = { id: it.id, floor: idx };
-  interior.group.visible = true; interior.setFloor(idx);
+  interior.group.visible = true;
+  if (state.tour?.active) interior.syncCameraCutaway(state.camera.position.y, true);
+  else interior.setFloor(idx, fly ? Infinity : state.camera.position.y);
   it.object.visible = false;
   setBuildingOnly(true);
   togglePanel('info-panel', false);   // keep the floor plan clear; the rail stays
@@ -486,12 +490,35 @@ let tourRes = null;
 const NAV_STATE_AR = {
   IDLE: 'الانتظار', ROUTE_PLANNING: 'تخطيط المسار', WALKING: 'المشي في الحرم',
   ENTERING_DOOR: 'دخول المبنى', CORRIDOR_NAVIGATION: 'في الممر',
-  APPROACHING_STAIRS: 'الاقتراب من السلم', CLIMBING: 'الصعود', FLOOR_LANDING: 'الوصول للدور',
-  ARRIVED: 'وصلت',
+  APPROACHING_STAIRS: 'الاقتراب من السلم', CLIMBING: 'الصعود', DESCENDING: 'النزول',
+  FLOOR_LANDING: 'الوصول للدور', ARRIVED: 'وصلت',
 };
+
+function buildOutdoorCollisionWorld() {
+  const cw = createCollisionWorld(null);
+  // Gate No. 1 central concrete monument pier (`[-205, -52]`, `2.4m x 4.2m x 9.5m`) + north/south guard pavilions
+  cw.addSolidBox(0, -205.0, 0, 9.5, 52.0, 2.6, 4.4, 0, 'gate_pier');
+  cw.addSolidBox(0, -205.0, 0, 6.1, 67.75, 6.2, 9.6, 0, 'guard_pavilion');
+  cw.addSolidBox(0, -205.0, 0, 6.1, 36.25, 6.2, 9.6, 0, 'guard_pavilion');
+  // Gate No. 1 overhead archway beams (`y = 6.6m .. 8.6m`) over both vehicle carriageways
+  cw.addSolidBox(0, -205.0, 6.6, 8.6, 58.35, 2.3, 8.6, 0, 'gate_beam');
+  cw.addSolidBox(0, -205.0, 6.6, 8.6, 45.65, 2.3, 8.6, 0, 'gate_beam');
+  return cw;
+}
+
+function setGateBarrierOpen(open) {
+  const gate = state.items.get('gate_1')?.object;
+  if (!gate) return;
+  gate.traverse((o) => {
+    if (/sliding_gates/i.test(o.name)) {
+      o.position.z = open ? -9.8 : 0; // slide barrier cleanly aside along its track into guard bay
+    }
+  });
+}
 
 async function initRouting() {
   if (!state.paths) return;
+  state.outdoorCollision = buildOutdoorCollisionWorld();
   state.router = createRouter({
     scene: state.scene, net: state.paths, index: state.roomIndex,
     getItem: (id) => state.items.get(id), getInterior,
@@ -500,6 +527,7 @@ async function initRouting() {
   state.tour = createTour({
     scene: state.scene, camera: state.camera, controls: state.controls,
     getInterior: (buildingId) => state.interiors.get(buildingId),
+    getOutdoorCollisionWorld: () => state.outdoorCollision,
     onStep: showTourStep,
     onFloor: (f) => {
       const it = tourRes && state.items.get(tourRes.buildingId);
@@ -553,16 +581,20 @@ async function initRouting() {
 
 function post(msg) { if (window.parent !== window) window.parent.postMessage(msg, location.origin); }
 
-async function showRoute({ building, room, label, lang, roomLabel, buildingLabel }) {
+let lastRouteParams = null;
+
+async function showRoute({ building, room, label, lang, roomLabel, buildingLabel, reverse = false }) {
   if (!state.router) return;
   lang = lang === 'ar' ? 'ar' : 'en';
+  lastRouteParams = { building, room, label, lang, roomLabel, buildingLabel, reverse: Boolean(reverse) };
   state.tour.stop();
   if (state.voice) state.voice.cancel();   // never let a previous route keep talking
   exitInterior();
   if (state.selected) clearSelection();
   ['list-panel', 'help'].forEach((p) => togglePanel(p, false));
-  const res = await state.router.show({ building, room, lang, roomLabel: roomLabel || room });
+  const res = await state.router.show({ building, room, lang, roomLabel: roomLabel || room, reverse: Boolean(reverse) });
   tourRes = res.ok ? res : null;
+  setGateBarrierOpen(res.ok);
   const tt = TOUR_TEXT[lang];
   for (const id of ['route-panel', 'tour-card']) { $(id).dir = lang === 'ar' ? 'rtl' : 'ltr'; $(id).lang = lang; }
   const title = label || roomLabel || room || building || '';
@@ -652,6 +684,7 @@ function clearRoute() {
   if (state.router) state.router.clear();
   if (state.tour) state.tour.stop();
   if (state.voice) state.voice.cancel();
+  setGateBarrierOpen(false);
   ensureLabels();
   tourRes = null;
   exitInterior();
@@ -681,6 +714,9 @@ function loop(now) {
     state.needsRender = true;
   } else if (state.controls.update()) {
     state.needsRender = true;
+  }
+  if (state.inside) {
+    state.interiors.get(state.inside.id)?.syncCameraCutaway?.(state.camera.position.y, Boolean(state.tour?.active));
   }
   const az = state.controls.getAzimuthalAngle();
   $('compass').firstElementChild.style.transform = `rotate(${THREE.MathUtils.radToDeg(az)}deg)`;
@@ -712,7 +748,8 @@ async function main() {
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     setTimeout(ensureLabels, 1000);
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
+    const reverseRoute = () => (lastRouteParams ? showRoute({ ...lastRouteParams, reverse: !lastRouteParams.reverse }) : null);
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, reverseRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
     window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
   } catch (err) {

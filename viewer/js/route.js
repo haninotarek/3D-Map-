@@ -136,47 +136,46 @@ function distToSegment(px, py, ax, ay, bx, by) {
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
-// Exact obstacle field for a building floor: walls, closed rooms, lifts, atrium voids, and split partitions
-function buildFloorObstacleField(interiorData, floorData, allowedRoomIds = new Set()) {
-  const segs = [];
-  const boxes = [];
+// Exact obstacle field for a building floor: walls, closed rooms, lifts, voids, columns, door leaves & furniture
+function buildFloorObstacleField(interiorData, floorData, allowedRoomIds = new Set(), collisionWorld = null, floorIndex = 0) {
   const fp = interiorData.footprint;
-  const entrances = floorData.entrances || [];
-
+  const segs = [];
   for (let i = 0; i < fp.length; i++) {
     const a = fp[i], b = fp[(i + 1) % fp.length];
-    const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
-    const cuts = [];
-    for (const ent of entrances) {
+    const ent = (floorData.entrances || [])[0];
+    if (ent) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
       const t = ((ent.at[0] - a[0]) * dx + (ent.at[1] - a[1]) * dy) / (len * len);
       const px = a[0] + t * dx, py = a[1] + t * dy;
       if (t > 0 && t < 1 && Math.hypot(px - ent.at[0], py - ent.at[1]) < 1.2) {
         const half = (ent.width / 2) / len;
-        cuts.push([Math.max(0, t - half), Math.min(1, t + half)]);
+        segs.push([a[0], a[1], a[0] + dx * Math.max(0, t - half), a[1] + dy * Math.max(0, t - half)]);
+        segs.push([a[0] + dx * Math.min(1, t + half), a[1] + dy * Math.min(1, t + half), b[0], b[1]]);
+        continue;
       }
     }
-    cuts.sort((u, v) => u[0] - v[0]);
-    let s = 0;
-    for (const [c0, c1] of cuts) {
-      if (c0 > s) segs.push([a[0] + dx * s, a[1] + dy * s, a[0] + dx * c0, a[1] + dy * c0]);
-      s = c1;
-    }
-    if (s < 1) segs.push([a[0] + dx * s, a[1] + dy * s, a[0] + dx * 1, a[1] + dy * 1]);
+    segs.push([a[0], a[1], b[0], b[1]]);
   }
 
+  const boxes = [];
   for (const r of floorData.rooms) {
-    if (r.open) continue;
-    const [x0, y0, x1, y1] = r.rect;
-    if (r.kind === 'lift' || r.kind === 'void' || r.kind === 'locker' || !allowedRoomIds.has(r.id)) {
-      boxes.push([x0, y0, x1, y1]);
+    if (r.kind === 'void' || r.kind === 'lift' || r.kind === 'locker') {
+      boxes.push(r.rect);
       continue;
     }
+    if (r.open) continue;
+    if (!allowedRoomIds.has(r.id)) {
+      boxes.push(r.rect);
+      continue;
+    }
+    const [x0, y0, x1, y1] = r.rect;
     const edges = { s: [x0, y0, x1, y0], e: [x1, y0, x1, y1], n: [x1, y1, x0, y1], w: [x0, y1, x0, y0] };
-    let doorSide = r.door, doorAt = null, doorW = ARCH_CONSTANTS.DOOR_W;
+    let doorSide = r.door || null, doorAt = null, doorW = 1.60;
     if (r.kind === 'stair') {
-      doorSide = (x1 - x0) >= (y1 - y0) ? 'e' : 'n';
-      doorAt = stairDoor(r.rect);
-      doorW = 1.25;
+      const alongX = (x1 - x0) >= (y1 - y0);
+      doorSide = alongX ? 'e' : 'n';
+      doorAt = alongX ? [x1, (y0 + y1) / 2] : [(x0 + x1) / 2, y1];
+      doorW = 1.60;
     } else if (r.door) {
       doorAt = roomDoorPortal(r).threshold;
       doorW = Math.min(ARCH_CONSTANTS.DOOR_W, Math.max(0.95, Math.min(x1 - x0, y1 - y0) * 0.55));
@@ -210,12 +209,15 @@ function buildFloorObstacleField(interiorData, floorData, allowedRoomIds = new S
       if (x >= bx0 && x <= bx1 && y >= by0 && y <= by1) return -1;
       minD = Math.min(minD, Math.hypot(Math.max(bx0 - x, 0, x - bx1), Math.max(by0 - y, 0, y - by1)));
     }
-    for (const [ax, ay, bx, by] of segs) minD = Math.min(minD, distToSegment(x, y, ax, ay, bx, by));
+    for (const [ax, ay, bx, by] of segs) minD = Math.min(minD, distToSegment(x, y, ax, ay, bx, by) - ARCH_CONSTANTS.WALL_T * 0.5);
+    if (collisionWorld) {
+      minD = Math.min(minD, collisionWorld.horizontalSurfaceDistance(floorIndex, x, y, floorData.level));
+    }
     return minD;
   }
 
-  function segmentClear(a, b, minClear = 0.42) {
-    const n = Math.max(2, Math.ceil(dist2(a, b) / 0.22));
+  function segmentClear(a, b, minClear = 0.40) {
+    const n = Math.max(2, Math.ceil(dist2(a, b) / 0.20));
     for (let i = 0; i <= n; i++) {
       const t = i / n;
       if (clearanceAt(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t) < minClear) return false;
@@ -227,9 +229,9 @@ function buildFloorObstacleField(interiorData, floorData, allowedRoomIds = new S
 }
 
 // Deterministic 0.5m A* corridor pathfinder + visibility string-pulling smoother
-function planCollisionFreeWalk(interiorData, floorData, startXY, goalXY, allowedRoomIds = new Set()) {
-  const field = buildFloorObstacleField(interiorData, floorData, allowedRoomIds);
-  if (field.segmentClear(startXY, goalXY, 0.55)) return [startXY, goalXY];
+function planCollisionFreeWalk(interiorData, floorData, startXY, goalXY, allowedRoomIds = new Set(), collisionWorld = null, floorIndex = 0) {
+  const field = buildFloorObstacleField(interiorData, floorData, allowedRoomIds, collisionWorld, floorIndex);
+  if (field.segmentClear(startXY, goalXY, 0.52)) return [startXY, goalXY];
 
   const fp = interiorData.footprint;
   const xs = fp.map((p) => p[0]), ys = fp.map((p) => p[1]);
@@ -431,7 +433,11 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     return o;
   }
 
-  async function show({ building, room, lang = 'en', roomLabel }) {
+  let lastReq = null;
+
+  async function show(req = {}) {
+    const { building, room, lang = 'en', roomLabel } = req;
+    lastReq = { ...req };
     clear();
     const t = T[lang] || T.en;
     const r = resolve(building, room);
@@ -479,6 +485,27 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
       floorIndex = r.floorId != null
         ? (typeof r.floorId === 'number' ? r.floorId : data.floors.findIndex((fl) => String(fl.id) === String(r.floorId)))
         : -1;
+      // Direct fallback across all 172 rooms in `bld_e2.json` & `bld_e1.json` (by id, English name, or Arabic name),
+      // preferring exact `req.floorId` if provided and teaching halls/labs/classrooms ahead of duplicate utility rooms
+      if (floorIndex < 0 || !r.roomId) {
+        const qNorm = norm(room), qAlnum = alnum(room);
+        const matchesRoom = (rm) => (
+          norm(rm.id) === qNorm || norm(rm.name_en) === qNorm || norm(rm.name_ar) === qNorm
+          || alnum(rm.id) === qAlnum || alnum(rm.name_en) === qAlnum
+        );
+        const floorOrder = floorIndex >= 0
+          ? [floorIndex]
+          : data.floors.map((_, idx) => idx);
+        let best = null;
+        for (const fi of floorOrder) {
+          for (const rm of data.floors[fi]?.rooms || []) {
+            if (!matchesRoom(rm)) continue;
+            const rank = rm.kind === 'wc' ? 0 : 1;
+            if (!best || rank > best.rank) best = { fi, id: rm.id, rank };
+          }
+        }
+        if (best) { floorIndex = best.fi; r.roomId = best.id; }
+      }
       const ground = data.floors[0];
       const entrance = ground.entrances?.[0];
       const roomName = roomLabel || room;
@@ -533,16 +560,18 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             add(entrance.at, gy, climbStep, 0, 'door');
             add(insideVestibule, gy, climbStep, 0, 'door');
 
-            // 2. Complete Ground-Floor corridor/atrium path to stairwell approach
+            // 2. Complete Ground-Floor corridor/atrium path to stairwell approach (orthogonal to 1.60m doorway)
             const [sx0, sy0, sx1, sy1] = groundStair.rect;
             const gProf = stairProfile(groundStair.rect, data.floors[1].level - ground.level);
-            const stairDoorOut = gProf.alongX ? [sx1 + 1.15, (sy0 + sy1) / 2] : [(sx0 + sx1) / 2, sy1 + 1.15];
-            const gWalk = planCollisionFreeWalk(data, ground, insideVestibule, stairDoorOut, new Set([stairId]));
+            const stairDoorOut = gProf.alongX ? [sx1 + 1.35, (sy0 + sy1) / 2] : [(sx0 + sx1) / 2, sy1 + 1.35];
+            const gWalk = planCollisionFreeWalk(
+              data, ground, insideVestibule, stairDoorOut, new Set([stairId]), interior.collisionWorld, 0,
+            );
             for (let wi = 1; wi < gWalk.length - 1; wi++) {
               add(gWalk[wi], gy, climbStep, 0, 'in');
             }
 
-            // 3. Multi-storey tread-by-tread climb with verified floor landings
+            // 3. Multi-storey tread-by-tread climb inside open shaft with orthogonal doorway & 1.50m East Landings
             let blocked = false;
             for (let k = 0; k < floorIndex && !blocked; k++) {
               const fk = data.floors[k], fk1 = data.floors[k + 1];
@@ -553,12 +582,15 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
               const prof = stairProfile(stair.rect, rise);
               const pt = (along, cross) => (prof.alongX ? [along, cross] : [cross, along]);
               const along1 = prof.alongX ? rx1 : ry1;
-              const doorOut = prof.alongX ? [rx1 + 1.15, (ry0 + ry1) / 2] : [(rx0 + rx1) / 2, ry1 + 1.15];
+              const mid = prof.alongX ? (ry0 + ry1) / 2 : (rx0 + rx1) / 2;
+              const doorOut = pt(along1 + 1.35, mid);
 
               if (k === 0) {
-                // Explicit `APPROACHING_STAIRS` doorway entry before first stair tread
+                // Orthogonal doorway entry cleanly through center of 1.60m double fire doors onto East Landing
                 add(doorOut, fk.level + FLOOR_PATCH_Y, climbStep, k, 'stair_approach');
-                add(pt(along1 - 0.65, prof.laneA), fk.level + FLOOR_PATCH_Y, climbStep, k, 'stair_approach');
+                add(pt(along1, mid), fk.level + FLOOR_PATCH_Y, climbStep, k, 'stair_approach');
+                add(pt(along1 - 0.85, mid), fk.level + FLOOR_PATCH_Y, climbStep, k, 'stair_approach');
+                add(pt(along1 - 1.50, prof.laneA), fk.level + FLOOR_PATCH_Y, climbStep, k, 'stair_approach');
               }
 
               // Step-by-step switchback ascent along exact tread elevations `fk.level + st.h`
@@ -568,12 +600,15 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
 
               const landY = fk1.level + FLOOR_PATCH_Y;
               if (k + 1 < floorIndex) {
-                // Verified intermediate landing inside stairwell shaft (midOutside === 0!)
-                add(pt(along1 - 0.65, prof.laneB), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
-                add(pt(along1 - 0.65, prof.laneA), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                // Verified intermediate landing cleanly inside solid 1.50m East Landing (clear of door leaves & walls!)
+                add(pt(along1 - 1.50, prof.laneB), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                add(pt(along1 - 0.85, mid), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                add(pt(along1 - 1.50, prof.laneA), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
               } else {
-                // Verified destination floor landing -> step cleanly out stairwell doorway
-                add(pt(along1 - 0.55, (prof.laneA + prof.laneB) / 2), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                // Verified destination floor landing -> orthogonal exit through center of 1.60m double fire doors
+                add(pt(along1 - 1.50, prof.laneB), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                add(pt(along1 - 0.85, mid), landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+                add(pt(along1, mid), landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
                 add(doorOut, landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
               }
             }
@@ -583,8 +618,10 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             const destStair = f.rooms.find((x) => x.id === stairId) || groundStair;
             const [dx0, dy0, dx1, dy1] = destStair.rect;
             const dAlongX = (dx1 - dx0) >= (dy1 - dy0);
-            const destDoorOut = dAlongX ? [dx1 + 1.15, (dy0 + dy1) / 2] : [(dx0 + dx1) / 2, dy1 + 1.15];
-            const dWalk = planCollisionFreeWalk(data, f, destDoorOut, portal.outside, new Set([target.id, stairId]));
+            const destDoorOut = dAlongX ? [dx1 + 1.35, (dy0 + dy1) / 2] : [(dx0 + dx1) / 2, dy1 + 1.35];
+            const dWalk = planCollisionFreeWalk(
+              data, f, destDoorOut, portal.outside, new Set([target.id, stairId]), interior.collisionWorld, floorIndex,
+            );
             for (let wi = 1; wi < dWalk.length; wi++) {
               add(dWalk[wi], fy, floorStep, floorIndex, 'in');
             }
@@ -592,7 +629,9 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
             add(portal.inside, fy, floorStep, floorIndex, 'in');
           } else {
             // Ground-floor destination: doorway entry -> collision-free ground corridors -> open room doorway -> inside room
-            const gWalk = planCollisionFreeWalk(data, ground, insideVestibule, portal.outside, new Set([target.id]));
+            const gWalk = planCollisionFreeWalk(
+              data, ground, insideVestibule, portal.outside, new Set([target.id]), interior.collisionWorld, 0,
+            );
             const turnRef = gWalk.length > 2 ? gWalk[1] : portal.outside;
             const turn = turnSide(entrance.at, insideVestibule, turnRef);
             const groundStep = steps.length;
@@ -612,6 +651,43 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
       }
     } else if (room) {
       notes.push(t.noInterior);
+    }
+
+    // Optional Reverse / Stair-Descent Route mode (`req.reverse === true`):
+    // Walks from inside destination room -> corridor -> step-by-step concrete stair descent -> Ground Atrium -> Gate!
+    if (req.reverse && track.length > 2) {
+      const origKinds = track.map((ptObj) => ptObj.kind);
+      const origFloors = track.map((ptObj) => ptObj.floor);
+      track.reverse();
+      origKinds.reverse();
+      origFloors.reverse();
+      for (let idx = 1; idx < track.length; idx++) {
+        // Segment `[idx - 1 -> idx]` corresponds to original forward segment `[origIdx -> origIdx - 1]`
+        track[idx].kind = origKinds[idx - 1];
+        track[idx].floor = origFloors[idx - 1];
+      }
+      steps.length = 0;
+      cues.length = 0;
+      const roomLabelClean = roomLabel || room || bName;
+      if (lang === 'ar') {
+        steps.push(`اخرج من ${roomLabelClean} واتجه لباب السلم.`);
+        if (floorIndex > 0) steps.push('انزل السلم خطوة خطوة لحد الدور الأرضي، وبعدين اخرج من المدخل الرئيسي.');
+        steps.push('كمّل المشي في ساحة الجامعة لحد البوابة الرئيسية رقم ١.');
+      } else {
+        steps.push(`Exit ${roomLabelClean} and walk along the corridor to the stairwell.`);
+        if (floorIndex > 0) steps.push('Walk down the stairs floor by floor to the Ground Floor atrium, then exit the main entrance.');
+        steps.push('Continue across the campus plaza back to Gate No. 1.');
+      }
+      if (floorIndex > 0) cues.push('corridor', 'to_stairs', 'gate');
+      else cues.push('corridor', 'gate');
+      track.forEach((ptObj) => {
+        if (ptObj.kind === 'stair') ptObj.descent = true;
+        if (floorIndex > 0) {
+          ptObj.step = ptObj.kind === 'out' ? 2 : (ptObj.floor === floorIndex && ptObj.kind === 'in' ? 0 : 1);
+        } else {
+          ptObj.step = ptObj.kind === 'out' ? 1 : 0;
+        }
+      });
     }
 
     // Visual route tubes (lifted slightly above ground ONLY for visual tube mesh; hidden automatically inside buildings)
@@ -644,9 +720,15 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     };
 
     const firstIndoor = track.findIndex((x) => x.kind !== 'out');
+    const firstOutdoorAfterIndoor = firstIndoor >= 0
+      ? track.findIndex((x, idx) => idx > firstIndoor && x.kind === 'out')
+      : -1;
     if (firstIndoor > 0) {
       outdoorTube = makeTube(track.slice(0, firstIndoor + 1).map((x) => x.p), 'route-outdoor');
       indoorTube = makeTube(track.slice(firstIndoor).map((x) => x.p), 'route-indoor');
+    } else if (firstIndoor === 0 && firstOutdoorAfterIndoor > 0) {
+      indoorTube = makeTube(track.slice(0, firstOutdoorAfterIndoor + 1).map((x) => x.p), 'route-indoor');
+      outdoorTube = makeTube(track.slice(firstOutdoorAfterIndoor).map((x) => x.p), 'route-outdoor');
     } else if (firstIndoor === 0) {
       indoorTube = makeTube(pts, 'route-indoor');
     } else {
@@ -690,5 +772,7 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
     };
   }
 
-  return { show, clear, resolve, setIndoorMode, get active() { return !!curve; } };
+  const showReverse = () => (lastReq ? show({ ...lastReq, reverse: !lastReq.reverse }) : null);
+
+  return { show, showReverse, clear, resolve, setIndoorMode, get active() { return !!curve; } };
 }

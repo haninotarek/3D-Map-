@@ -46,13 +46,14 @@ const mat = (c) => {
 };
 
 /** Collects axis-aligned architectural/furniture boxes per material, then builds InstancedMeshes. */
-export function createFurnisher() {
+export function createFurnisher(onBox = null) {
   const boxes = new Map();
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
-  function box(color, cx, cy, h0, sx, sy, sz) {
+  function box(color, cx, cy, h0, sx, sy, sz, tag = 'furniture') {
     if (sx <= 0.005 || sy <= 0.005 || sz <= 0.005) return;
     if (!boxes.has(color)) boxes.set(color, []);
     boxes.get(color).push([cx, cy, h0, sx, sy, sz]);
+    if (onBox && color !== C.rug) onBox(cx, cy, h0, sx, sy, sz, tag);
   }
   function build(group) {
     for (const [color, list] of boxes) {
@@ -105,10 +106,10 @@ function frame([x0, y0, x1, y1], front) {
   return { at, size, depth, width, front };
 }
 
-function put(F, fr, color, u, v, h0, su, sv, sz) {
+function put(F, fr, color, u, v, h0, su, sv, sz, tag = 'furniture') {
   const [x, y] = fr.at(u, v);
   const [sx, sy] = fr.size(su, sv);
-  F.box(color, x, y, h0, sx, sy, sz);
+  F.box(color, x, y, h0, sx, sy, sz, tag);
 }
 
 function table(F, fr, u, v, su, sv, h = 0.74) {
@@ -155,7 +156,7 @@ function classroom(F, fr) {
   }
 }
 
-/** Computer & engineering lab: perimeter workstation benches + monitors, keeping central entry clear. */
+/** Computer & engineering lab: perimeter workstation benches + set-back center bench, keeping entry vestibule clear. */
 function lab(F, fr) {
   if (fr.depth < 4 || fr.width < 4) return;
   board(F, fr, Math.min(3.4, fr.width - 1.8));
@@ -176,9 +177,10 @@ function lab(F, fr) {
     table(F, fr, (u0 + u1) / 2, v, len, 0.72);
     for (let u = u0 + 0.6; u <= u1 - 0.5; u += 1.15) pcs(u, v, side);
   }
-  if (fr.width > 7.2) {
-    table(F, fr, (u0 + u1) / 2 + 0.4, 0, Math.max(1.4, len - 1.6), 1.35);
-    for (let u = u0 + 1.4; u <= u1 - 0.9; u += 1.15) { pcs(u, 0.34, -1); pcs(u, -0.34, 1); }
+  const c0 = -fr.depth / 2 + 3.35;
+  if (fr.width > 7.2 && u1 - c0 >= 1.6) {
+    table(F, fr, (c0 + u1) / 2, 0, u1 - c0, 1.35);
+    for (let u = c0 + 0.55; u <= u1 - 0.55; u += 1.15) { pcs(u, 0.34, -1); pcs(u, -0.34, 1); }
   }
 }
 
@@ -220,28 +222,31 @@ function hall(F, fr) {
 }
 
 function wc(F, fr) {
-  const back = -fr.depth / 2;
+  // Stalls along far wall (+fr.depth/2), keeping front entrance vestibule completely clear
+  const far = fr.depth / 2;
   const n = Math.max(2, Math.floor((fr.width - 0.4) / 1.05));
   const w = (fr.width - 0.4) / n;
-  for (let i = 0; i <= n; i++) put(F, fr, C.partition, back + 0.8, -fr.width / 2 + 0.2 + i * w, 0.15, 1.5, 0.04, 1.85);
+  for (let i = 0; i <= n; i++) put(F, fr, C.partition, far - 0.8, -fr.width / 2 + 0.2 + i * w, 0.15, 1.5, 0.04, 1.85);
   for (let i = 0; i < n; i++) {
     const v = -fr.width / 2 + 0.2 + (i + 0.5) * w;
-    put(F, fr, C.partition, back + 1.55, v, 0.15, 0.04, w - 0.72, 1.85);
-    put(F, fr, C.sink, back + 0.3, v, 0, 0.58, 0.38, 0.42);
+    put(F, fr, C.partition, far - 1.55, v, 0.15, 0.04, w - 0.72, 1.85);
+    put(F, fr, C.sink, far - 0.3, v, 0, 0.58, 0.38, 0.42);
   }
-  if (fr.depth > 3.6) {
-    put(F, fr, C.sink, -back - 0.32, 0, 0.82, 0.52, fr.width * 0.58, 0.08);
-    put(F, fr, C.chrome, -back - 0.05, 0, 1.18, 0.03, fr.width * 0.54, 0.78);
+  if (fr.depth > 3.6 && fr.width > 3.2) {
+    put(F, fr, C.sink, 0, fr.width / 2 - 0.30, 0.82, Math.min(2.2, fr.depth * 0.42), 0.48, 0.08);
+    put(F, fr, C.chrome, 0, fr.width / 2 - 0.05, 1.18, Math.min(2.1, fr.depth * 0.40), 0.03, 0.78);
   }
 }
 
 function office(F, fr) {
   if (fr.depth < 3.5 || fr.width < 3.0) return;
-  const u = fr.depth / 2 - 1.8;
+  const u = fr.depth / 2 - 1.35;
   table(F, fr, u, 0, 0.8, Math.min(1.6, fr.width - 1.2));
   chair(F, fr, u + 0.62, 0, 1);
-  chair(F, fr, u - 0.72, -0.45, -1);
-  chair(F, fr, u - 0.72, 0.45, -1);
+  if (fr.depth >= 5.2) {
+    chair(F, fr, u - 0.72, -0.45, -1);
+    chair(F, fr, u - 0.72, 0.45, -1);
+  }
   put(F, fr, C.cabinet, fr.depth / 2 - 0.3, fr.width / 2 - 0.65, 0, 0.44, 0.95, 1.9);
   put(F, fr, C.cabinet, fr.depth / 2 - 0.3, -fr.width / 2 + 0.65, 0, 0.44, 0.95, 1.9);
 }
@@ -250,8 +255,9 @@ function cafe(F, fr) {
   put(F, fr, C.counter, fr.depth / 2 - 0.65, 0, 0, 0.7, fr.width * 0.62, 1.05);
   put(F, fr, C.darkWood, fr.depth / 2 - 0.65, 0, 1.05, 0.8, fr.width * 0.62 + 0.1, 0.05);
   put(F, fr, C.cabinet, fr.depth / 2 - 0.25, 0, 1.0, 0.38, fr.width * 0.52, 1.35);
-  for (let u = -fr.depth / 2 + 1.4; u <= fr.depth / 2 - 2.5; u += 2.0) {
+  for (let u = -fr.depth / 2 + 1.6; u <= fr.depth / 2 - 2.5; u += 2.0) {
     for (let v = -fr.width / 2 + 1.3; v <= fr.width / 2 - 1.2; v += 2.1) {
+      if (Math.abs(v) < 0.95) continue; // clear central walkway from cafe doorway to counter
       table(F, fr, u, v, 0.82, 0.82);
       chair(F, fr, u - 0.62, v, -1);
       chair(F, fr, u + 0.62, v, 1);
@@ -261,16 +267,17 @@ function cafe(F, fr) {
 
 function lobby(F, fr, desk) {
   if (!desk) return;
-  const u = fr.depth / 2 - 1.5;
-  put(F, fr, C.counter, u, 0, 0, 0.65, 3.2, 1.08);
-  put(F, fr, C.darkWood, u, 0, 1.08, 0.78, 3.32, 0.05);
-  chair(F, fr, u + 0.72, -0.6, 1);
-  chair(F, fr, u + 0.72, 0.6, 1);
+  // Reception desk against the east feature wall facing incoming visitors, clear of entrance & stair paths
+  const u = desk.depth / 2 - 1.65;
+  put(F, desk, C.counter, u, 0, 0, 0.65, 3.2, 1.08);
+  put(F, desk, C.darkWood, u, 0, 1.08, 0.78, 3.32, 0.05);
+  chair(F, desk, u + 0.72, -0.6, 1);
+  chair(F, desk, u + 0.72, 0.6, 1);
   for (const side of [-1, 1]) {
-    put(F, fr, C.sofa, -fr.depth / 4, side * (fr.width / 2 - 0.55), 0, 2.0, 0.6, 0.44);
-    put(F, fr, C.sofa, -fr.depth / 4, side * (fr.width / 2 - 0.26), 0.44, 2.0, 0.12, 0.38);
-    put(F, fr, C.pot, fr.depth / 2 - 0.55, side * (fr.width / 2 - 0.55), 0, 0.42, 0.42, 0.42);
-    put(F, fr, C.plant, fr.depth / 2 - 0.55, side * (fr.width / 2 - 0.55), 0.42, 0.58, 0.58, 0.88);
+    put(F, desk, C.sofa, desk.depth / 4, side * (desk.width / 2 - 0.55), 0, 2.0, 0.6, 0.44);
+    put(F, desk, C.sofa, desk.depth / 4, side * (desk.width / 2 - 0.26), 0.44, 2.0, 0.12, 0.38);
+    put(F, desk, C.pot, desk.depth / 2 - 0.55, side * (desk.width / 2 - 0.55), 0, 0.42, 0.42, 0.42);
+    put(F, desk, C.plant, desk.depth / 2 - 0.55, side * (desk.width / 2 - 0.55), 0.42, 0.58, 0.58, 0.88);
   }
 }
 
@@ -289,17 +296,17 @@ function service(F, fr, r) {
 export function doorLeaves(F, side, at, w, h) {
   const fr = frame([at[0] - 1, at[1] - 1, at[0] + 1, at[1] + 1], OPP[side] || 'n');
   const leaf = w / 2 - 0.03;
-  // Architectural door jambs on left & right of opening
+  // Architectural door jambs on left & right of opening + overhead transom header
   for (const sgn of [-1, 1]) {
-    put(F, fr, C.doorFrame, 0, sgn * (w / 2 + 0.03), 0, 0.25, 0.07, h + 0.06);
+    put(F, fr, C.doorFrame, 0, sgn * (w / 2 + 0.045), 0, 0.25, 0.07, h + 0.06, 'door_frame');
   }
-  put(F, fr, C.doorFrame, 0, 0, h, 0.25, w + 0.18, 0.07);
-  // Open double door leaves folded cleanly back into the room
+  put(F, fr, C.doorFrame, 0, 0, h, 0.25, w + 0.22, 0.08, 'door_frame');
+  // Open double door leaves folded cleanly flush along +/- (w / 2 + 0.03) leaving full `w` aperture unobstructed
   for (const sgn of [-1, 1]) {
-    put(F, fr, C.door, leaf / 2 + 0.05, sgn * (w / 2 - 0.04), 0.01, leaf, 0.05, h - 0.02);
-    put(F, fr, C.glass, leaf * 0.58, sgn * (w / 2 - 0.04), h * 0.50, 0.14, 0.06, 0.72);
-    put(F, fr, C.chrome, leaf * 0.82, sgn * (w / 2 - 0.075), 1.02, 0.04, 0.12, 0.035);
-    put(F, fr, C.chrome, leaf / 2 + 0.05, sgn * (w / 2 - 0.04), 0.01, leaf * 0.92, 0.055, 0.16);
+    put(F, fr, C.door, leaf / 2 + 0.06, sgn * (w / 2 + 0.03), 0.01, leaf, 0.05, h - 0.02, 'door_frame');
+    put(F, fr, C.glass, leaf * 0.58, sgn * (w / 2 + 0.03), h * 0.50, 0.14, 0.06, 0.72, 'door_frame');
+    put(F, fr, C.chrome, leaf * 0.82, sgn * (w / 2 - 0.01), 1.02, 0.04, 0.08, 0.035, 'door_frame');
+    put(F, fr, C.chrome, leaf / 2 + 0.06, sgn * (w / 2 + 0.03), 0.01, leaf * 0.92, 0.055, 0.16, 'door_frame');
   }
 }
 
@@ -319,7 +326,7 @@ export function furnishRoom(F, r) {
       case 'wc': wc(F, fr); break;
       case 'office': office(F, fr); break;
       case 'cafe': cafe(F, fr); break;
-      case 'lobby': lobby(F, fr, r.desk ? frame(cell, r.desk) : null); break;
+      case 'lobby': lobby(F, fr, r.desk ? frame(cell, OPP[r.desk] || 'e') : null); break;
       case 'service': service(F, fr, r); break;
       default: break;
     }

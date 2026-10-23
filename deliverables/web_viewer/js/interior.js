@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createFurnisher, furnishRoom, doorLeaves, roomCells } from './furniture.js';
+import { createCollisionWorld } from './collision.js';
 
 const KIND_FLOOR = {
   lobby: 'terrazzo',
@@ -197,13 +198,25 @@ function getAcousticCeilingMaterial() {
   const m = new THREE.MeshStandardMaterial({
     map: tex,
     color: 0xf7f5f0,
-    emissive: 0x2c2a26,
-    emissiveIntensity: 0.34,
-    roughness: 0.92,
+    emissive: 0x35322d,
+    emissiveIntensity: 0.38,
+    roughness: 0.90,
     metalness: 0.0,
-    side: THREE.BackSide,
+    side: THREE.DoubleSide,
   });
   texCache.set('ceiling_grid', m);
+  return m;
+}
+
+function createCeilingMaterial(cutUniform) {
+  const m = getAcousticCeilingMaterial().clone();
+  m.onBeforeCompile = (shader) => {
+    shader.uniforms.uCutaway = cutUniform;
+    shader.fragmentShader = 'uniform float uCutaway;\n' + shader.fragmentShader.replace(
+      '#include <clipping_planes_fragment>',
+      '#include <clipping_planes_fragment>\n\tif (uCutaway > 0.5) discard;',
+    );
+  };
   return m;
 }
 
@@ -232,16 +245,21 @@ const ledPanelMat = new THREE.MeshStandardMaterial({
 });
 
 // Fast per-floor instanced box batcher (supports arbitrary 3D position, Euler rotation, and scale)
-function createArchBatcher() {
+function createArchBatcher(collisionWorld = null, floorIndex = 0, levelY = 0) {
   const buckets = new Map();
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), eul = new THREE.Euler();
   const p = new THREE.Vector3(), s = new THREE.Vector3();
 
-  function add(material, px, py, pz, sx, sy, sz, rx = 0, ry = 0, rz = 0, collide = false) {
+  function add(material, px, py, pz, sx, sy, sz, rx = 0, ry = 0, rz = 0, collide = false, tag = 'wall') {
     if (sx <= 0.004 || sy <= 0.004 || sz <= 0.004) return;
     let bucket = buckets.get(material);
     if (!bucket) { bucket = { collide: false, list: [] }; buckets.set(material, bucket); }
-    if (collide) bucket.collide = true;
+    if (collide) {
+      bucket.collide = true;
+      if (collisionWorld && tag && Math.abs(rx) < 0.05 && Math.abs(rz) < 0.05) {
+        collisionWorld.addSolidBox(floorIndex, px, levelY + py - sy * 0.5, levelY + py + sy * 0.5, pz, sx, sz, ry, tag);
+      }
+    }
     bucket.list.push([px, py, pz, sx, sy, sz, rx, ry, rz]);
   }
 
@@ -267,13 +285,13 @@ function createArchBatcher() {
   return { add, flush };
 }
 
-function batchWall(B, ax, ay, bx, by, h, t, material, yCenter = h / 2, withTrim = true) {
+function batchWall(B, ax, ay, bx, by, h, t, material, yCenter = h / 2, withTrim = true, tag = 'wall') {
   const dx = bx - ax, dz = -(by - ay);
   const len = Math.hypot(dx, dz);
   if (len < 0.05 || h <= 0.02) return null;
   const cx = (ax + bx) / 2, cz = -(ay + by) / 2;
   const ang = -Math.atan2(dz, dx);
-  B.add(material, cx, yCenter, cz, len + t, h, t, 0, ang, 0, true);
+  B.add(material, cx, yCenter, cz, len + t, h, t, 0, ang, 0, true, tag);
   if (withTrim && h > 2.4) {
     const skirtH = 0.085;
     B.add(mat(SKIRT_COLOR, 0.55), cx, skirtH / 2, cz, len + t + 0.016, skirtH, t + 0.028, 0, ang, 0, false);
@@ -284,9 +302,9 @@ function batchWall(B, ax, ay, bx, by, h, t, material, yCenter = h / 2, withTrim 
   return { cx, cz, ang };
 }
 
-function rectWalls(B, [x0, y0, x1, y1], h, material) {
+function rectWalls(B, [x0, y0, x1, y1], h, material, tag = 'wall') {
   for (const [a, b, c, d] of [[x0, y0, x1, y0], [x1, y0, x1, y1], [x1, y1, x0, y1], [x0, y1, x0, y0]]) {
-    batchWall(B, a, b, c, d, h, WALL_T, material, h / 2, true);
+    batchWall(B, a, b, c, d, h, WALL_T, material, h / 2, true, tag);
   }
 }
 
@@ -299,8 +317,9 @@ function atriumBalustrade(B, [x0, y0, x1, y1]) {
     if (len < 0.1) continue;
     const ang = -Math.atan2(dz, dx);
     const cx = (ax + bx) / 2, cz = -(ay + by) / 2;
-    B.add(getTravertineMaterial(), cx, 0.06, cz, len + 0.14, 0.12, 0.14, 0, ang, 0, true);
-    B.add(railGlassMat, cx, 0.12 + (railH - 0.18) / 2, cz, len, railH - 0.18, 0.03, 0, ang, 0, false);
+    // Register full 1.08 m safety guardrail barrier into 3D character collision world
+    B.add(getTravertineMaterial(), cx, 0.06, cz, len + 0.14, 0.12, 0.14, 0, ang, 0, false);
+    B.add(railGlassMat, cx, railH * 0.5, cz, len + 0.10, railH, 0.14, 0, ang, 0, true, 'railing');
     B.add(steelMat, cx, railH, cz, len + 0.12, 0.055, 0.075, 0, ang, 0, false);
     const nPosts = Math.max(2, Math.round(len / 1.8) + 1);
     for (let i = 0; i < nPosts; i++) {
@@ -329,7 +348,7 @@ function rectWallsWithDoors(B, r, h, material, F) {
   for (const [side, [a, b, c, d]] of Object.entries(edges)) {
     const gaps = side === r.door ? doors.map((at) => ({ at, width: doorW })) : [];
     for (const [ax, ay, bx, by] of edgeWithGaps([a, b], [c, d], gaps)) {
-      batchWall(B, ax, ay, bx, by, h, WALL_T, material, h / 2, true);
+      batchWall(B, ax, ay, bx, by, h, WALL_T, material, h / 2, true, 'wall');
     }
   }
   const horiz = r.door === 'n' || r.door === 's';
@@ -338,7 +357,7 @@ function rectWallsWithDoors(B, r, h, material, F) {
       ? [at[0] - doorW / 2, at[1], at[0] + doorW / 2, at[1]]
       : [at[0], at[1] - doorW / 2, at[0], at[1] + doorW / 2];
     const lintelH = h - doorH;
-    const lin = batchWall(B, ax, ay, bx, by, lintelH, WALL_T, material, doorH + lintelH / 2, false);
+    const lin = batchWall(B, ax, ay, bx, by, lintelH, WALL_T, material, doorH + lintelH / 2, false, 'door_frame');
     if (lin && lintelH > 0.55) {
       B.add(glassMat, lin.cx, doorH + 0.28, lin.cz, doorW - 0.12, 0.42, WALL_T + 0.03, 0, lin.ang, 0, false);
     }
@@ -366,46 +385,60 @@ function exteriorWindows(B, segs, clearH) {
   }
 }
 
-// Switchback stair geometry shared between interior.js and route.js
+// Co-designed structural switchback stair geometry shared between interior.js, collision.js, and route.js.
+// Guarantees 100% open shaft headroom (`>= +2.00 m`) above every step & half-landing on all 4 floors.
 export function stairProfile(rect, rise) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
   const along0 = alongX ? x0 : y0, along1 = alongX ? x1 : y1;
   const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1;
   const L = along1 - along0, W = cross1 - cross0;
-  const landingDepth = Math.min(1.8, L * 0.2);
-  const runLen = L - landingDepth;
+  const eastLanding = Math.min(1.50, L * 0.16);
+  const topApron = 0.35; // level bridge apron inside open shaft before slab rim
+  const westLanding = Math.min(1.60, L * 0.17);
+  const flightStart = along1 - eastLanding - topApron;
+  const flightEnd = along0 + westLanding;
+  const runLen = Math.max(2.4, flightStart - flightEnd);
   const nF = Math.max(4, Math.round(Math.max(8, Math.round(Math.abs(rise) / 0.22)) / 2));
   const n = nF * 2;
   const run = runLen / nF;
-  const width = W * 0.45;
-  const laneA = cross0 + width / 2 + 0.3;
-  const laneB = cross1 - width / 2 - 0.3;
+  const width = W * 0.44;
+  const laneA = cross0 + width / 2 + 0.30;
+  const laneB = cross1 - width / 2 - 0.30;
   const stepRise = rise / n, half = rise / 2;
   const P = (along, cross, h, land) => alongX
     ? { x: along, y: cross, h, ...(land ? { land: true } : {}) }
     : { x: cross, y: along, h, ...(land ? { land: true } : {}) };
   const steps = [], walk = [];
   for (let i = 0; i < nF; i++) {
-    const p = P(along1 - run * (i + 0.5), laneA, stepRise * (i + 1));
+    const p = P(flightStart - run * (i + 0.5), laneA, stepRise * (i + 1));
     steps.push(p); walk.push(p);
   }
-  walk.push(P(along0 + landingDepth / 2, laneA, half, true));
-  walk.push(P(along0 + landingDepth / 2, laneB, half, true));
+  walk.push(P(along0 + westLanding * 0.55, laneA, half, true));
+  walk.push(P(along0 + westLanding * 0.55, laneB, half, true));
   for (let j = 0; j < nF; j++) {
-    const p = P(along0 + landingDepth + run * (j + 0.5), laneB, half + stepRise * (j + 1));
+    const p = P(flightEnd + run * (j + 0.5), laneB, half + stepRise * (j + 1));
     steps.push(p); walk.push(p);
   }
-  const landings = [{ alongC: along0 + landingDepth / 2, crossC: (cross0 + cross1) / 2, alongSize: landingDepth, crossSize: (laneB - laneA) + width, h: half }];
-  const flights = [
-    { from: along1, to: along0 + landingDepth, cross: laneA, hFrom: 0, hTo: half },
-    { from: along0 + landingDepth, to: along1, cross: laneB, hFrom: half, hTo: rise },
+  // Level top apron step flush at `h = rise` inside shaft cutout before stepping onto East Floor Landing
+  walk.push(P(along1 - eastLanding - 0.10, laneB, rise, true));
+
+  const landings = [
+    { alongC: along0 + westLanding / 2, crossC: (cross0 + cross1) / 2, alongSize: westLanding, crossSize: (laneB - laneA) + width, h: half },
+    { alongC: along1 - eastLanding - topApron / 2, crossC: laneB, alongSize: topApron + 0.16, crossSize: width, h: rise },
   ];
-  return { steps, walk, flights, landings, alongX, n, run, width, laneA, laneB, landingDepth };
+  const flights = [
+    { from: flightStart, to: flightEnd, cross: laneA, hFrom: 0, hTo: half },
+    { from: flightEnd, to: flightStart, cross: laneB, hFrom: half, hTo: rise },
+  ];
+  return {
+    steps, walk, flights, landings, alongX, along0, along1, cross0, cross1,
+    n, run, width, laneA, laneB, landingDepth: westLanding, eastLanding, topApron, flightStart, flightEnd,
+  };
 }
 
 // Instanced structural reinforced-concrete switchback staircase (treads, nosings, risers, slanted stringers, landing, handrails)
-function stairs(B, rect, rise) {
+function stairs(B, rect, rise, collisionWorld = null, floorIndex = 0, levelY = 0) {
   const prof = stairProfile(rect, rise);
   const { alongX, run, width, n } = prof;
   const stepRise = rise / n;
@@ -435,6 +468,15 @@ function stairs(B, rect, rise) {
     );
   });
 
+  // Ground transition step apron at start of Flight 1 so first tread joins flush with East Landing
+  const [ax, ay, az] = alongX
+    ? [prof.along1 - prof.eastLanding - prof.topApron / 2, -0.11, -prof.laneA]
+    : [prof.laneA, -0.11, -(prof.along1 - prof.eastLanding - prof.topApron / 2)];
+  B.add(
+    treadMat, ax, ay, az,
+    alongX ? prof.topApron + 0.16 : width, 0.22, alongX ? width : prof.topApron + 0.16,
+  );
+
   const landingThick = 0.22;
   for (const l of prof.landings) {
     B.add(
@@ -442,6 +484,14 @@ function stairs(B, rect, rise) {
       alongX ? l.alongC : l.crossC, l.h - landingThick / 2, -(alongX ? l.crossC : l.alongC),
       alongX ? l.alongSize + 0.12 : l.crossSize, landingThick, alongX ? l.crossSize : l.alongSize + 0.12,
     );
+    if (collisionWorld && Math.abs(l.h - rise * 0.5) < 0.2) {
+      collisionWorld.addStairSoffit(
+        floorIndex, alongX,
+        l.crossC - l.crossSize * 0.5, l.crossC + l.crossSize * 0.5,
+        l.alongC - l.alongSize * 0.5, l.alongC + l.alongSize * 0.5,
+        levelY + l.h - landingThick, levelY + l.h - landingThick,
+      );
+    }
   }
 
   const railMat = mat(0x46525f, 0.36, 0.65);
@@ -462,16 +512,25 @@ function stairs(B, rect, rise) {
       alongX ? slopeLen : width, 0.15, alongX ? width : slopeLen,
       alongX ? 0 : slopeAng, 0, alongX ? slopeAng : 0,
     );
+    if (collisionWorld) {
+      collisionWorld.addStairSoffit(
+        floorIndex, alongX,
+        f.cross - width * 0.5, f.cross + width * 0.5,
+        f.from, f.to,
+        levelY + f.hFrom - stepRise * 0.72 - 0.075,
+        levelY + f.hTo - stepRise * 0.72 - 0.075,
+      );
+    }
 
-    const insetStart = 0.65;
-    const insetEnd = f.hTo >= rise - 0.05 ? Math.min(1.65, len * 0.32) : 0.65;
+    const insetStart = 0.35;
+    const insetEnd = 0.35;
     const aStart = f.from < f.to ? f.from + insetStart : f.from - insetStart;
     const aEnd = f.from < f.to ? f.to - insetEnd : f.to + insetEnd;
     const rLen = Math.max(0.8, Math.abs(aEnd - aStart));
     const rMid = (aStart + aEnd) / 2;
     const fracMid = (rMid - Math.min(f.from, f.to)) / len;
     const hMid = hAtMin + (hAtMax - hAtMin) * fracMid;
-    const railH = Math.min(0.92, Math.max(0.45, rise - 0.06 - (hMid + rLen * 0.5 * Math.abs(Math.sin(slopeAng)))));
+    const railH = 0.90;
     const rSlopeLen = Math.hypot(rLen, dh * (rLen / len));
     const cross = f.cross + (f.cross < midCross ? 1 : -1) * (width / 2 - 0.05);
 
@@ -481,8 +540,16 @@ function stairs(B, rect, rise) {
       alongX ? rSlopeLen : 0.055, 0.055, alongX ? 0.055 : rSlopeLen,
       alongX ? 0 : slopeAng, 0, alongX ? slopeAng : 0,
     );
+    const [rcx, , rcz] = toXYZ(rMid, cross, 0);
+    if (collisionWorld) {
+      collisionWorld.addSolidBox(
+        floorIndex, rcx,
+        levelY + Math.min(f.hFrom, f.hTo), levelY + Math.max(f.hFrom, f.hTo) + railH,
+        rcz, alongX ? rLen : 0.07, alongX ? 0.07 : rLen, 0, 'railing',
+      );
+    }
 
-    for (const fr of [0.15, 0.5, 0.85]) {
+    for (const fr of [0.12, 0.5, 0.88]) {
       const along = aStart + (aEnd - aStart) * fr;
       const frac = (along - Math.min(f.from, f.to)) / len;
       const hSurf = hAtMin + (hAtMax - hAtMin) * frac;
@@ -510,13 +577,13 @@ function doorSign(text_en, text_ar) {
   return new CSS2DObject(el);
 }
 
-function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr) {
+function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr, collisionWorld = null, floorIndex = 0, levelY = 0) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
   const along0 = alongX ? x0 : y0, along1 = alongX ? x1 : y1;
   const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1;
   const mid = (cross0 + cross1) / 2;
-  const doorW = 1.25, doorH = 2.25;
+  const doorW = 1.60, doorH = 2.30;
   const pt = (along, cross) => (alongX ? [along, cross] : [cross, along]);
 
   for (const [a, b] of [
@@ -526,30 +593,44 @@ function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr) {
     [pt(along1, cross0), pt(along1, mid - doorW / 2)],
     [pt(along1, mid + doorW / 2), pt(along1, cross1)],
   ]) {
-    batchWall(B, a[0], a[1], b[0], b[1], wallH, WALL_T, wallMat, wallH / 2, true);
+    batchWall(B, a[0], a[1], b[0], b[1], wallH, WALL_T, wallMat, wallH / 2, true, 'stair_wall');
   }
 
   const [la, lb] = [pt(along1, mid - doorW / 2), pt(along1, mid + doorW / 2)];
   const lintelH = wallH - doorH;
-  batchWall(B, la[0], la[1], lb[0], lb[1], lintelH, WALL_T, wallMat, doorH + lintelH / 2, false);
+  batchWall(B, la[0], la[1], lb[0], lb[1], lintelH, WALL_T, wallMat, doorH + lintelH / 2, false, 'door_frame');
 
-  const hinge = pt(along1, mid + doorW / 2);
-  const door = new THREE.Group();
-  door.name = 'floor-door';
-  door.position.set(hinge[0], 0, -hinge[1]);
-  const panel = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.055), mat(0x9b7650, 0.65));
-  panel.position.set(doorW / 2, doorH / 2, 0);
-  const vision = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.065), glassMat);
-  vision.position.set(doorW * 0.62, doorH * 0.58, 0);
-  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), mat(0xadb5bd, 0.35, 0.7));
-  handle.position.set(doorW - 0.14, 1.02, 0.045);
-  door.add(panel, vision, handle);
-  door.rotation.y = alongX ? Math.PI * 0.58 : -0.25;
-  group.add(door);
+  // Double fire-rated oak door leaves folded 90 deg open outside jambs so full 1.60m opening & landing stay clear
+  const leafW = doorW * 0.5 - 0.03;
+  const doorGroup = new THREE.Group();
+  doorGroup.name = 'floor-door';
+  const woodLeafMat = mat(0x9b7650, 0.65);
+  const handleMat = mat(0xadb5bd, 0.35, 0.7);
+  for (const sgn of [-1, 1]) {
+    const [hx, hy] = pt(along1 + WALL_T * 0.5 + leafW * 0.5 + 0.02, mid + sgn * (doorW * 0.5 + 0.04));
+    const leaf = new THREE.Group();
+    leaf.position.set(hx, 0, -hy);
+    if (!alongX) leaf.rotation.y = Math.PI * 0.5;
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(leafW, doorH, 0.055), woodLeafMat);
+    panel.position.set(0, doorH / 2, 0);
+    const vision = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.72, 0.065), glassMat);
+    vision.position.set(leafW * 0.14, doorH * 0.58, 0);
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.07), handleMat);
+    handle.position.set(leafW * 0.34, 1.02, 0);
+    leaf.add(panel, vision, handle);
+    doorGroup.add(leaf);
+    if (collisionWorld) {
+      collisionWorld.addSolidBox(
+        floorIndex, hx, levelY, levelY + doorH, -hy,
+        alongX ? leafW : 0.06, alongX ? 0.06 : leafW, 0, 'door_frame',
+      );
+    }
+  }
+  group.add(doorGroup);
 
   const sign = doorSign(floorEn, floorAr);
   const sp = pt(along1 + 0.42, mid);
-  sign.position.set(sp[0], doorH + 0.38, -sp[1]);
+  sign.position.set(sp[0], doorH + 0.35, -sp[1]);
   group.add(sign);
   return sign;
 }
@@ -557,9 +638,9 @@ function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr) {
 function buildLiftCore(B, r, clearH, wallMat) {
   const [x0, y0, x1, y1] = r.rect;
   // Full architectural plaster + travertine marble wainscot enclosure on all 4 sides of elevator shaft
-  rectWalls(B, r.rect, clearH, wallMat);
+  rectWalls(B, r.rect, clearH, wallMat, 'lift');
   // Solid inner core fill so overhead cutaways never show an empty pit inside the elevator shaft
-  B.add(mat(LIFT_BODY, 0.78, 0.04), (x0 + x1) / 2, clearH / 2, -(y0 + y1) / 2, Math.max(0.2, x1 - x0 - 0.16), clearH - 0.04, Math.max(0.2, y1 - y0 - 0.16), 0, 0, 0, true);
+  B.add(mat(LIFT_BODY, 0.78, 0.04), (x0 + x1) / 2, clearH / 2, -(y0 + y1) / 2, Math.max(0.2, x1 - x0 - 0.16), clearH - 0.04, Math.max(0.2, y1 - y0 - 0.16), 0, 0, 0, true, 'lift');
 
   const face = r.door || 'e';
   const steelMat = mat(0xbcc5ce, 0.28, 0.76);
@@ -571,7 +652,6 @@ function buildLiftCore(B, r, clearH, wallMat) {
     const px = face === 'e' ? x1 + Out : face === 'w' ? x0 - Out : cx;
     const py = face === 'n' ? y1 + Out : face === 's' ? y0 - Out : cy;
     const doorW = Math.min(1.12, (horiz ? (cx1 - cx0) : (cy1 - cy0)) * 0.68);
-    // Dark stainless architrave surround + twin brushed steel elevator leaves + center seam + call button plate
     B.add(frameMat, px, 2.22 / 2, -py, horiz ? doorW + 0.16 : 0.045, 2.22, horiz ? 0.045 : doorW + 0.16);
     const pxOut = face === 'e' ? px + 0.015 : face === 'w' ? px - 0.015 : px;
     const pyOut = face === 'n' ? py + 0.015 : face === 's' ? py - 0.015 : py;
@@ -601,24 +681,28 @@ function addStructuralColumns(B, f, clearH) {
   const travMat = getTravertineMaterial();
   const capMat = mat(DADO_CAP, 0.5);
   for (const [cx, cy] of candidates) {
-    B.add(shaftMat, cx, clearH / 2, -cy, colW, clearH, colW, 0, 0, 0, true);
+    B.add(shaftMat, cx, clearH / 2, -cy, colW, clearH, colW, 0, 0, 0, true, 'column');
     B.add(travMat, cx, DADO_H / 2, -cy, colW + 0.06, DADO_H, colW + 0.06);
     B.add(capMat, cx, DADO_H + 0.025, -cy, colW + 0.08, 0.05, colW + 0.08);
   }
 }
 
-function addCeilingLuminaires(B, f, clearH) {
+function addCeilingLuminaires(B, f, clearH, ceilingHoleRects = []) {
   const bezelMat = mat(0xe4e7eb, 0.4, 0.3);
+  const inCutout = (x, y) => ceilingHoleRects.some(
+    ([hx0, hy0, hx1, hy1]) => x > hx0 - 0.75 && x < hx1 + 0.75 && y > hy0 - 0.75 && y < hy1 + 0.75,
+  );
   for (const r of f.rooms) {
     if (r.kind === 'void' || r.kind === 'lift' || r.kind === 'locker') continue;
     if (r.kind === 'stair') {
-      // Dedicated warm wall/landing sconce panel at stairwell doorway side
       const [sx0, sy0, sx1, sy1] = r.rect;
       const alongX = (sx1 - sx0) >= (sy1 - sy0);
       const lx = alongX ? sx1 - 0.58 : (sx0 + sx1) / 2;
-      const lz = -(alongX ? (sy0 + sy1) / 2 : sy1 - 0.58);
-      B.add(bezelMat, lx, clearH - 0.015, lz, 0.9, 0.025, 0.45);
-      B.add(ledPanelMat, lx, clearH - 0.032, lz, 0.82, 0.012, 0.38);
+      const ly = alongX ? (sy0 + sy1) / 2 : sy1 - 0.58;
+      if (!inCutout(lx, ly)) {
+        B.add(bezelMat, lx, clearH - 0.015, -ly, 0.9, 0.025, 0.45);
+        B.add(ledPanelMat, lx, clearH - 0.032, -ly, 0.82, 0.012, 0.38);
+      }
       continue;
     }
     const [x0, y0, x1, y1] = r.rect;
@@ -630,18 +714,19 @@ function addCeilingLuminaires(B, f, clearH) {
     const ang = alongX ? 0 : Math.PI / 2;
     for (let ix = 0; ix < nx; ix++) {
       for (let iy = 0; iy < ny; iy++) {
-        const px = x0 + w * ((ix + 0.5) / nx), pz = -(y0 + d * ((iy + 0.5) / ny));
-        B.add(bezelMat, px, clearH - 0.015, pz, 1.18, 0.025, 0.58, 0, ang, 0);
-        B.add(ledPanelMat, px, clearH - 0.032, pz, 1.10, 0.012, 0.50, 0, ang, 0);
+        const px = x0 + w * ((ix + 0.5) / nx), py = y0 + d * ((iy + 0.5) / ny);
+        if (inCutout(px, py)) continue;
+        B.add(bezelMat, px, clearH - 0.015, -py, 1.18, 0.025, 0.58, 0, ang, 0);
+        B.add(ledPanelMat, px, clearH - 0.032, -py, 1.10, 0.012, 0.50, 0, ang, 0);
       }
     }
   }
 }
 
-function stairShaftHoleRect(rect) {
+export function stairShaftHoleRect(rect) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
-  return alongX ? [x0 + 0.05, y0 + 0.05, x1 - 1.15, y1 - 0.05] : [x0 + 0.05, y0 + 0.05, x1 - 0.05, y1 - 1.15];
+  return alongX ? [x0 + 0.05, y0 + 0.05, x1 - 1.50, y1 - 0.05] : [x0 + 0.05, y0 + 0.05, x1 - 0.05, y1 - 1.50];
 }
 
 function makeShapeWithHoles(footprint, holeRects) {
@@ -683,9 +768,11 @@ export function buildInterior(data) {
   const root = new THREE.Group();
   root.name = `interior_${data.building_id}`;
 
-  const indoorHemi = new THREE.HemisphereLight(0xfffaf2, 0xd8cdb8, 0.72);
+  const indoorHemi = new THREE.HemisphereLight(0xfffaf2, 0xd8cdb8, 0.78);
   indoorHemi.name = 'interior-ambient-fill';
   root.add(indoorHemi);
+
+  const collisionWorld = createCollisionWorld(data.footprint);
 
   const defaultRise = data.floors.length > 1
     ? (data.floors[1].level - data.floors[0].level)
@@ -704,7 +791,7 @@ export function buildInterior(data) {
       : (data.floors.length > 2 ? (data.floors[2].level - data.floors[1].level) : defaultRise);
     const clearH = Math.max(2.9, rise - SLAB);
     const colliders = [];
-    const B = createArchBatcher();
+    const B = createArchBatcher(collisionWorld, fi, f.level);
 
     // 1. Structural floor slab with cutouts for double-height atrium voids AND rising stair shafts from floor below
     const floorHoleRects = f.rooms.filter((r) => r.kind === 'void').map((r) => r.rect);
@@ -722,7 +809,7 @@ export function buildInterior(data) {
     slab.receiveShadow = true;
     g.add(slab);
 
-    // 2. Complete acoustic ceiling soffit at y = clearH (opaque from below, culled from aerial orbit above)
+    // 2. Solid 4 cm acoustic ceiling slab at y = clearH on EVERY occupied floor (`G`, `1`, `2`, `3`)
     const ceilingHoleRects = [];
     if (fi < data.floors.length - 1) {
       for (const curStair of f.rooms.filter((r) => r.kind === 'stair')) {
@@ -732,20 +819,24 @@ export function buildInterior(data) {
         ceilingHoleRects.push(nextVoid.rect);
       }
     }
+    const cutUniform = { value: 0.0 };
     const ceilShape = makeShapeWithHoles(data.footprint, ceilingHoleRects);
-    const ceilGeo = new THREE.ShapeGeometry(ceilShape);
+    const ceilGeo = new THREE.ExtrudeGeometry(ceilShape, { depth: 0.04, bevelEnabled: false });
     ceilGeo.rotateX(-Math.PI / 2);
-    const ceiling = new THREE.Mesh(ceilGeo, getAcousticCeilingMaterial());
+    const ceiling = new THREE.Mesh(ceilGeo, createCeilingMaterial(cutUniform));
     ceiling.name = `ceiling_${f.id}`;
     ceiling.position.y = clearH;
     g.add(ceiling);
+
+    const nextLevel = fi < data.floors.length - 1 ? data.floors[fi + 1].level : f.level + rise;
+    collisionWorld.addCeilingSlab(fi, f.level + clearH, nextLevel, ceilingHoleRects);
 
     // 3. Full-height exterior walls + mullioned windows
     const fp = data.footprint;
     const extSegs = [];
     for (let i = 0; i < fp.length; i++) {
       for (const seg of edgeWithGaps(fp[i], fp[(i + 1) % fp.length], f.entrances || [])) {
-        batchWall(B, seg[0], seg[1], seg[2], seg[3], clearH, EXT_T, extMat, clearH / 2, true);
+        batchWall(B, seg[0], seg[1], seg[2], seg[3], clearH, EXT_T, extMat, clearH / 2, true, 'ext_wall');
         extSegs.push(seg);
       }
     }
@@ -753,7 +844,9 @@ export function buildInterior(data) {
 
     // 4. Batched floor patches, walls, open doors, stairs, lift cores, columns, lighting & furniture
     const labels = [];
-    const furniture = createFurnisher();
+    const furniture = createFurnisher((cx, cy, h0, sx, sy, sz, tag) => {
+      collisionWorld.addPlanBox(fi, f.level, cx, cy, h0, sx, sy, sz, tag);
+    });
 
     for (const r of f.rooms) {
       const [x0, y0, x1, y1] = r.rect;
@@ -772,11 +865,11 @@ export function buildInterior(data) {
 
       if (!r.open && r.kind !== 'void' && r.kind !== 'lift') {
         if (r.kind === 'stair') {
-          labels.push(stairDoor(g, B, r.rect, clearH, wallMat, f.name_en, f.name_ar));
+          labels.push(stairDoor(g, B, r.rect, clearH, wallMat, f.name_en, f.name_ar, collisionWorld, fi, f.level));
         } else if (r.door) {
           rectWallsWithDoors(B, r, clearH, wallMat, furniture);
         } else {
-          rectWalls(B, r.rect, clearH, wallMat);
+          rectWalls(B, r.rect, clearH, wallMat, 'wall');
         }
       }
 
@@ -787,21 +880,21 @@ export function buildInterior(data) {
         for (let k = 1; k < r.split; k++) {
           if (alongX) {
             const xk = x0 + (x1 - x0) * (k / r.split);
-            batchWall(B, xk, y0, xk, y1, clearH, WALL_T, wallMat, clearH / 2, true);
+            batchWall(B, xk, y0, xk, y1, clearH, WALL_T, wallMat, clearH / 2, true, 'wall');
           } else {
             const yk = y0 + (y1 - y0) * (k / r.split);
-            batchWall(B, x0, yk, x1, yk, clearH, WALL_T, wallMat, clearH / 2, true);
+            batchWall(B, x0, yk, x1, yk, clearH, WALL_T, wallMat, clearH / 2, true, 'wall');
           }
         }
       }
 
       if (r.kind === 'stair' && fi < data.floors.length - 1) {
-        stairs(B, r.rect, rise);
+        stairs(B, r.rect, rise, collisionWorld, fi, f.level);
       }
       if (r.kind === 'lift') {
         buildLiftCore(B, r, clearH, wallMat);
       } else if (r.kind === 'locker') {
-        B.add(mat(LOCKER_BODY, 0.62, 0.12), (x0 + x1) / 2, 0.91, -(y0 + y1) / 2, x1 - x0, 1.82, y1 - y0);
+        B.add(mat(LOCKER_BODY, 0.62, 0.12), (x0 + x1) / 2, 0.91, -(y0 + y1) / 2, x1 - x0, 1.82, y1 - y0, 0, 0, 0, true, 'furniture');
       }
 
       if (r.nolabel) continue;
@@ -820,7 +913,7 @@ export function buildInterior(data) {
     }
 
     addStructuralColumns(B, f, clearH);
-    addCeilingLuminaires(B, f, clearH);
+    addCeilingLuminaires(B, f, clearH, ceilingHoleRects);
     B.flush(g, colliders);
     const furnitureGroup = new THREE.Group();
     furnitureGroup.name = `furniture_${f.id}`;
@@ -835,6 +928,11 @@ export function buildInterior(data) {
       level: f.level,
       rise,
       clearH,
+      ceilingHoleRects,
+      floorHoleRects,
+      slab,
+      ceiling,
+      cutUniform,
       group: g,
       furnitureGroup,
       labels,
@@ -842,18 +940,37 @@ export function buildInterior(data) {
     };
   });
 
-  function setVisibleFloors(maxGeomIdx, labelIdx = maxGeomIdx) {
-    const minGeomIdx = Math.max(0, labelIdx - 1);
+  let sliceIdx = floors.length - 1;
+  let activeLabelIdx = 0;
+
+  function applyVisibility(camY = -Infinity, tourActive = true) {
+    const topSlice = floors[sliceIdx] || floors[floors.length - 1];
+    // Cutaway top slice ONLY when aerial camera orbits well above the selected floor's roof (`+3.5m` clearance)
+    const aerialCutaway = !tourActive && camY > topSlice.level + topSlice.clearH + 3.5;
     floors.forEach((f, i) => {
-      f.group.visible = i >= minGeomIdx && i <= maxGeomIdx;
-      f.furnitureGroup.visible = i === labelIdx;
-      for (const l of f.labels) l.visible = i === labelIdx;
+      f.group.visible = i <= sliceIdx;
+      f.ceiling.visible = i <= sliceIdx;
+      f.cutUniform.value = (aerialCutaway && i === sliceIdx) ? 1.0 : 0.0;
+      f.furnitureGroup.visible = Math.abs(i - activeLabelIdx) <= 1;
+      for (const l of f.labels) l.visible = (i === activeLabelIdx);
     });
   }
 
-  function setFloor(idx) {
-    setVisibleFloors(idx, idx);
+  function setVisibleFloors(maxGeomIdx, labelIdx = maxGeomIdx) {
+    sliceIdx = Math.max(0, Math.min(floors.length - 1, maxGeomIdx));
+    activeLabelIdx = Math.max(0, Math.min(floors.length - 1, labelIdx));
+    applyVisibility(-Infinity, true);
   }
 
-  return { group: root, floors, setFloor, setVisibleFloors };
+  function setFloor(idx, camY = Infinity) {
+    sliceIdx = Math.max(0, Math.min(floors.length - 1, idx));
+    activeLabelIdx = sliceIdx;
+    applyVisibility(camY, false);
+  }
+
+  function syncCameraCutaway(camY, tourActive) {
+    applyVisibility(camY, tourActive);
+  }
+
+  return { group: root, data, floors, collisionWorld, setFloor, setVisibleFloors, syncCameraCutaway };
 }

@@ -4,8 +4,8 @@
   "start_name_en": "Gate No. 1 (Main Gate)",
   "start_name_ar": "البوابة رقم ١ (البوابة الرئيسية)",
   "nodes": {
-    "gate_out": [-216, -52],
-    "gate_in": [-198, -52],
+    "gate_out": [-216, -57.5],
+    "gate_in": [-198, -57.5],
     "forecourt": [-180, -52],
     "main_nw": [-180, -14],
     "gap_n": [-97, -14],

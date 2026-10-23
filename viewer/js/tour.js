@@ -5,6 +5,7 @@
 // - Horizontal human eye-level follow camera (`~1.62 m`) with smooth damping & 3D raycast wall/ceiling collision safety
 import * as THREE from 'three';
 import { createWalkerFigure } from './walker.js';
+import { CHAR_COLLIDER } from './collision.js';
 
 export const TOUR_CONFIG = {
   speed: {
@@ -40,6 +41,7 @@ export const NAV_STATES = [
   'CORRIDOR_NAVIGATION',
   'APPROACHING_STAIRS',
   'CLIMBING',
+  'DESCENDING',
   'FLOOR_LANDING',
   'ARRIVED',
 ];
@@ -55,7 +57,7 @@ function shortestAngleDiff(a, b) {
   return d;
 }
 
-export function createTour({ scene, camera, controls, onStep, onFloor, onProgress, onEnd, onState, getInterior }) {
+export function createTour({ scene, camera, controls, onStep, onFloor, onProgress, onEnd, onState, getInterior, getOutdoorCollisionWorld }) {
   const walker = new THREE.Group();
   walker.name = 'tour-walker';
   walker.visible = false;
@@ -67,7 +69,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
   const baseFov = camera.fov || 45;
   let segs = [], total = 0, time = 0, prevSegIdx = 0;
   let playing = false, active = false, ended = false;
-  let step = -1, floor = null, shownGeomFloor = -1, buildingId = null;
+  let step = -1, floor = null, shownGeomFloor = -1, shownLabelFloor = -1, buildingId = null;
   let inside = 0, climb = 0, orbit = 0, playbackRate = 1, camPull = 1.0;
   let state = 'IDLE';
   const navLog = [];
@@ -80,12 +82,71 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     floorTransitions: [],
   };
 
+  const collisionTelemetry = {
+    collider: { ...CHAR_COLLIDER },
+    queries: 0,
+    substeps: 0,
+    wallContacts: 0,
+    wallSlides: 0,
+    ceilingChecks: 0,
+    ceilingBlocks: 0,
+    maxPenetrationDepth: 0,
+    minHorizontalClearance: 99,
+    minOverheadClearance: 99,
+    minOverheadPoint: null,
+    lastBlockingTag: null,
+    maxFrameDt: 0,
+    lastSpeedMps: 0,
+  };
+
+  function resetCollisionTelemetry() {
+    collisionTelemetry.queries = 0;
+    collisionTelemetry.substeps = 0;
+    collisionTelemetry.wallContacts = 0;
+    collisionTelemetry.wallSlides = 0;
+    collisionTelemetry.ceilingChecks = 0;
+    collisionTelemetry.ceilingBlocks = 0;
+    collisionTelemetry.maxPenetrationDepth = 0;
+    collisionTelemetry.minHorizontalClearance = 99;
+    collisionTelemetry.minOverheadClearance = 99;
+    collisionTelemetry.minOverheadPoint = null;
+    collisionTelemetry.lastBlockingTag = null;
+    collisionTelemetry.maxFrameDt = 0;
+    collisionTelemetry.lastSpeedMps = 0;
+  }
+
   const fwd = new THREE.Vector3(1, 0, 0);
   const side = new THREE.Vector3(0, 0, 1);
   const look = new THREE.Vector3();
   const want = new THREE.Vector3();
   const pos = new THREE.Vector3();
+  const _intendedPos = new THREE.Vector3();
+  const _prevPos = new THREE.Vector3();
+  const _stepVec = new THREE.Vector3();
   let camPos = null, camLook = null;
+
+  function activeCollisionWorld(segKind) {
+    if (segKind === 'out') return getOutdoorCollisionWorld ? getOutdoorCollisionWorld() : null;
+    const interior = buildingId && getInterior ? getInterior(buildingId) : null;
+    return interior?.collisionWorld || null;
+  }
+
+  function recordAuditAt(wx, wy, wz, segKind, floorHint) {
+    const cw = activeCollisionWorld(segKind);
+    if (!cw) return null;
+    const audit = cw.auditPoint(wx, wy, wz, Math.max(0, floorHint ?? 0));
+    if (audit.maxPenetration > collisionTelemetry.maxPenetrationDepth) {
+      collisionTelemetry.maxPenetrationDepth = +audit.maxPenetration.toFixed(4);
+    }
+    if (audit.minHorizontalClearance < collisionTelemetry.minHorizontalClearance) {
+      collisionTelemetry.minHorizontalClearance = +audit.minHorizontalClearance.toFixed(4);
+    }
+    if (audit.overheadClearance < collisionTelemetry.minOverheadClearance) {
+      collisionTelemetry.minOverheadClearance = +audit.overheadClearance.toFixed(3);
+      collisionTelemetry.minOverheadPoint = [+wx.toFixed(2), +wy.toFixed(2), +(-wz).toFixed(2), audit.overheadTag];
+    }
+    return audit;
+  }
 
   function setState(s, t = time) {
     if (state === s) return;
@@ -99,7 +160,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     if (k === 'out') return 'WALKING';
     if (k === 'door') return 'ENTERING_DOOR';
     if (k === 'stair_approach') return 'APPROACHING_STAIRS';
-    if (k === 'stair') return 'CLIMBING';
+    if (k === 'stair') return segs[i].b.y < segs[i].a.y - 0.01 ? 'DESCENDING' : 'CLIMBING';
     if (k === 'landing' || prev === 'stair') return 'FLOOR_LANDING';
     if (next === 'stair' || next === 'stair_approach') return 'APPROACHING_STAIRS';
     if (prev === 'out' || prev === undefined) return 'ENTERING_DOOR';
@@ -126,8 +187,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     if (logicalFloor !== floor) {
       floor = logicalFloor;
       telemetry.floorTransitions.push(floor);
-      if (onFloor) onFloor(floor);
-      shownGeomFloor = floor;
+      if (floor >= 0 && onFloor) onFloor(floor);
     }
 
     // While actively ascending inside stairwell, expose next floor shaft landing without changing logical floor
@@ -137,8 +197,9 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
       const desiredGeom = s.kind === 'stair'
         ? Math.min(interior.floors.length - 1, floor + 1)
         : floor;
-      if (desiredGeom !== shownGeomFloor) {
+      if (desiredGeom !== shownGeomFloor || floor !== shownLabelFloor) {
         shownGeomFloor = desiredGeom;
+        shownLabelFloor = floor;
         interior.setVisibleFloors(desiredGeom, floor);
       }
     }
@@ -160,8 +221,9 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     const flObj = interior.floors[floor];
     const minFloorY = walker.position.y + TOUR_CONFIG.collision.floorMargin;
 
-    if (segKind === 'stair' || segKind === 'landing') {
-      // Analytically contain camera inside the open stairwell shaft hole so neither shaft walls, landing jambs, nor soffits occlude view
+    if (segKind === 'stair') {
+      // Analytically contain camera inside the open stairwell shaft hole during active flight ascent/descent
+      // so neither shaft walls, landing jambs, nor soffits ever occlude the character view
       const stairRooms = interior.data?.floors?.[floor]?.rooms?.filter((r) => r.kind === 'stair') || [];
       let bestStair = null, bestD = Infinity;
       for (const sr of stairRooms) {
@@ -172,8 +234,8 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
       if (bestStair) {
         const [rx0, ry0, rx1, ry1] = bestStair.rect;
         const alongX = (rx1 - rx0) >= (ry1 - ry0);
-        const minX = rx0 + 0.52, maxX = alongX ? rx1 - 1.24 : rx1 - 0.52;
-        const minY = ry0 + 0.52, maxY = alongX ? ry1 - 0.52 : ry1 - 1.24;
+        const minX = rx0 + 0.52, maxX = alongX ? rx1 - 1.62 : rx1 - 0.52;
+        const minY = ry0 + 0.52, maxY = alongX ? ry1 - 0.52 : ry1 - 1.62;
         desiredPos.x = THREE.MathUtils.clamp(desiredPos.x, minX, maxX);
         desiredPos.z = -THREE.MathUtils.clamp(-desiredPos.z, minY, maxY);
       }
@@ -267,6 +329,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     step = -1;
     floor = null;
     shownGeomFloor = -1;
+    shownLabelFloor = -1;
     camPull = 1.0;
     ended = false;
     active = true;
@@ -276,6 +339,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     telemetry.cameraCollisionClamps = 0;
     telemetry.maxIndoorPitchDeg = 0;
     telemetry.floorTransitions = [];
+    resetCollisionTelemetry();
 
     setState('ROUTE_PLANNING', 0);
     inside = tr[0].kind === 'out' ? 0 : 1;
@@ -283,20 +347,42 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     walker.visible = true;
     controls.enabled = false;
     figure.reset();
-    place(segs[0], 0, 1, 0.016);
-    camPos = camera.position.clone();
-    camLook = controls.target.clone();
+    const firstMove = segs.find((s) => Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) > 0.01);
+    if (firstMove) {
+      fwd.set(firstMove.b.x - firstMove.a.x, 0, firstMove.b.z - firstMove.a.z).normalize();
+      walker.rotation.y = Math.atan2(fwd.x, fwd.z);
+    }
+    walker.position.copy(segs[0].a);
+    applySegmentAuthority(segs[0], 0);
+    place(segs[0], 0, 1, 0.016, true);
+    camPos = tr[0].kind === 'out' ? camera.position.clone() : want.clone();
+    camLook = tr[0].kind === 'out' ? controls.target.clone() : look.clone();
+    if (tr[0].kind !== 'out') {
+      camera.position.copy(camPos);
+      controls.target.copy(camLook);
+      camera.lookAt(camLook);
+    }
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) skip();
   }
 
-  function place(s, u, k, dt = 0.016) {
+  function place(s, u, k, dt = 0.016, resetAnchor = false) {
     const prevYaw = walker.rotation.y;
-    walker.position.lerpVectors(s.a, s.b, u);
+    _intendedPos.lerpVectors(s.a, s.b, u);
+    _prevPos.copy(resetAnchor ? _intendedPos : walker.position);
 
-    const d = new THREE.Vector3().subVectors(s.b, s.a);
-    d.y = 0;
-    if (d.lengthSq() > 0.0004) fwd.lerp(d.normalize(), Math.min(1, k * 2.2)).normalize();
+    const floorHint = Math.max(0, s.kind === 'stair' ? (s.fromFloor ?? floor ?? 0) : (s.floor ?? floor ?? 0));
+    const cw = activeCollisionWorld(s.kind);
+    if (cw) {
+      cw.sweepMove(_prevPos, _intendedPos, walker.position, floorHint, collisionTelemetry);
+      recordAuditAt(walker.position.x, walker.position.y, walker.position.z, s.kind, floorHint);
+    } else {
+      walker.position.copy(_intendedPos);
+    }
+
+    _stepVec.subVectors(s.b, s.a);
+    _stepVec.y = 0;
+    if (_stepVec.lengthSq() > 0.0004) fwd.lerp(_stepVec.normalize(), Math.min(1, k * 2.2)).normalize();
     walker.rotation.y = Math.atan2(fwd.x, fwd.z);
     const headingDelta = shortestAngleDiff(prevYaw, walker.rotation.y);
     side.set(fwd.z, 0, -fwd.x);
@@ -358,12 +444,12 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
 
   function update(dt) {
     if (!active) return false;
+    collisionTelemetry.maxFrameDt = Math.max(collisionTelemetry.maxFrameDt, +dt.toFixed(4));
     const motionDt = dt * playbackRate;
 
     if (ended) {
       figure.update(dt, { speed: 0, isStair: false, headingDelta: 0 });
       if (inside > 0.5) {
-        // Indoors: keep calm human eye-level framing inside the room with full wall/ceiling collision safety!
         const last = segs[segs.length - 1];
         place(last, 1, 1 - Math.pow(0.04, dt), dt);
         camPos.lerp(want, 1 - Math.pow(0.08, dt));
@@ -381,41 +467,47 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
       return true;
     }
 
-    if (playing) time = Math.min(total, time + motionDt);
+    // Substep physics across large `motionDt` (`1.5x`, `2x`, or large `dt` frame spikes) so corners,
+    // doorways, treads, and capsule colliders NEVER tunnel even under severe frame hitches!
+    const MAX_SIM_DT = 0.04;
+    const simSteps = Math.max(1, Math.ceil(motionDt / MAX_SIM_DT));
+    const subDt = motionDt / simSteps;
+    let headingDelta = 0;
+    let activeSeg = segs[prevSegIdx];
 
-    const nextIdx = segIndexAt(time);
-    // Sweep cleanly across EVERY segment traversed in this frame so state & floor transitions NEVER skip or reorder
-    for (let si = prevSegIdx; si <= nextIdx; si++) {
-      applySegmentAuthority(segs[si], Math.max(time, segs[si].t0));
+    for (let stepIdx = 0; stepIdx < simSteps; stepIdx++) {
+      if (playing) time = Math.min(total, time + subDt);
+      const nextIdx = segIndexAt(time);
+      for (let si = prevSegIdx; si <= nextIdx; si++) {
+        applySegmentAuthority(segs[si], Math.max(time, segs[si].t0));
+      }
+      prevSegIdx = nextIdx;
+      activeSeg = segs[nextIdx];
+      const u = THREE.MathUtils.clamp((time - activeSeg.t0) / activeSeg.dur, 0, 1);
+      headingDelta += place(activeSeg, u, 1 - Math.pow(0.015, subDt), subDt);
     }
-    prevSegIdx = nextIdx;
 
-    const s = segs[nextIdx];
-    const u = THREE.MathUtils.clamp((time - s.t0) / s.dur, 0, 1);
-    const headingDelta = place(s, u, 1 - Math.pow(0.015, motionDt), motionDt);
-
-    // Distance-synchronized stride kinematics driven by actual ground velocity (m/s)
-    const physicalSpeed = playing ? (s.speed || 0) : 0;
+    const physicalSpeed = playing ? (activeSeg.speed || 0) : 0;
+    collisionTelemetry.lastSpeedMps = +(physicalSpeed * playbackRate).toFixed(3);
     figure.update(motionDt, {
       speed: physicalSpeed,
-      isStair: s.kind === 'stair',
+      isStair: activeSeg.kind === 'stair',
       headingDelta,
     });
 
     const k = 1 - Math.pow(0.00015, motionDt);
-    const lookK = s.kind === 'out' ? 1 - Math.pow(1e-8, motionDt) : k;
+    const lookK = activeSeg.kind === 'out' ? 1 - Math.pow(1e-8, motionDt) : k;
     camPos.lerp(want, k);
     camLook.lerp(look, lookK);
     camera.position.copy(camPos);
     controls.target.copy(camLook);
     camera.lookAt(camLook);
 
-    // Record live indoor eye-level & pitch telemetry
     const horizDist = Math.hypot(camLook.x - camPos.x, camLook.z - camPos.z) || 1;
     const pitchDeg = THREE.MathUtils.radToDeg(Math.atan2(camLook.y - camPos.y, horizDist));
     telemetry.lastCameraPitchDeg = +pitchDeg.toFixed(2);
     telemetry.lastCamEyeOffset = +(camPos.y - walker.position.y).toFixed(3);
-    if (floor !== null && floor >= 0 && inside > 0.85 && state !== 'CLIMBING') {
+    if (floor !== null && floor >= 0 && activeSeg.kind !== 'out' && inside > 0.85 && state !== 'CLIMBING' && state !== 'DESCENDING') {
       telemetry.maxIndoorPitchDeg = Math.max(telemetry.maxIndoorPitchDeg, Math.abs(pitchDeg));
     }
 
@@ -446,7 +538,7 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     inside = last.kind === 'out' ? 0 : 1;
     climb = 0;
     figure.setHalo(last.kind === 'out');
-    place(last, 1, 1, 0.016);
+    place(last, 1, 1, 0.016, true);
     if (camPos) camPos.copy(want);
     if (camLook) camLook.copy(look);
     camera.position.copy(want);
@@ -466,15 +558,65 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
       step = -1;
       floor = null;
       shownGeomFloor = -1;
+      shownLabelFloor = -1;
       camPull = 1.0;
       orbit = 0;
       navLog.length = 0;
+      telemetry.cameraCollisionClamps = 0;
+      telemetry.maxIndoorPitchDeg = 0;
+      telemetry.floorTransitions = [];
+      resetCollisionTelemetry();
       setState('ROUTE_PLANNING', 0);
       figure.reset();
-      place(segs[0], 0, 1, 0.016);
-      camPos = camera.position.clone();
-      camLook = controls.target.clone();
+      const firstMove = segs.find((s) => Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) > 0.01);
+      if (firstMove) {
+        fwd.set(firstMove.b.x - firstMove.a.x, 0, firstMove.b.z - firstMove.a.z).normalize();
+        walker.rotation.y = Math.atan2(fwd.x, fwd.z);
+      }
+      walker.position.copy(segs[0].a);
+      applySegmentAuthority(segs[0], 0);
+      place(segs[0], 0, 1, 0.016, true);
+      camPos = segs[0].kind === 'out' ? camera.position.clone() : want.clone();
+      camLook = segs[0].kind === 'out' ? controls.target.clone() : look.clone();
     }
+  }
+
+  /**
+   * Direct continuous 3D collision probe on the live character rig & live building `collisionWorld`:
+   * moves character from `fromXYZ` toward `toXYZ`, commits resolved pose to `walker.position`,
+   * updates skeletal pose, and returns exact post-move collision & overhead clearance diagnostics.
+   */
+  function probeMove(fromXYZ, toXYZ, floorIdx = 0, customBldId = null) {
+    const targetBld = customBldId || buildingId;
+    const interior = targetBld && getInterior ? getInterior(targetBld) : null;
+    const cw = interior ? interior.collisionWorld : (getOutdoorCollisionWorld ? getOutdoorCollisionWorld() : null);
+    const pFrom = new THREE.Vector3(fromXYZ[0], fromXYZ[1], fromXYZ[2]);
+    const pTo = new THREE.Vector3(toXYZ[0], toXYZ[1], toXYZ[2]);
+    const out = new THREE.Vector3();
+    const probeStats = {
+      queries: 0, substeps: 0, wallContacts: 0, wallSlides: 0,
+      ceilingChecks: 0, ceilingBlocks: 0, minOverheadClearance: 99,
+      minOverheadPoint: null, lastBlockingTag: null,
+    };
+    if (cw) {
+      cw.sweepMove(pFrom, pTo, out, floorIdx, probeStats);
+    } else {
+      out.copy(pTo);
+    }
+    walker.visible = true;
+    walker.position.copy(out);
+    const disp = out.clone().sub(pFrom);
+    if (Math.hypot(disp.x, disp.z) > 1e-3) {
+      walker.rotation.y = Math.atan2(disp.x, disp.z);
+    }
+    figure.update(0.05, { speed: Math.hypot(disp.x, disp.z) > 0.02 ? 2.0 : 0, isStair: false, headingDelta: 0 });
+    const audit = cw ? cw.auditPoint(out.x, out.y, out.z, floorIdx) : null;
+    return {
+      resolved: [+out.x.toFixed(4), +out.y.toFixed(4), +out.z.toFixed(4)],
+      movedDist: +out.distanceTo(pFrom).toFixed(4),
+      stats: probeStats,
+      audit,
+    };
   }
 
   function toggle() {
@@ -518,7 +660,10 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     setPlaybackRate,
     stop,
     release,
+    probeMove,
     telemetry,
+    collisionTelemetry,
+    resetCollisionTelemetry,
     walkerFigure: figure,
     get active() { return active; },
     get playing() { return playing && !ended; },
