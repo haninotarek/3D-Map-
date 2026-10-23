@@ -1,0 +1,987 @@
+{
+  "base": "http://127.0.0.1:8080/?qa=1",
+  "timestamp": "2026-10-23 09:31:46",
+  "checks": [
+    {
+      "name": "T01_character_collider_matches_student_rig",
+      "ok": true,
+      "detail": "collider={'height': 1.75, 'radius': 0.27, 'stepUp': 0.3, 'headSafetyMargin': 0.08, 'maxSweepStep': 0.06, 'skin': 0.002}"
+    },
+    {
+      "name": "T02_world_obstacles_registered_on_all_floors",
+      "ok": true,
+      "detail": "bld_e2=[2443, 2397, 1988, 2371], bld_e1=[818, 876, 1109, 1049]"
+    },
+    {
+      "name": "P4_bld_e2_exact_4_occupied_floors_G_1_2_3",
+      "ok": true,
+      "detail": "floors=['G', '1', '2', '3'], ceilingPlanes=4"
+    },
+    {
+      "name": "P4_bld_e2_floor_G_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=0.6m soffit=4.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e2_floor_1_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=5.1m soffit=8.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e2_floor_2_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=9.1m soffit=12.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e2_floor_3_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=13.1m soffit=16.85m thick=0.04m span=62.58x58.99m holes=0 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e1_exact_4_occupied_floors_G_1_2_3",
+      "ok": true,
+      "detail": "floors=['G', '1', '2', '3'], ceilingPlanes=4"
+    },
+    {
+      "name": "P4_bld_e1_floor_G_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=0.6m soffit=4.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e1_floor_1_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=5.1m soffit=8.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e1_floor_2_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=9.1m soffit=12.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+    },
+    {
+      "name": "P4_bld_e1_floor_3_ceiling_complete_opaque_connected",
+      "ok": true,
+      "detail": "level=13.1m soffit=16.85m thick=0.04m span=60.41x62.97m holes=0 opaque=True doubleSide=True"
+    },
+    {
+      "name": "GA_01_direct_perpendicular_wall_stop",
+      "ok": true,
+      "detail": "resolvedX=158.372 contacts=32 pen=0"
+    },
+    {
+      "name": "GA_02_parallel_wall_sliding_smooth_no_penetration",
+      "ok": true,
+      "detail": "resolved=[158.3717, 0.612, 78.0875] slidZ=1.988m pen=0"
+    },
+    {
+      "name": "GA_03_acute_corner_block_and_clean_recovery",
+      "ok": true,
+      "detail": "cornerIn=[157.3787, 0.612, 69.2799] recoveredTo=[159.2, 0.612, 69.2]"
+    },
+    {
+      "name": "GA_04_open_doorway_unobstructed_vs_adjacent_jamb_blocked",
+      "ok": true,
+      "detail": "openDoorX=156.9 jambBlockedX=158.372"
+    },
+    {
+      "name": "GA_05_structural_column_blocks_penetration",
+      "ok": true,
+      "detail": "colResolved=[161.132, 0.612, 69.628] tag=column"
+    },
+    {
+      "name": "GA_06_atrium_balustrade_railing_blocks_fall",
+      "ok": true,
+      "detail": "railResolved=[171.542, 5.112, 62.5] tag=railing"
+    },
+    {
+      "name": "GC_01_overhead_ceiling_guard_blocks_head_penetration",
+      "ok": true,
+      "detail": "ceilGuardResolvedY=3.0857 minClearance=0.014285714285715123m"
+    },
+    {
+      "name": "GBC_B1_e2_south_stairs_G_to_3_ascent",
+      "ok": true,
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.861m minDoorClear=+0.488m pitch=8.14deg"
+    },
+    {
+      "name": "GBC_B2_e2_north_stairs_G_to_3_ascent",
+      "ok": true,
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.857m minDoorClear=+0.488m pitch=8.15deg"
+    },
+    {
+      "name": "GBC_B3_e1_south_stairs_G_to_3_ascent",
+      "ok": true,
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.852m minDoorClear=+0.488m pitch=8.02deg"
+    },
+    {
+      "name": "GBC_B4_e1_north_stairs_G_to_3_ascent",
+      "ok": true,
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.859m minDoorClear=+0.488m pitch=7.95deg"
+    },
+    {
+      "name": "GBC_A7_e2_ground_lab_arrival",
+      "ok": true,
+      "detail": "floors=[-1, 0] maxPen=0m minStairHeadroom=+99m minDoorClear=+0.488m pitch=2.73deg"
+    },
+    {
+      "name": "GBC_C2_e2_south_stairs_3_to_G_descent",
+      "ok": true,
+      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.858m minDoorClear=+0.488m pitch=8.23deg"
+    },
+    {
+      "name": "GBC_C3_e1_north_stairs_3_to_G_descent",
+      "ok": true,
+      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.853m minDoorClear=+0.488m pitch=8.04deg"
+    },
+    {
+      "name": "GD_01_speed_1x_1_5x_2x_zero_tunneling_monotonic_scaling",
+      "ok": true,
+      "detail": "frames: 1x=2562, 1.5x=1708, 2x=1281"
+    },
+    {
+      "name": "GD_02_pause_resume_on_stairs_and_full_replay",
+      "ok": true,
+      "detail": "pauseResume={'driftWhilePaused': 0, 'arrivedAfterResume': True, 'maxPen': 0}, replay={'floors': [-1, 0, 1, 2, 3], 'maxPen': 0, 'minOverhead': 0.488}"
+    },
+    {
+      "name": "GD_03_extreme_dt_spike_0_50s_at_2x_zero_wall_or_ceiling_tunneling",
+      "ok": true,
+      "detail": "spike={'updates': 101, 'state': 'ARRIVED', 'floors': [-1, 0, 1, 2, 3], 'substeps': 11752, 'maxPen': 0, 'ceilingBlocks': 0, 'minOverhead': 0.488}"
+    },
+    {
+      "name": "GD_04_responsive_viewport_resize_during_active_navigation",
+      "ok": true,
+      "detail": "{'arrived': True, 'maxPen': 0}"
+    },
+    {
+      "name": "Z01_zero_browser_console_or_network_errors",
+      "ok": true,
+      "detail": "console_errors=[] failed_requests=[]"
+    }
+  ],
+  "console_errors": [],
+  "failed_requests": [],
+  "telemetry_runs": {
+    "group_a_adversarial": {
+      "a1": {
+        "resolved": [
+          158.372,
+          0.612,
+          77
+        ],
+        "movedDist": 1.028,
+        "stats": {
+          "queries": 191079,
+          "substeps": 49,
+          "wallContacts": 32,
+          "wallSlides": 32,
+          "ceilingChecks": 49,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            158.37,
+            0.61,
+            -77,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "stair_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0020000000000141016,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "a2": {
+        "resolved": [
+          158.3717,
+          0.612,
+          78.0875
+        ],
+        "movedDist": 1.9881,
+        "stats": {
+          "queries": 186361,
+          "substeps": 40,
+          "wallContacts": 41,
+          "wallSlides": 39,
+          "ceilingChecks": 40,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            158.37,
+            0.61,
+            -78.09,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "stair_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0017130377112313244,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "cornerIn": {
+        "resolved": [
+          157.3787,
+          0.612,
+          69.2799
+        ],
+        "movedDist": 1.8231,
+        "stats": {
+          "queries": 181643,
+          "substeps": 39,
+          "wallContacts": 38,
+          "wallSlides": 38,
+          "ceilingChecks": 39,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            157.38,
+            0.61,
+            -69.28,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "ext_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.002000000000000446,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "cornerOut": {
+        "resolved": [
+          159.2,
+          0.612,
+          69.2
+        ],
+        "movedDist": 1.8231,
+        "stats": {
+          "queries": 73129,
+          "substeps": 31,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 31,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            159.2,
+            0.61,
+            -69.2,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": null
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.05252087490520013,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "doorPass": {
+        "resolved": [
+          156.9,
+          0.612,
+          74.1
+        ],
+        "movedDist": 2.3,
+        "stats": {
+          "queries": 92001,
+          "substeps": 39,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 39,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 0.538,
+          "minOverheadPoint": [
+            157.73,
+            0.61,
+            -74.1,
+            "door_frame"
+          ],
+          "lastBlockingTag": null
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.8493073751210733,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "doorJambBlock": {
+        "resolved": [
+          158.372,
+          0.612,
+          75.25
+        ],
+        "movedDist": 0.828,
+        "stats": {
+          "queries": 150976,
+          "substeps": 39,
+          "wallContacts": 25,
+          "wallSlides": 25,
+          "ceilingChecks": 39,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            158.37,
+            0.61,
+            -75.25,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "stair_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0020000000000139906,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "colHit": {
+        "resolved": [
+          161.132,
+          0.612,
+          69.628
+        ],
+        "movedDist": 0.8683,
+        "stats": {
+          "queries": 143899,
+          "substeps": 37,
+          "wallContacts": 24,
+          "wallSlides": 24,
+          "ceilingChecks": 37,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            161.13,
+            0.61,
+            -69.63,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "column"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0019999999999993356,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "railHit": {
+        "resolved": [
+          171.542,
+          5.112,
+          62.5
+        ],
+        "movedDist": 1.458,
+        "stats": {
+          "queries": 176244,
+          "substeps": 50,
+          "wallContacts": 26,
+          "wallSlides": 26,
+          "ceilingChecks": 50,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 1.988,
+          "minOverheadPoint": [
+            172.94,
+            5.11,
+            -62.5,
+            "ceiling_1"
+          ],
+          "lastBlockingTag": "railing"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.002000000000012936,
+          "worstObstacleTag": null,
+          "overheadClearance": 1.9880000000000004,
+          "overheadY": 8.85,
+          "overheadTag": "ceiling_1"
+        }
+      },
+      "ceilGuard": {
+        "resolved": [
+          161.2,
+          3.0857,
+          62.5
+        ],
+        "movedDist": 0.2857,
+        "stats": {
+          "queries": 918,
+          "substeps": 6,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 6,
+          "ceilingBlocks": 1,
+          "minOverheadClearance": -0.043,
+          "minOverheadPoint": [
+            161.2,
+            3.14,
+            -62.5,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "ceiling_0"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 1.290971646158358,
+          "worstObstacleTag": null,
+          "overheadClearance": 0.014285714285715123,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      }
+    },
+    "groups_b_c_routes": {
+      "B1_e2_south_stairs_G_to_3_ascent": {
+        "frames": 2562,
+        "state": "ARRIVED",
+        "finalFloor": 3,
+        "floorTransitions": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxIndoorPitchDeg": 8.14,
+        "minStairHeadroomM": 1.861,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 5184622,
+          "substeps": 11289,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11289,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.2264,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            177.25,
+            13.11,
+            -82.3,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 2.35
+        }
+      },
+      "B2_e2_north_stairs_G_to_3_ascent": {
+        "frames": 2614,
+        "state": "ARRIVED",
+        "finalFloor": 3,
+        "floorTransitions": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxIndoorPitchDeg": 8.15,
+        "minStairHeadroomM": 1.857,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 5389808,
+          "substeps": 11382,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11382,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.1808,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            170,
+            13.11,
+            -45.65,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 2.35
+        }
+      },
+      "B3_e1_south_stairs_G_to_3_ascent": {
+        "frames": 2689,
+        "state": "ARRIVED",
+        "finalFloor": 3,
+        "floorTransitions": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxIndoorPitchDeg": 8.02,
+        "minStairHeadroomM": 1.852,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 2430814,
+          "substeps": 11471,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11471,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.1836,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            133.42,
+            13.11,
+            -27.53,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 2.35
+        }
+      },
+      "B4_e1_north_stairs_G_to_3_ascent": {
+        "frames": 2442,
+        "state": "ARRIVED",
+        "finalFloor": 3,
+        "floorTransitions": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxIndoorPitchDeg": 7.95,
+        "minStairHeadroomM": 1.859,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 2031120,
+          "substeps": 11008,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11008,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.1697,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            141.5,
+            13.11,
+            20.67,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 2.35
+        }
+      },
+      "A7_e2_ground_lab_arrival": {
+        "frames": 1324,
+        "state": "ARRIVED",
+        "finalFloor": 0,
+        "floorTransitions": [
+          -1,
+          0
+        ],
+        "maxIndoorPitchDeg": 2.73,
+        "minStairHeadroomM": 99,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 3596956,
+          "substeps": 9912,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 9912,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.2187,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            141.5,
+            0.61,
+            -43.83,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 2.35
+        }
+      },
+      "C2_e2_south_stairs_3_to_G_descent": {
+        "frames": 2562,
+        "state": "ARRIVED",
+        "finalFloor": -1,
+        "floorTransitions": [
+          3,
+          2,
+          1,
+          0,
+          -1
+        ],
+        "maxIndoorPitchDeg": 8.23,
+        "minStairHeadroomM": 1.858,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 5203339,
+          "substeps": 11293,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11293,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.2252,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            176.57,
+            13.11,
+            -82.3,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 28
+        }
+      },
+      "C3_e1_north_stairs_3_to_G_descent": {
+        "frames": 2442,
+        "state": "ARRIVED",
+        "finalFloor": -1,
+        "floorTransitions": [
+          3,
+          2,
+          1,
+          0,
+          -1
+        ],
+        "maxIndoorPitchDeg": 8.04,
+        "minStairHeadroomM": 1.853,
+        "collision": {
+          "collider": {
+            "height": 1.75,
+            "radius": 0.27,
+            "stepUp": 0.3,
+            "headSafetyMargin": 0.08,
+            "maxSweepStep": 0.06,
+            "skin": 0.002
+          },
+          "queries": 2046995,
+          "substeps": 11004,
+          "wallContacts": 0,
+          "wallSlides": 0,
+          "ceilingChecks": 11004,
+          "ceilingBlocks": 0,
+          "maxPenetrationDepth": 0,
+          "minHorizontalClearance": 0.1714,
+          "minOverheadClearance": 0.488,
+          "minOverheadPoint": [
+            141.5,
+            13.11,
+            21.33,
+            "door_frame"
+          ],
+          "lastBlockingTag": null,
+          "maxFrameDt": 0.0333,
+          "lastSpeedMps": 28
+        }
+      }
+    },
+    "group_d_stress": {
+      "rate_1x": {
+        "frames": 2562,
+        "floors": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxPen": 0,
+        "minOverhead": 0.488
+      },
+      "rate_1.5x": {
+        "frames": 1708,
+        "floors": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxPen": 0,
+        "minOverhead": 0.488
+      },
+      "rate_2x": {
+        "frames": 1281,
+        "floors": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxPen": 0,
+        "minOverhead": 0.488
+      },
+      "pauseResumeStairs": {
+        "driftWhilePaused": 0,
+        "arrivedAfterResume": true,
+        "maxPen": 0
+      },
+      "replayRun": {
+        "floors": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "maxPen": 0,
+        "minOverhead": 0.488
+      },
+      "extremeDtSpike": {
+        "updates": 101,
+        "state": "ARRIVED",
+        "floors": [
+          -1,
+          0,
+          1,
+          2,
+          3
+        ],
+        "substeps": 11752,
+        "maxPen": 0,
+        "ceilingBlocks": 0,
+        "minOverhead": 0.488
+      }
+    }
+  },
+  "ceiling_audit": {
+    "bld_e2": {
+      "buildingNameEn": "Engineering Building 1",
+      "totalFloors": 4,
+      "ceilingPlanesRegistered": 4,
+      "soffitsRegistered": 18,
+      "floors": [
+        {
+          "index": 0,
+          "id": "G",
+          "nameEn": "Ground floor",
+          "levelY": 0.6,
+          "clearH": 4.25,
+          "worldSoffitY": 4.85,
+          "slabTopAboveY": 5.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 62.58,
+          "spanZ": 58.99,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 1,
+          "id": "1",
+          "nameEn": "First floor",
+          "levelY": 5.1,
+          "clearH": 3.75,
+          "worldSoffitY": 8.85,
+          "slabTopAboveY": 9.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 62.58,
+          "spanZ": 58.99,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 2,
+          "id": "2",
+          "nameEn": "Second floor",
+          "levelY": 9.1,
+          "clearH": 3.75,
+          "worldSoffitY": 12.85,
+          "slabTopAboveY": 13.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 62.58,
+          "spanZ": 58.99,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 3,
+          "id": "3",
+          "nameEn": "Third floor",
+          "levelY": 13.1,
+          "clearH": 3.75,
+          "worldSoffitY": 16.85,
+          "slabTopAboveY": 17.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 62.58,
+          "spanZ": 58.99,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 0,
+          "registeredInCollider": true
+        }
+      ]
+    },
+    "bld_e1": {
+      "buildingNameEn": "Engineering Building 2",
+      "totalFloors": 4,
+      "ceilingPlanesRegistered": 4,
+      "soffitsRegistered": 18,
+      "floors": [
+        {
+          "index": 0,
+          "id": "G",
+          "nameEn": "Ground floor",
+          "levelY": 0.6,
+          "clearH": 4.25,
+          "worldSoffitY": 4.85,
+          "slabTopAboveY": 5.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 60.41,
+          "spanZ": 62.97,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 1,
+          "id": "1",
+          "nameEn": "First floor",
+          "levelY": 5.1,
+          "clearH": 3.75,
+          "worldSoffitY": 8.85,
+          "slabTopAboveY": 9.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 60.41,
+          "spanZ": 62.97,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 2,
+          "id": "2",
+          "nameEn": "Second floor",
+          "levelY": 9.1,
+          "clearH": 3.75,
+          "worldSoffitY": 12.85,
+          "slabTopAboveY": 13.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 60.41,
+          "spanZ": 62.97,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 3,
+          "registeredInCollider": true
+        },
+        {
+          "index": 3,
+          "id": "3",
+          "nameEn": "Third floor",
+          "levelY": 13.1,
+          "clearH": 3.75,
+          "worldSoffitY": 16.85,
+          "slabTopAboveY": 17.1,
+          "meshExists": true,
+          "groupVisibleEyeLevel": true,
+          "ceilingVisibleEyeLevel": true,
+          "solidThicknessM": 0.04,
+          "spanX": 60.41,
+          "spanZ": 62.97,
+          "opaque": true,
+          "doubleSided": true,
+          "holeCount": 0,
+          "registeredInCollider": true
+        }
+      ]
+    }
+  }
+}
