@@ -5,9 +5,7 @@
   "source": "Architectural university floor plans within the OSM way 1250092609 footprint (4 storeys: Ground, First, Second, Third). Coordinates are local ENU metres matching viewer/data/osm_footprints_local.json; all rooms, stairwells, lift cores, open corridors, doorways, and academic furnishings are verified conflict-free.",
   "wall_height": 3.75,
   "footprint": [
-    [176.74, -88.78], [176.95, -93.49], [187.48, -93.33], [187.14, -71.11],
-    [176.67, -71.27], [176.11, -34.5], [124.9, -35.33], [125.23, -55.46],
-    [160.05, -54.9], [160.29, -69.68], [124.96, -70.25], [125.28, -89.6]
+    [186.62, -34.33], [124.9, -35.33], [125.23, -55.46], [160.05, -54.9], [160.29, -69.68], [124.96, -70.25], [125.28, -89.6], [176.74, -88.78], [176.82, -93.62], [187.57, -93.45]
   ],
   "floors": [
     {
@@ -16,8 +14,8 @@
         { "at": [160.17, -62.3], "width": 3.4, "name_en": "Main entrance", "name_ar": "المدخل الرئيسي", "label_offset": [-4, 0] }
       ],
       "rooms": [
-        { "id": "spine", "rect": [160.3, -70.0, 176.2, -55.0], "kind": "lobby", "open": true, "desk": "w", "name_en": "Atrium & Reception", "name_ar": "البهو والاستقبال" },
-        { "id": "lobby_n", "rect": [158.0, -52.2, 176.1, -46.5], "kind": "lobby", "open": true, "name_en": "North Stair & Lift Lobby", "name_ar": "بهو السلم والمصاعد الشمالي" },
+        { "id": "spine", "rect": [160.3, -70.0, 186.3, -55.0], "kind": "lobby", "open": true, "desk": "w", "name_en": "Atrium & Reception", "name_ar": "البهو والاستقبال" },
+        { "id": "lobby_n", "rect": [158.0, -52.2, 186.3, -46.5], "kind": "lobby", "open": true, "name_en": "North Stair & Lift Lobby", "name_ar": "بهو السلم والمصاعد الشمالي" },
         { "id": "corr_n", "rect": [125.4, -46.5, 164.0, -43.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Corridor", "name_ar": "الممر الشمالي" },
         { "id": "lobby_s", "rect": [158.0, -81.2, 176.2, -72.8], "kind": "lobby", "open": true, "name_en": "South Stair & Lift Lobby", "name_ar": "بهو السلم والمصاعد الجنوبي" },
         { "id": "corr_s", "rect": [125.4, -81.2, 158.0, -78.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Corridor", "name_ar": "الممر الجنوبي" },
@@ -30,7 +28,7 @@
         { "id": "wc_n", "rect": [125.4, -43.5, 134.0, -35.35], "kind": "wc", "split": 2, "door": "s", "name_en": "Restrooms", "name_ar": "دورات مياه" },
         { "id": "lab_n", "rect": [134.0, -43.5, 149.0, -35.35], "kind": "lab", "door": "s", "name_en": "General Engineering Lab", "name_ar": "معمل الهندسة العام" },
         { "id": "cls_n_out", "rect": [149.0, -43.5, 164.0, -35.35], "kind": "room", "split": 2, "door": "s", "name_en": "Rooms 102 & 103", "name_ar": "قاعات دراسية 102-103" },
-        { "id": "off_n", "rect": [164.0, -46.5, 176.0, -35.35], "kind": "office", "split": 2, "door": "s", "name_en": "Student Affairs Offices", "name_ar": "مكاتب شؤون الطلاب" },
+        { "id": "off_n", "rect": [164.0, -46.5, 186.3, -35.4], "kind": "office", "split": 2, "door": "s", "name_en": "Student Affairs Offices", "name_ar": "مكاتب شؤون الطلاب" },
 
         { "id": "cls_n_in", "rect": [125.4, -55.0, 136.5, -46.5], "kind": "room", "door": "n", "name_en": "Room 101", "name_ar": "غرفة 101" },
         { "id": "exit_n", "rect": [136.5, -55.0, 141.0, -46.5], "kind": "exit", "door": "n", "name_en": "Courtyard Exit", "name_ar": "مخرج الفناء" },
@@ -50,8 +48,8 @@
       "id": "1", "name_en": "First floor", "name_ar": "الدور الأول", "level": 5.1,
       "rooms": [
         { "id": "void_c", "rect": [161.2, -68.8, 171.2, -56.2], "kind": "void", "nolabel": true, "name_en": "Atrium Void", "name_ar": "فراغ البهو" },
-        { "id": "gallery_e", "rect": [171.5, -72.8, 176.2, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
-        { "id": "lobby_n", "rect": [158.0, -52.2, 176.1, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
+        { "id": "gallery_e", "rect": [171.5, -72.8, 186.3, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
+        { "id": "lobby_n", "rect": [158.0, -52.2, 186.3, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
         { "id": "corr_n", "rect": [125.4, -46.5, 164.0, -43.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Corridor", "name_ar": "الممر الشمالي" },
         { "id": "lobby_s", "rect": [158.0, -81.2, 176.2, -72.8], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Lobby", "name_ar": "البهو الجنوبي" },
         { "id": "corr_s", "rect": [125.4, -81.2, 158.0, -78.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Corridor", "name_ar": "الممر الجنوبي" },
@@ -66,7 +64,7 @@
         { "id": "room_104", "rect": [141.0, -43.5, 148.5, -35.35], "kind": "room", "door": "s", "name_en": "Room 104", "name_ar": "غرفة 104" },
         { "id": "room_105", "rect": [148.5, -43.5, 156.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 105", "name_ar": "غرفة 105" },
         { "id": "room_106", "rect": [156.0, -43.5, 164.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 106", "name_ar": "غرفة 106" },
-        { "id": "off_n1", "rect": [164.0, -46.0, 176.0, -35.35], "kind": "office", "split": 2, "door": "s", "name_en": "Faculty Offices", "name_ar": "مكاتب أعضاء هيئة التدريس" },
+        { "id": "off_n1", "rect": [164.0, -46.0, 186.3, -35.4], "kind": "office", "split": 2, "door": "s", "name_en": "Faculty Offices", "name_ar": "مكاتب أعضاء هيئة التدريس" },
 
         { "id": "drawing_hall_4", "rect": [125.4, -55.0, 141.5, -46.5], "kind": "drawing", "door": "n", "name_en": "Drawing Hall 4", "name_ar": "صالة رسم 4" },
         { "id": "off_n1_in", "rect": [141.5, -55.0, 148.0, -46.5], "kind": "office", "door": "n", "name_en": "TA Office", "name_ar": "مكتب المعيدين" },
@@ -85,8 +83,8 @@
       "id": "2", "name_en": "Second floor", "name_ar": "الدور التاني", "level": 9.1,
       "rooms": [
         { "id": "void_c", "rect": [161.2, -68.8, 171.2, -56.2], "kind": "void", "nolabel": true, "name_en": "Atrium Void", "name_ar": "فراغ البهو" },
-        { "id": "gallery_e", "rect": [171.5, -72.8, 176.2, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
-        { "id": "lobby_n", "rect": [158.0, -52.2, 176.1, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
+        { "id": "gallery_e", "rect": [171.5, -72.8, 186.3, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
+        { "id": "lobby_n", "rect": [158.0, -52.2, 186.3, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
         { "id": "corr_n", "rect": [125.4, -46.5, 164.0, -43.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Corridor", "name_ar": "الممر الشمالي" },
         { "id": "lobby_s", "rect": [158.0, -81.2, 176.2, -72.8], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Lobby", "name_ar": "البهو الجنوبي" },
         { "id": "corr_s", "rect": [125.4, -81.2, 158.0, -78.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Corridor", "name_ar": "الممر الجنوبي" },
@@ -100,7 +98,7 @@
         { "id": "lab_n2", "rect": [132.5, -43.5, 144.0, -35.35], "kind": "lab", "door": "s", "name_en": "Computer Lab 201", "name_ar": "معمل الحاسبات 201" },
         { "id": "room_206", "rect": [144.0, -43.5, 154.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 206", "name_ar": "غرفة 206" },
         { "id": "cls_n2_e", "rect": [154.0, -43.5, 164.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 208", "name_ar": "غرفة 208" },
-        { "id": "hall_2", "rect": [164.0, -46.0, 176.0, -35.35], "kind": "hall", "door": "s", "name_en": "Hall 2", "name_ar": "قاعة 2" },
+        { "id": "hall_2", "rect": [164.0, -46.0, 186.3, -35.4], "kind": "hall", "door": "s", "name_en": "Hall 2", "name_ar": "قاعة 2" },
 
         { "id": "cls_n2_in", "rect": [125.4, -55.0, 141.5, -46.5], "kind": "drawing", "door": "n", "name_en": "Architecture Studio 2", "name_ar": "استوديو التصميم 2" },
         { "id": "off_n2_in", "rect": [141.5, -55.0, 148.0, -46.5], "kind": "office", "door": "n", "name_en": "Faculty Office 202", "name_ar": "مكتب أعضاء هيئة التدريس" },
@@ -121,8 +119,8 @@
       "id": "3", "name_en": "Third floor", "name_ar": "الدور التالت", "level": 13.1,
       "rooms": [
         { "id": "void_c", "rect": [161.2, -68.8, 171.2, -56.2], "kind": "void", "nolabel": true, "name_en": "Atrium Void", "name_ar": "فراغ البهو" },
-        { "id": "gallery_e", "rect": [171.5, -72.8, 176.2, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
-        { "id": "lobby_n", "rect": [158.0, -52.2, 176.1, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
+        { "id": "gallery_e", "rect": [171.5, -72.8, 186.3, -52.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "East Gallery", "name_ar": "ممر البهو الشرقي" },
+        { "id": "lobby_n", "rect": [158.0, -52.2, 186.3, -46.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Lobby", "name_ar": "البهو الشمالي" },
         { "id": "corr_n", "rect": [125.4, -46.5, 164.0, -43.5], "kind": "lobby", "open": true, "nolabel": true, "name_en": "North Corridor", "name_ar": "الممر الشمالي" },
         { "id": "lobby_s", "rect": [158.0, -81.2, 176.2, -72.8], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Lobby", "name_ar": "البهو الجنوبي" },
         { "id": "corr_s", "rect": [125.4, -81.2, 158.0, -78.2], "kind": "lobby", "open": true, "nolabel": true, "name_en": "South Corridor", "name_ar": "الممر الجنوبي" },
@@ -136,7 +134,7 @@
         { "id": "lab_n3", "rect": [132.5, -43.5, 145.0, -35.35], "kind": "lab", "door": "s", "name_en": "Networks & Systems Lab", "name_ar": "معمل الشبكات والنظم" },
         { "id": "cls_n3_m", "rect": [145.0, -43.5, 155.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 302", "name_ar": "غرفة 302" },
         { "id": "cls_n3_e", "rect": [155.0, -43.5, 164.0, -35.35], "kind": "room", "door": "s", "name_en": "Room 304", "name_ar": "غرفة 304" },
-        { "id": "hall_4", "rect": [164.0, -46.0, 176.0, -35.35], "kind": "hall", "door": "s", "name_en": "Hall 4", "name_ar": "قاعة 4" },
+        { "id": "hall_4", "rect": [164.0, -46.0, 186.3, -35.4], "kind": "hall", "door": "s", "name_en": "Hall 4", "name_ar": "قاعة 4" },
 
         { "id": "cls_n3_in", "rect": [125.4, -55.0, 141.5, -46.5], "kind": "drawing", "door": "n", "name_en": "Senior Design Studio", "name_ar": "استوديو مشاريع التخرج" },
         { "id": "off_n3_in", "rect": [141.5, -55.0, 148.0, -46.5], "kind": "office", "door": "n", "name_en": "Dean & Faculty Suite", "name_ar": "مكاتب الأساتذة" },
