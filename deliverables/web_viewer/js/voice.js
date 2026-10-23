@@ -175,8 +175,8 @@ export function createVoice({ lang = 'ar' } = {}) {
 
   function speakBridge(text) {
     try {
-      const u = new URL('tts', TTS_BASE || location.origin);
-      u.pathname = (TTS_BASE ? new URL(TTS_BASE).pathname.replace(/\/$/, '') : '') + '/tts';
+      const u = new URL('__tts', TTS_BASE || location.origin);
+      u.pathname = (TTS_BASE ? new URL(TTS_BASE).pathname.replace(/\/$/, '') : '') + '/__tts';
       u.searchParams.set('text', text);
       const el = new Audio(u.toString()); el.playbackRate = CUE_RATE; el.preservesPitch = true;
       nowPlaying = { el };
