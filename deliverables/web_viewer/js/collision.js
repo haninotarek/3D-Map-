@@ -97,11 +97,13 @@ export function createCollisionWorld(footprint) {
   /** Registers a solid 3D oriented box on `floorIndex` (`y0`, `y1` in world Y metres). */
   function addSolidBox(floorIndex, cx, y0, y1, cz, sx, sz, angY = 0, tag = 'wall') {
     if (sx <= 0.005 || sz <= 0.005 || y1 - y0 <= 0.02) return;
+    const hx = sx * 0.5, hz = sz * 0.5;
     ensureFloor(floorIndex).push({
       cx,
       cz,
-      hx: sx * 0.5,
-      hz: sz * 0.5,
+      hx,
+      hz,
+      boundR: hx + hz,
       cos: Math.cos(-angY),
       sin: Math.sin(-angY),
       y0,
@@ -214,7 +216,8 @@ export function createCollisionWorld(footprint) {
    * Returns `< CHAR_COLLIDER.radius` if the character capsule would touch/penetrate an obstacle.
    */
   function horizontalSurfaceDistance(floorIndex, x, yPlan, footY) {
-    if (footprint && !pointInPoly2D(x, yPlan, footprint)) return -1;
+    // Exterior walls (`ext_wall`, thickness `EXT_T = 0.35m` with openings ONLY at entrances) are all
+    // registered directly in `obstaclesByFloor`, avoiding false negatives on slightly tilted OSM edges.
     const wz = -yPlan;
     let minSurfaceDist = 99;
     const minF = Math.max(0, floorIndex - 1);
@@ -225,7 +228,10 @@ export function createCollisionWorld(footprint) {
         const b = list[i];
         if (footY + CHAR_COLLIDER.height <= b.y0 + 0.02) continue;
         if (footY + CHAR_COLLIDER.stepUp >= b.y1) continue;
-        const rx = x - b.cx, rz = wz - b.cz;
+        const rx = x - b.cx;
+        if (rx > minSurfaceDist + b.boundR || -rx > minSurfaceDist + b.boundR) continue;
+        const rz = wz - b.cz;
+        if (rz > minSurfaceDist + b.boundR || -rz > minSurfaceDist + b.boundR) continue;
         const lx = rx * b.cos + rz * b.sin;
         const lz = -rx * b.sin + rz * b.cos;
         const qx = Math.max(-b.hx, Math.min(b.hx, lx));
@@ -364,6 +370,43 @@ export function createCollisionWorld(footprint) {
     return outPos;
   }
 
+  /**
+   * Independent zero-allocation 3D camera-arm obstacle solver along `A(ax, ay, az) -> B(bx, by, bz)`:
+   * Finds the earliest fractional hit `tHit in [0, 1]` where the camera sphere (`margin` m) meets ANY
+   * solid wall, exterior wall, stair wall, column, lift core, door frame, or balustrade on nearby floors.
+   * Completely independent of `sweepMove` (never moves or mutates the character collider!).
+   */
+  function raycastCameraArm(floorIndex, ax, ay, az, bx, by, bz, margin = 0.38) {
+    const dx = bx - ax, dy = by - ay, dz = bz - az;
+    const fullDist = Math.hypot(dx, dy, dz);
+    if (fullDist < 1e-3) return null;
+    const minF = Math.max(0, floorIndex - 1);
+    const maxF = Math.min(obstaclesByFloor.length - 1, floorIndex + 1);
+    const nSamples = Math.max(8, Math.ceil(fullDist / 0.14));
+    for (let s = 1; s <= nSamples; s++) {
+      const t = s / nSamples;
+      const px = ax + dx * t;
+      const py = ay + dy * t;
+      const pz = az + dz * t;
+      for (let fi = minF; fi <= maxF; fi++) {
+        const list = obstaclesByFloor[fi] || [];
+        for (let i = 0; i < list.length; i++) {
+          const b = list[i];
+          if (b.tag === 'furniture') continue;
+          if (py < b.y0 - margin || py > b.y1 + margin) continue;
+          const rx = px - b.cx;
+          if (rx > margin + b.boundR || -rx > margin + b.boundR) continue;
+          const rz = pz - b.cz;
+          if (rz > margin + b.boundR || -rz > margin + b.boundR) continue;
+          if (obbPushOut(px, pz, margin, b, _tmpOut)) {
+            return Math.max(0, ((s - 1) / nSamples) * fullDist);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   return {
     obstaclesByFloor,
     ceilingPlanes,
@@ -374,6 +417,7 @@ export function createCollisionWorld(footprint) {
     addStairSoffit,
     measureOverheadClearance,
     horizontalSurfaceDistance,
+    raycastCameraArm,
     auditPoint,
     sweepMove,
   };

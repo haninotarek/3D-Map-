@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8080/?qa=1",
-  "timestamp": "2026-10-23 09:31:46",
+  "timestamp": "2026-10-23 14:00:44",
   "checks": [
     {
       "name": "T01_character_collider_matches_student_rig",
@@ -10,7 +10,7 @@
     {
       "name": "T02_world_obstacles_registered_on_all_floors",
       "ok": true,
-      "detail": "bld_e2=[2443, 2397, 1988, 2371], bld_e1=[818, 876, 1109, 1049]"
+      "detail": "bld_e2=[762, 1752, 1291, 3118], bld_e1=[865, 2562, 2366, 2787]"
     },
     {
       "name": "P4_bld_e2_exact_4_occupied_floors_G_1_2_3",
@@ -20,22 +20,22 @@
     {
       "name": "P4_bld_e2_floor_G_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=0.6m soffit=4.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+      "detail": "level=0.6m soffit=4.85m thick=0.04m span=62.67x59.12m holes=3 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e2_floor_1_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=5.1m soffit=8.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+      "detail": "level=5.1m soffit=8.85m thick=0.04m span=62.67x59.12m holes=2 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e2_floor_2_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=9.1m soffit=12.85m thick=0.04m span=62.58x58.99m holes=3 opaque=True doubleSide=True"
+      "detail": "level=9.1m soffit=12.85m thick=0.04m span=62.67x59.12m holes=2 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e2_floor_3_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=13.1m soffit=16.85m thick=0.04m span=62.58x58.99m holes=0 opaque=True doubleSide=True"
+      "detail": "level=13.1m soffit=16.85m thick=0.04m span=62.67x59.12m holes=0 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e1_exact_4_occupied_floors_G_1_2_3",
@@ -45,52 +45,52 @@
     {
       "name": "P4_bld_e1_floor_G_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=0.6m soffit=4.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+      "detail": "level=0.6m soffit=4.85m thick=0.04m span=59.81x56.76m holes=3 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e1_floor_1_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=5.1m soffit=8.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+      "detail": "level=5.1m soffit=8.85m thick=0.04m span=59.81x56.76m holes=2 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e1_floor_2_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=9.1m soffit=12.85m thick=0.04m span=60.41x62.97m holes=3 opaque=True doubleSide=True"
+      "detail": "level=9.1m soffit=12.85m thick=0.04m span=59.81x56.76m holes=2 opaque=True doubleSide=True"
     },
     {
       "name": "P4_bld_e1_floor_3_ceiling_complete_opaque_connected",
       "ok": true,
-      "detail": "level=13.1m soffit=16.85m thick=0.04m span=60.41x62.97m holes=0 opaque=True doubleSide=True"
+      "detail": "level=13.1m soffit=16.85m thick=0.04m span=59.81x56.76m holes=0 opaque=True doubleSide=True"
     },
     {
       "name": "GA_01_direct_perpendicular_wall_stop",
       "ok": true,
-      "detail": "resolvedX=158.372 contacts=32 pen=0"
+      "detail": "resolvedZ=78.572 contacts=27 pen=0"
     },
     {
       "name": "GA_02_parallel_wall_sliding_smooth_no_penetration",
       "ok": true,
-      "detail": "resolved=[158.3717, 0.612, 78.0875] slidZ=1.988m pen=0"
+      "detail": "resolved=[154.6, 0.612, 78.572] slidX=2.1m pen=0"
     },
     {
       "name": "GA_03_acute_corner_block_and_clean_recovery",
       "ok": true,
-      "detail": "cornerIn=[157.3787, 0.612, 69.2799] recoveredTo=[159.2, 0.612, 69.2]"
+      "detail": "cornerIn=[137.172, 0.612, 77.5828] recoveredTo=[138.2, 0.612, 79.4]"
     },
     {
       "name": "GA_04_open_doorway_unobstructed_vs_adjacent_jamb_blocked",
       "ok": true,
-      "detail": "openDoorX=156.9 jambBlockedX=158.372"
+      "detail": "openDoorZ=77.05 jambBlockedZ=78.662"
     },
     {
       "name": "GA_05_structural_column_blocks_penetration",
       "ok": true,
-      "detail": "colResolved=[161.132, 0.612, 69.628] tag=column"
+      "detail": "colResolved=[161.232, 0.612, 69.65] tag=column"
     },
     {
       "name": "GA_06_atrium_balustrade_railing_blocks_fall",
       "ok": true,
-      "detail": "railResolved=[171.542, 5.112, 62.5] tag=railing"
+      "detail": "railResolved=[169.842, 5.112, 62.5] tag=railing"
     },
     {
       "name": "GC_01_overhead_ceiling_guard_blocks_head_penetration",
@@ -100,22 +100,22 @@
     {
       "name": "GBC_B1_e2_south_stairs_G_to_3_ascent",
       "ok": true,
-      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.861m minDoorClear=+0.488m pitch=8.14deg"
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.845m minDoorClear=+0.538m pitch=8.82deg"
     },
     {
       "name": "GBC_B2_e2_north_stairs_G_to_3_ascent",
       "ok": true,
-      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.857m minDoorClear=+0.488m pitch=8.15deg"
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.842m minDoorClear=+0.488m pitch=8.63deg"
     },
     {
       "name": "GBC_B3_e1_south_stairs_G_to_3_ascent",
       "ok": true,
-      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.852m minDoorClear=+0.488m pitch=8.02deg"
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.852m minDoorClear=+0.488m pitch=9.93deg"
     },
     {
       "name": "GBC_B4_e1_north_stairs_G_to_3_ascent",
       "ok": true,
-      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.859m minDoorClear=+0.488m pitch=7.95deg"
+      "detail": "floors=[-1, 0, 1, 2, 3] maxPen=0m minStairHeadroom=+1.85m minDoorClear=+0.488m pitch=9.93deg"
     },
     {
       "name": "GBC_A7_e2_ground_lab_arrival",
@@ -125,27 +125,27 @@
     {
       "name": "GBC_C2_e2_south_stairs_3_to_G_descent",
       "ok": true,
-      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.858m minDoorClear=+0.488m pitch=8.23deg"
+      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.843m minDoorClear=+0.538m pitch=9.93deg"
     },
     {
       "name": "GBC_C3_e1_north_stairs_3_to_G_descent",
       "ok": true,
-      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.853m minDoorClear=+0.488m pitch=8.04deg"
+      "detail": "floors=[3, 2, 1, 0, -1] maxPen=0m minStairHeadroom=+1.851m minDoorClear=+0.488m pitch=9.35deg"
     },
     {
       "name": "GD_01_speed_1x_1_5x_2x_zero_tunneling_monotonic_scaling",
       "ok": true,
-      "detail": "frames: 1x=2562, 1.5x=1708, 2x=1281"
+      "detail": "frames: 1x=2773, 1.5x=1849, 2x=1387"
     },
     {
       "name": "GD_02_pause_resume_on_stairs_and_full_replay",
       "ok": true,
-      "detail": "pauseResume={'driftWhilePaused': 0, 'arrivedAfterResume': True, 'maxPen': 0}, replay={'floors': [-1, 0, 1, 2, 3], 'maxPen': 0, 'minOverhead': 0.488}"
+      "detail": "pauseResume={'driftWhilePaused': 0, 'arrivedAfterResume': True, 'maxPen': 0}, replay={'floors': [-1, 0, 1, 2, 3], 'maxPen': 0, 'minOverhead': 0.538}"
     },
     {
       "name": "GD_03_extreme_dt_spike_0_50s_at_2x_zero_wall_or_ceiling_tunneling",
       "ok": true,
-      "detail": "spike={'updates': 101, 'state': 'ARRIVED', 'floors': [-1, 0, 1, 2, 3], 'substeps': 11752, 'maxPen': 0, 'ceilingBlocks': 0, 'minOverhead': 0.488}"
+      "detail": "spike={'updates': 109, 'state': 'ARRIVED', 'floors': [-1, 0, 1, 2, 3], 'substeps': 12115, 'maxPen': 0, 'ceilingBlocks': 0, 'minOverhead': 0.538}"
     },
     {
       "name": "GD_04_responsive_viewport_resize_during_active_navigation",
@@ -164,26 +164,90 @@
     "group_a_adversarial": {
       "a1": {
         "resolved": [
-          158.372,
+          154,
           0.612,
-          77
+          78.572
         ],
-        "movedDist": 1.028,
+        "movedDist": 0.828,
         "stats": {
-          "queries": 191079,
-          "substeps": 49,
-          "wallContacts": 32,
-          "wallSlides": 32,
-          "ceilingChecks": 49,
+          "queries": 46648,
+          "substeps": 41,
+          "wallContacts": 27,
+          "wallSlides": 27,
+          "ceilingChecks": 41,
           "ceilingBlocks": 0,
           "minOverheadClearance": 2.488,
           "minOverheadPoint": [
-            158.37,
+            154,
             0.61,
-            -77,
+            -78.57,
             "ceiling_0"
           ],
           "lastBlockingTag": "stair_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0019999999999998908,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "a2": {
+        "resolved": [
+          154.6,
+          0.612,
+          78.572
+        ],
+        "movedDist": 2.1005,
+        "stats": {
+          "queries": 56938,
+          "substeps": 42,
+          "wallContacts": 41,
+          "wallSlides": 41,
+          "ceilingChecks": 42,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            154.6,
+            0.61,
+            -78.57,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "stair_wall"
+        },
+        "audit": {
+          "maxPenetration": 0,
+          "minHorizontalClearance": 0.0019999999999998908,
+          "worstObstacleTag": null,
+          "overheadClearance": 2.4879999999999995,
+          "overheadY": 4.85,
+          "overheadTag": "ceiling_0"
+        }
+      },
+      "cornerIn": {
+        "resolved": [
+          137.172,
+          0.612,
+          77.5828
+        ],
+        "movedDist": 2.0878,
+        "stats": {
+          "queries": 40474,
+          "substeps": 42,
+          "wallContacts": 20,
+          "wallSlides": 17,
+          "ceilingChecks": 42,
+          "ceilingBlocks": 0,
+          "minOverheadClearance": 2.488,
+          "minOverheadPoint": [
+            137.17,
+            0.61,
+            -77.58,
+            "ceiling_0"
+          ],
+          "lastBlockingTag": "wall"
         },
         "audit": {
           "maxPenetration": 0,
@@ -194,96 +258,32 @@
           "overheadTag": "ceiling_0"
         }
       },
-      "a2": {
-        "resolved": [
-          158.3717,
-          0.612,
-          78.0875
-        ],
-        "movedDist": 1.9881,
-        "stats": {
-          "queries": 186361,
-          "substeps": 40,
-          "wallContacts": 41,
-          "wallSlides": 39,
-          "ceilingChecks": 40,
-          "ceilingBlocks": 0,
-          "minOverheadClearance": 2.488,
-          "minOverheadPoint": [
-            158.37,
-            0.61,
-            -78.09,
-            "ceiling_0"
-          ],
-          "lastBlockingTag": "stair_wall"
-        },
-        "audit": {
-          "maxPenetration": 0,
-          "minHorizontalClearance": 0.0017130377112313244,
-          "worstObstacleTag": null,
-          "overheadClearance": 2.4879999999999995,
-          "overheadY": 4.85,
-          "overheadTag": "ceiling_0"
-        }
-      },
-      "cornerIn": {
-        "resolved": [
-          157.3787,
-          0.612,
-          69.2799
-        ],
-        "movedDist": 1.8231,
-        "stats": {
-          "queries": 181643,
-          "substeps": 39,
-          "wallContacts": 38,
-          "wallSlides": 38,
-          "ceilingChecks": 39,
-          "ceilingBlocks": 0,
-          "minOverheadClearance": 2.488,
-          "minOverheadPoint": [
-            157.38,
-            0.61,
-            -69.28,
-            "ceiling_0"
-          ],
-          "lastBlockingTag": "ext_wall"
-        },
-        "audit": {
-          "maxPenetration": 0,
-          "minHorizontalClearance": 0.002000000000000446,
-          "worstObstacleTag": null,
-          "overheadClearance": 2.4879999999999995,
-          "overheadY": 4.85,
-          "overheadTag": "ceiling_0"
-        }
-      },
       "cornerOut": {
         "resolved": [
-          159.2,
+          138.2,
           0.612,
-          69.2
+          79.4
         ],
-        "movedDist": 1.8231,
+        "movedDist": 2.0878,
         "stats": {
-          "queries": 73129,
-          "substeps": 31,
+          "queries": 24010,
+          "substeps": 35,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 31,
+          "ceilingChecks": 35,
           "ceilingBlocks": 0,
           "minOverheadClearance": 2.488,
           "minOverheadPoint": [
-            159.2,
+            138.2,
             0.61,
-            -69.2,
+            -79.4,
             "ceiling_0"
           ],
           "lastBlockingTag": null
         },
         "audit": {
           "maxPenetration": 0,
-          "minHorizontalClearance": 0.05252087490520013,
+          "minHorizontalClearance": 1.432938636592757,
           "worstObstacleTag": null,
           "overheadClearance": 2.4879999999999995,
           "overheadY": 4.85,
@@ -292,30 +292,30 @@
       },
       "doorPass": {
         "resolved": [
-          156.9,
+          157.15,
           0.612,
-          74.1
+          77.05
         ],
-        "movedDist": 2.3,
+        "movedDist": 2.25,
         "stats": {
-          "queries": 92001,
-          "substeps": 39,
+          "queries": 26068,
+          "substeps": 38,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 39,
+          "ceilingChecks": 38,
           "ceilingBlocks": 0,
           "minOverheadClearance": 0.538,
           "minOverheadPoint": [
-            157.73,
+            157.15,
             0.61,
-            -74.1,
+            -77.88,
             "door_frame"
           ],
           "lastBlockingTag": null
         },
         "audit": {
           "maxPenetration": 0,
-          "minHorizontalClearance": 0.8493073751210733,
+          "minHorizontalClearance": 0.4799999999999941,
           "worstObstacleTag": null,
           "overheadClearance": 2.4879999999999995,
           "overheadY": 4.85,
@@ -324,30 +324,30 @@
       },
       "doorJambBlock": {
         "resolved": [
-          158.372,
+          155.8,
           0.612,
-          75.25
+          78.662
         ],
-        "movedDist": 0.828,
+        "movedDist": 0.638,
         "stats": {
-          "queries": 150976,
-          "substeps": 39,
-          "wallContacts": 25,
-          "wallSlides": 25,
-          "ceilingChecks": 39,
+          "queries": 45276,
+          "substeps": 38,
+          "wallContacts": 28,
+          "wallSlides": 28,
+          "ceilingChecks": 38,
           "ceilingBlocks": 0,
           "minOverheadClearance": 2.488,
           "minOverheadPoint": [
-            158.37,
+            155.8,
             0.61,
-            -75.25,
+            -78.66,
             "ceiling_0"
           ],
-          "lastBlockingTag": "stair_wall"
+          "lastBlockingTag": "door_frame"
         },
         "audit": {
           "maxPenetration": 0,
-          "minHorizontalClearance": 0.0020000000000139906,
+          "minHorizontalClearance": 0.002000000000002111,
           "worstObstacleTag": null,
           "overheadClearance": 2.4879999999999995,
           "overheadY": 4.85,
@@ -356,23 +356,23 @@
       },
       "colHit": {
         "resolved": [
-          161.132,
+          161.232,
           0.612,
-          69.628
+          69.65
         ],
-        "movedDist": 0.8683,
+        "movedDist": 0.668,
         "stats": {
-          "queries": 143899,
-          "substeps": 37,
+          "queries": 40474,
+          "substeps": 35,
           "wallContacts": 24,
           "wallSlides": 24,
-          "ceilingChecks": 37,
+          "ceilingChecks": 35,
           "ceilingBlocks": 0,
           "minOverheadClearance": 2.488,
           "minOverheadPoint": [
-            161.13,
+            161.23,
             0.61,
-            -69.63,
+            -69.65,
             "ceiling_0"
           ],
           "lastBlockingTag": "column"
@@ -388,13 +388,13 @@
       },
       "railHit": {
         "resolved": [
-          171.542,
+          169.842,
           5.112,
           62.5
         ],
         "movedDist": 1.458,
         "stats": {
-          "queries": 176244,
+          "queries": 128136,
           "substeps": 50,
           "wallContacts": 26,
           "wallSlides": 26,
@@ -402,7 +402,7 @@
           "ceilingBlocks": 0,
           "minOverheadClearance": 1.988,
           "minOverheadPoint": [
-            172.94,
+            171.24,
             5.11,
             -62.5,
             "ceiling_1"
@@ -420,13 +420,13 @@
       },
       "ceilGuard": {
         "resolved": [
-          161.2,
+          172,
           3.0857,
           62.5
         ],
         "movedDist": 0.2857,
         "stats": {
-          "queries": 918,
+          "queries": 726,
           "substeps": 6,
           "wallContacts": 0,
           "wallSlides": 0,
@@ -434,7 +434,7 @@
           "ceilingBlocks": 1,
           "minOverheadClearance": -0.043,
           "minOverheadPoint": [
-            161.2,
+            172,
             3.14,
             -62.5,
             "ceiling_0"
@@ -443,7 +443,7 @@
         },
         "audit": {
           "maxPenetration": 0,
-          "minHorizontalClearance": 1.290971646158358,
+          "minHorizontalClearance": 4.119865793137334,
           "worstObstacleTag": null,
           "overheadClearance": 0.014285714285715123,
           "overheadY": 4.85,
@@ -453,7 +453,7 @@
     },
     "groups_b_c_routes": {
       "B1_e2_south_stairs_G_to_3_ascent": {
-        "frames": 2562,
+        "frames": 2773,
         "state": "ARRIVED",
         "finalFloor": 3,
         "floorTransitions": [
@@ -463,8 +463,8 @@
           2,
           3
         ],
-        "maxIndoorPitchDeg": 8.14,
-        "minStairHeadroomM": 1.861,
+        "maxIndoorPitchDeg": 8.82,
+        "minStairHeadroomM": 1.845,
         "collision": {
           "collider": {
             "height": 1.75,
@@ -474,19 +474,19 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 5184622,
-          "substeps": 11289,
+          "queries": 5068073,
+          "substeps": 11701,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 11289,
+          "ceilingChecks": 11701,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.2264,
-          "minOverheadClearance": 0.488,
+          "minHorizontalClearance": 0.28,
+          "minOverheadClearance": 0.538,
           "minOverheadPoint": [
-            177.25,
+            157.15,
             13.11,
-            -82.3,
+            -78.52,
             "door_frame"
           ],
           "lastBlockingTag": null,
@@ -495,7 +495,7 @@
         }
       },
       "B2_e2_north_stairs_G_to_3_ascent": {
-        "frames": 2614,
+        "frames": 2660,
         "state": "ARRIVED",
         "finalFloor": 3,
         "floorTransitions": [
@@ -505,8 +505,8 @@
           2,
           3
         ],
-        "maxIndoorPitchDeg": 8.15,
-        "minStairHeadroomM": 1.857,
+        "maxIndoorPitchDeg": 8.63,
+        "minStairHeadroomM": 1.842,
         "collision": {
           "collider": {
             "height": 1.75,
@@ -516,19 +516,19 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 5389808,
-          "substeps": 11382,
+          "queries": 4299838,
+          "substeps": 11465,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 11382,
+          "ceilingChecks": 11465,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.1808,
+          "minHorizontalClearance": 0.1417,
           "minOverheadClearance": 0.488,
           "minOverheadPoint": [
-            170,
+            170.15,
             13.11,
-            -45.65,
+            -45.66,
             "door_frame"
           ],
           "lastBlockingTag": null,
@@ -537,7 +537,7 @@
         }
       },
       "B3_e1_south_stairs_G_to_3_ascent": {
-        "frames": 2689,
+        "frames": 2296,
         "state": "ARRIVED",
         "finalFloor": 3,
         "floorTransitions": [
@@ -547,7 +547,7 @@
           2,
           3
         ],
-        "maxIndoorPitchDeg": 8.02,
+        "maxIndoorPitchDeg": 9.93,
         "minStairHeadroomM": 1.852,
         "collision": {
           "collider": {
@@ -558,28 +558,28 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 2430814,
-          "substeps": 11471,
-          "wallContacts": 0,
-          "wallSlides": 0,
-          "ceilingChecks": 11471,
+          "queries": 35972359,
+          "substeps": 31213,
+          "wallContacts": 34469,
+          "wallSlides": 20726,
+          "ceilingChecks": 31213,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.1836,
+          "minHorizontalClearance": 0.0001,
           "minOverheadClearance": 0.488,
           "minOverheadPoint": [
-            133.42,
+            166.35,
             13.11,
-            -27.53,
+            -3.65,
             "door_frame"
           ],
-          "lastBlockingTag": null,
+          "lastBlockingTag": "column",
           "maxFrameDt": 0.0333,
           "lastSpeedMps": 2.35
         }
       },
       "B4_e1_north_stairs_G_to_3_ascent": {
-        "frames": 2442,
+        "frames": 2407,
         "state": "ARRIVED",
         "finalFloor": 3,
         "floorTransitions": [
@@ -589,8 +589,8 @@
           2,
           3
         ],
-        "maxIndoorPitchDeg": 7.95,
-        "minStairHeadroomM": 1.859,
+        "maxIndoorPitchDeg": 9.93,
+        "minStairHeadroomM": 1.85,
         "collision": {
           "collider": {
             "height": 1.75,
@@ -600,28 +600,28 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 2031120,
-          "substeps": 11008,
-          "wallContacts": 0,
-          "wallSlides": 0,
-          "ceilingChecks": 11008,
+          "queries": 36157052,
+          "substeps": 31142,
+          "wallContacts": 33342,
+          "wallSlides": 20499,
+          "ceilingChecks": 31142,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.1697,
+          "minHorizontalClearance": 0,
           "minOverheadClearance": 0.488,
           "minOverheadPoint": [
-            141.5,
+            170.4,
             13.11,
-            20.67,
+            24.55,
             "door_frame"
           ],
-          "lastBlockingTag": null,
+          "lastBlockingTag": "furniture",
           "maxFrameDt": 0.0333,
           "lastSpeedMps": 2.35
         }
       },
       "A7_e2_ground_lab_arrival": {
-        "frames": 1324,
+        "frames": 824,
         "state": "ARRIVED",
         "finalFloor": 0,
         "floorTransitions": [
@@ -639,19 +639,19 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 3596956,
-          "substeps": 9912,
+          "queries": 379467,
+          "substeps": 8912,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 9912,
+          "ceilingChecks": 8912,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.2187,
+          "minHorizontalClearance": 0.405,
           "minOverheadClearance": 0.488,
           "minOverheadPoint": [
-            141.5,
+            170.4,
             0.61,
-            -43.83,
+            -69.67,
             "door_frame"
           ],
           "lastBlockingTag": null,
@@ -660,7 +660,7 @@
         }
       },
       "C2_e2_south_stairs_3_to_G_descent": {
-        "frames": 2562,
+        "frames": 2773,
         "state": "ARRIVED",
         "finalFloor": -1,
         "floorTransitions": [
@@ -670,8 +670,8 @@
           0,
           -1
         ],
-        "maxIndoorPitchDeg": 8.23,
-        "minStairHeadroomM": 1.858,
+        "maxIndoorPitchDeg": 9.93,
+        "minStairHeadroomM": 1.843,
         "collision": {
           "collider": {
             "height": 1.75,
@@ -681,19 +681,19 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 5203339,
-          "substeps": 11293,
+          "queries": 5125297,
+          "substeps": 11695,
           "wallContacts": 0,
           "wallSlides": 0,
-          "ceilingChecks": 11293,
+          "ceilingChecks": 11695,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.2252,
-          "minOverheadClearance": 0.488,
+          "minHorizontalClearance": 0.28,
+          "minOverheadClearance": 0.538,
           "minOverheadPoint": [
-            176.57,
-            13.11,
-            -82.3,
+            157.15,
+            0.61,
+            -78.51,
             "door_frame"
           ],
           "lastBlockingTag": null,
@@ -702,7 +702,7 @@
         }
       },
       "C3_e1_north_stairs_3_to_G_descent": {
-        "frames": 2442,
+        "frames": 2407,
         "state": "ARRIVED",
         "finalFloor": -1,
         "floorTransitions": [
@@ -712,8 +712,8 @@
           0,
           -1
         ],
-        "maxIndoorPitchDeg": 8.04,
-        "minStairHeadroomM": 1.853,
+        "maxIndoorPitchDeg": 9.35,
+        "minStairHeadroomM": 1.851,
         "collision": {
           "collider": {
             "height": 1.75,
@@ -723,22 +723,22 @@
             "maxSweepStep": 0.06,
             "skin": 0.002
           },
-          "queries": 2046995,
-          "substeps": 11004,
-          "wallContacts": 0,
-          "wallSlides": 0,
-          "ceilingChecks": 11004,
+          "queries": 9625829,
+          "substeps": 14422,
+          "wallContacts": 3568,
+          "wallSlides": 3568,
+          "ceilingChecks": 14422,
           "ceilingBlocks": 0,
           "maxPenetrationDepth": 0,
-          "minHorizontalClearance": 0.1714,
+          "minHorizontalClearance": 0.002,
           "minOverheadClearance": 0.488,
           "minOverheadPoint": [
-            141.5,
+            170.4,
             13.11,
-            21.33,
+            23.87,
             "door_frame"
           ],
-          "lastBlockingTag": null,
+          "lastBlockingTag": "furniture",
           "maxFrameDt": 0.0333,
           "lastSpeedMps": 28
         }
@@ -746,7 +746,7 @@
     },
     "group_d_stress": {
       "rate_1x": {
-        "frames": 2562,
+        "frames": 2773,
         "floors": [
           -1,
           0,
@@ -755,10 +755,10 @@
           3
         ],
         "maxPen": 0,
-        "minOverhead": 0.488
+        "minOverhead": 0.538
       },
       "rate_1.5x": {
-        "frames": 1708,
+        "frames": 1849,
         "floors": [
           -1,
           0,
@@ -767,10 +767,10 @@
           3
         ],
         "maxPen": 0,
-        "minOverhead": 0.488
+        "minOverhead": 0.538
       },
       "rate_2x": {
-        "frames": 1281,
+        "frames": 1387,
         "floors": [
           -1,
           0,
@@ -779,7 +779,7 @@
           3
         ],
         "maxPen": 0,
-        "minOverhead": 0.488
+        "minOverhead": 0.538
       },
       "pauseResumeStairs": {
         "driftWhilePaused": 0,
@@ -795,10 +795,10 @@
           3
         ],
         "maxPen": 0,
-        "minOverhead": 0.488
+        "minOverhead": 0.538
       },
       "extremeDtSpike": {
-        "updates": 101,
+        "updates": 109,
         "state": "ARRIVED",
         "floors": [
           -1,
@@ -807,16 +807,16 @@
           2,
           3
         ],
-        "substeps": 11752,
+        "substeps": 12115,
         "maxPen": 0,
         "ceilingBlocks": 0,
-        "minOverhead": 0.488
+        "minOverhead": 0.538
       }
     }
   },
   "ceiling_audit": {
     "bld_e2": {
-      "buildingNameEn": "Engineering Building 1",
+      "buildingNameEn": null,
       "totalFloors": 4,
       "ceilingPlanesRegistered": 4,
       "soffitsRegistered": 18,
@@ -833,8 +833,8 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 62.58,
-          "spanZ": 58.99,
+          "spanX": 62.67,
+          "spanZ": 59.12,
           "opaque": true,
           "doubleSided": true,
           "holeCount": 3,
@@ -852,11 +852,11 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 62.58,
-          "spanZ": 58.99,
+          "spanX": 62.67,
+          "spanZ": 59.12,
           "opaque": true,
           "doubleSided": true,
-          "holeCount": 3,
+          "holeCount": 2,
           "registeredInCollider": true
         },
         {
@@ -871,11 +871,11 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 62.58,
-          "spanZ": 58.99,
+          "spanX": 62.67,
+          "spanZ": 59.12,
           "opaque": true,
           "doubleSided": true,
-          "holeCount": 3,
+          "holeCount": 2,
           "registeredInCollider": true
         },
         {
@@ -890,8 +890,8 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 62.58,
-          "spanZ": 58.99,
+          "spanX": 62.67,
+          "spanZ": 59.12,
           "opaque": true,
           "doubleSided": true,
           "holeCount": 0,
@@ -917,8 +917,8 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 60.41,
-          "spanZ": 62.97,
+          "spanX": 59.81,
+          "spanZ": 56.76,
           "opaque": true,
           "doubleSided": true,
           "holeCount": 3,
@@ -936,11 +936,11 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 60.41,
-          "spanZ": 62.97,
+          "spanX": 59.81,
+          "spanZ": 56.76,
           "opaque": true,
           "doubleSided": true,
-          "holeCount": 3,
+          "holeCount": 2,
           "registeredInCollider": true
         },
         {
@@ -955,11 +955,11 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 60.41,
-          "spanZ": 62.97,
+          "spanX": 59.81,
+          "spanZ": 56.76,
           "opaque": true,
           "doubleSided": true,
-          "holeCount": 3,
+          "holeCount": 2,
           "registeredInCollider": true
         },
         {
@@ -974,8 +974,8 @@
           "groupVisibleEyeLevel": true,
           "ceilingVisibleEyeLevel": true,
           "solidThicknessM": 0.04,
-          "spanX": 60.41,
-          "spanZ": 62.97,
+          "spanX": 59.81,
+          "spanZ": 56.76,
           "opaque": true,
           "doubleSided": true,
           "holeCount": 0,

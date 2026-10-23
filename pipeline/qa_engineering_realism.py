@@ -49,7 +49,7 @@ def check(name, ok, detail=''):
 
 async def save_shot(page, filename):
     p1 = os.path.join(OUT, filename)
-    await page.screenshot(path=p1)
+    await page.screenshot(path=p1, animations='disabled')
     if EXTRA_OUT:
         shutil.copy2(p1, os.path.join(EXTRA_OUT, filename))
 
@@ -89,7 +89,7 @@ async def main():
             "() => document.getElementById('loading').classList.contains('hidden') || !document.getElementById('error').classList.contains('hidden')",
             timeout=240000,
         )
-        ok_boot = await page.evaluate("() => document.getElementById('error').classList.contains('hidden')")
+        ok_boot = await page.evaluate("() => { window.__campus.state.manualStepping = true; return document.getElementById('error').classList.contains('hidden'); }")
         check('Boot: application loads cleanly with zero error state', ok_boot)
 
         # Hide floating schedule sidebar cleanly only during architectural framing captures, then restore for UI shots
@@ -238,12 +238,15 @@ async def main():
             const router = window.__campus.state.router;
             let total = 0, mapped = 0;
             const sampleRoutes = [
-                { building: 'Engineering Building 1', room: 'Room 101', lang: 'ar' },
-                { building: 'Engineering Building 1', room: 'Room 105', lang: 'ar' },
+                { building: 'Engineering Building 1', room: 'Cafeteria', lang: 'ar' },
+                { building: 'Engineering Building 1', room: 'Room 104', lang: 'ar' },
                 { building: 'Engineering Building 1', room: 'Drawing Hall 3', lang: 'ar' },
+                { building: 'Engineering Building 1', room: 'Drawing Hall 4', lang: 'ar' },
                 { building: 'Engineering Building 1', room: 'Room 204', lang: 'ar' },
                 { building: 'Engineering Building 1', room: 'Hall 1', lang: 'ar' },
                 { building: 'Engineering Building 1', room: 'Hall 3', lang: 'ar' },
+                { building: 'Engineering Building 2', room: 'Room 101', lang: 'ar' },
+                { building: 'Engineering Building 2', room: 'Room 105', lang: 'ar' },
                 { building: 'Engineering Building 2', room: 'Lab 1', lang: 'ar' },
                 { building: 'Engineering Building 2', room: 'Room 205', lang: 'ar' },
                 { building: 'Engineering Building 2', room: 'Hall 3', lang: 'ar' },
