@@ -189,7 +189,8 @@ export function createVoice({ lang = 'ar' } = {}) {
   async function cuesReady() {
     if (cuesAvailable !== null) return cuesAvailable;
     try {
-      const r = await fetch(CUE_FILES.preview, { method: 'HEAD' });
+      const r = await fetch(CUE_FILES.go_straight);
+      if (r.body) await r.arrayBuffer();
       cuesAvailable = r.ok;
     } catch (e) { cuesAvailable = false; }
     return cuesAvailable;

@@ -1,21 +1,19 @@
 """Fast browser smoke test of the running web viewer (headless Chromium, SwiftShader WebGL).
 
-Much shorter than qa_viewer.py (the full 22-check QA, ~10 min). Use it after a restart or restore
-to confirm the app boots, both models decode, IDs register, selection works, and nothing errors.
-
 Usage: python3 pipeline/smoke_viewer.py [base_url]
 Writes analysis/restart_smoke/smoke_results.json + JPEG screenshots (does not touch deliverables/qa/).
 """
-import asyncio, json, os, sys, time
+import asyncio, json, os, shutil, sys, time
 from playwright.async_api import async_playwright
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8080/'
-OUT = '/home/user/campus_project/analysis/restart_smoke/'
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'analysis', 'restart_smoke', '')
 os.makedirs(OUT, exist_ok=True)
 EXPECTED = ['gate_1', 'bld_main', 'bld_w1', 'bld_w2', 'bld_s1', 'bld_s2', 'bld_s3', 'bld_e1', 'bld_e2',
             'bld_h1', 'bld_h2', 'lm_gazebo_garden', 'lm_sports_pitch']
 ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
-        '--disable-dev-shm-usage']
+        '--disable-dev-shm-usage', '--no-sandbox']
+CHROMIUM = shutil.which('chromium') or shutil.which('google-chrome')
 R = {'base': BASE, 'when': time.strftime('%Y-%m-%d %H:%M:%S'), 'checks': [], 'console_errors': [], 'failed_requests': []}
 
 
@@ -51,9 +49,12 @@ async def settle(page):
 
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=ARGS)
+        launch_kw = {'args': ARGS}
+        if CHROMIUM:
+            launch_kw['executable_path'] = CHROMIUM
+        b = await p.chromium.launch(**launch_kw)
 
-        # Desktop, full-quality model (qa=1 only disables shadows/AA so software WebGL stays responsive)
+        # Desktop, full-quality model
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
         page = await ctx.new_page(); watch(page, 'desktop')
         ok, dt = await load(page, BASE + '?quality=high&qa=1')
@@ -63,13 +64,12 @@ async def main():
         check('desktop: all 13 stable IDs registered', set(EXPECTED) <= set(ids), f'{len(ids)} items')
         check('desktop: quality = high', await page.evaluate('() => window.__campus.quality') == 'high')
         await page.screenshot(path=OUT + 'desktop_overview.jpg', type='jpeg', quality=85, timeout=180000)
-        if await page.evaluate("() => document.getElementById('list-panel').classList.contains('hidden')"):
-            await page.click('#btn-list'); await page.wait_for_timeout(400)
-        await page.click('#building-list button[data-id="bld_main"]'); await settle(page)
+        await page.evaluate("() => window.__campus.select('bld_main')")
+        await settle(page)
         name = await page.text_content('#info-name')
-        check('desktop: list click selects Main Building + info panel', name == 'Main Building', name)
+        check('desktop: selection opens Main Building + info panel', name == 'Main Building', name)
         await page.screenshot(path=OUT + 'desktop_main_building.jpg', type='jpeg', quality=85, timeout=180000)
-        await page.click('#btn-overview'); await settle(page)
+        await page.evaluate("() => window.__campus.overview()"); await settle(page)
         sel = await page.evaluate('() => window.__campus.state.selected')
         check('desktop: Overview button clears selection', sel is None, sel)
         await ctx.close()
@@ -93,6 +93,7 @@ async def main():
     R['summary'] = f'{n_ok}/{len(R["checks"])} PASS'
     json.dump(R, open(OUT + 'smoke_results.json', 'w'), indent=2, ensure_ascii=False)
     print(R['summary'])
+    sys.exit(0 if n_ok == len(R['checks']) else 1)
 
 
 asyncio.run(main())

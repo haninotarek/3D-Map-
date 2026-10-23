@@ -1,10 +1,11 @@
 // Architectural floor-by-floor interior builder for university campus buildings (data/interiors/*.json).
 // Coordinates are local ENU metres (x = East, y = North); Three.js uses x = East, z = -North, y = up.
+// All walls, marble dado wainscots, walnut caps, skirtings, staircases, columns, ceilings, and LED luminaires
+// are batched into InstancedMeshes per material per floor for ultra-low draw calls and smooth 60 fps rendering.
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createFurnisher, furnishRoom, doorLeaves, roomCells } from './furniture.js';
 
-// Restrained architectural flooring palette (academic visualization, never oversaturated pastel blocks)
 const KIND_FLOOR = {
   lobby: 'terrazzo',
   cafe: 'terrazzo',
@@ -33,14 +34,12 @@ export const ARCH_CONSTANTS = {
 
 const { SLAB, WALL_T, EXT_T, DOOR_W, DOOR_H, DADO_H } = ARCH_CONSTANTS;
 
-const PAINT_COLOR = 0xf2ece1;
-const EXT_PAINT = 0xe9e0cf;
-const DADO_COLOR = 0xd6c2a3;
 const DADO_CAP = 0x7a6048;
 const SKIRT_COLOR = 0x5d5348;
 const LIFT_BODY = 0xcfd5dc;
 const LOCKER_BODY = 0xdad2c0;
 
+const unitCentered = new THREE.BoxGeometry(1, 1, 1);
 const matCache = new Map();
 const texCache = new Map();
 
@@ -50,7 +49,6 @@ function mat(color, roughness = 0.86, metalness = 0.0) {
   return matCache.get(key);
 }
 
-// Deterministic pseudo-random helper so procedural stone/plaster grain is 100% reproducible across runs
 function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
@@ -64,19 +62,19 @@ function mulberry32(seed) {
 function getPlasterMaterial(tintHex = '#f2ece1', key = 'plaster_in') {
   if (texCache.has(key)) return texCache.get(key);
   const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
+  c.width = 128; c.height = 128;
   const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, 0, 256);
+  const grad = g.createLinearGradient(0, 0, 0, 128);
   grad.addColorStop(0, '#ebe4d7');
   grad.addColorStop(0.18, tintHex);
   grad.addColorStop(0.88, tintHex);
   grad.addColorStop(1, '#e5ddd0');
   g.fillStyle = grad;
-  g.fillRect(0, 0, 256, 256);
+  g.fillRect(0, 0, 128, 128);
   const rnd = mulberry32(4201);
-  for (let i = 0; i < 2400; i++) {
+  for (let i = 0; i < 900; i++) {
     g.fillStyle = rnd() > 0.5 ? 'rgba(255,255,255,0.14)' : 'rgba(130,115,95,0.06)';
-    g.fillRect(rnd() * 256, rnd() * 256, 2, 2);
+    g.fillRect(rnd() * 128, rnd() * 128, 1.5, 1.5);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -89,19 +87,19 @@ function getPlasterMaterial(tintHex = '#f2ece1', key = 'plaster_in') {
 function getTravertineMaterial() {
   if (texCache.has('travertine')) return texCache.get('travertine');
   const c = document.createElement('canvas');
-  c.width = 256; c.height = 128;
+  c.width = 128; c.height = 64;
   const g = c.getContext('2d');
   g.fillStyle = '#d7c3a4';
-  g.fillRect(0, 0, 256, 128);
+  g.fillRect(0, 0, 128, 64);
   const rnd = mulberry32(9187);
-  for (let i = 0; i < 46; i++) {
-    const y = rnd() * 128;
+  for (let i = 0; i < 28; i++) {
+    const y = rnd() * 64;
     g.fillStyle = i % 2 === 0 ? 'rgba(150,122,90,0.12)' : 'rgba(248,240,226,0.16)';
-    g.fillRect(0, y, 256, 1 + rnd() * 3.5);
+    g.fillRect(0, y, 128, 1 + rnd() * 2.5);
   }
   g.strokeStyle = 'rgba(120,98,74,0.22)';
-  g.lineWidth = 1.2;
-  for (let x = 64; x < 256; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); }
+  g.lineWidth = 1;
+  for (let x = 32; x < 128; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 64); g.stroke(); }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
@@ -110,120 +108,97 @@ function getTravertineMaterial() {
   return m;
 }
 
-function getPorcelainTileMaterial(w, d, cool = false) {
-  const key = cool ? 'porcelain_cool' : 'porcelain_warm';
-  if (!texCache.has(key)) {
+// Shared tiled floor materials (reused across all rooms so GPU texture memory stays < 2 MB total!)
+function getFloorMaterial(finish) {
+  if (texCache.has(`floor_${finish}`)) return texCache.get(`floor_${finish}`);
+  let m;
+  if (finish === 'terrazzo') {
     const c = document.createElement('canvas');
     c.width = 256; c.height = 256;
     const g = c.getContext('2d');
-    g.fillStyle = cool ? '#dfe5ea' : '#e8e3d9';
+    g.fillStyle = '#e7dac3';
     g.fillRect(0, 0, 256, 256);
+    g.strokeStyle = 'rgba(125,98,74,0.34)';
+    g.lineWidth = 3;
+    g.strokeRect(8, 8, 240, 240);
+    g.lineWidth = 1.5;
+    g.strokeStyle = 'rgba(145,118,92,0.22)';
+    g.strokeRect(18, 18, 220, 220);
+    const rnd = mulberry32(5521);
+    for (let i = 0; i < 1800; i++) {
+      g.fillStyle = rnd() < 0.5 ? 'rgba(122,98,74,0.16)' : 'rgba(255,252,246,0.25)';
+      g.fillRect(rnd() * 256, rnd() * 256, 1.8, 1.8);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(0.28, 0.28);
+    m = new THREE.MeshStandardMaterial({
+      map: tex, roughness: 0.36, metalness: 0.04,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    });
+  } else if (finish === 'tile_cool' || finish === 'tile_warm' || finish === 'granite') {
+    const cool = finish === 'tile_cool';
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = cool ? '#dfe5ea' : '#e8e3d9';
+    g.fillRect(0, 0, 128, 128);
     const rnd = mulberry32(cool ? 771 : 331);
     for (let ty = 0; ty < 4; ty++) {
       for (let tx = 0; tx < 4; tx++) {
         const delta = (rnd() - 0.5) * 8;
         const base = cool ? [222, 228, 233] : [231, 226, 216];
         g.fillStyle = `rgb(${Math.round(base[0] + delta)},${Math.round(base[1] + delta)},${Math.round(base[2] + delta)})`;
-        g.fillRect(tx * 64 + 1, ty * 64 + 1, 62, 62);
+        g.fillRect(tx * 32 + 1, ty * 32 + 1, 30, 30);
       }
     }
     g.strokeStyle = cool ? 'rgba(138,148,158,0.34)' : 'rgba(150,140,126,0.32)';
-    g.lineWidth = 1.5;
-    for (let p = 0; p <= 256; p += 64) {
-      g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 256); g.stroke();
-      g.beginPath(); g.moveTo(0, p); g.lineTo(256, p); g.stroke();
+    g.lineWidth = 1;
+    for (let p = 0; p <= 128; p += 32) {
+      g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 128); g.stroke();
+      g.beginPath(); g.moveTo(0, p); g.lineTo(128, p); g.stroke();
     }
-    const baseTex = new THREE.CanvasTexture(c);
-    baseTex.colorSpace = THREE.SRGBColorSpace;
-    baseTex.wrapS = baseTex.wrapT = THREE.RepeatWrapping;
-    texCache.set(key, baseTex);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(0.42, 0.42);
+    m = new THREE.MeshStandardMaterial({
+      map: tex, roughness: 0.46, metalness: 0.02,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    });
+  } else {
+    m = new THREE.MeshStandardMaterial({
+      color: finish, roughness: 0.5, metalness: 0.02,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    });
   }
-  const tex = texCache.get(key).clone();
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(Math.max(1, w / 2.4), Math.max(1, d / 2.4));
-  tex.needsUpdate = true;
-  return new THREE.MeshStandardMaterial({
-    map: tex,
-    roughness: 0.46,
-    metalness: 0.02,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-  });
+  texCache.set(`floor_${finish}`, m);
+  return m;
 }
 
-// Honed Egyptian terrazzo floor with dark border inlays matching modern national university corridors
-function terrazzo(w, d) {
-  const PX = 20;
-  const cw = Math.max(32, Math.min(1024, Math.round(w * PX)));
-  const ch = Math.max(32, Math.min(1024, Math.round(d * PX)));
-  const c = document.createElement('canvas');
-  c.width = cw; c.height = ch;
-  const g = c.getContext('2d');
-  const sx = cw / w, sy = ch / d;
-  g.fillStyle = '#e7dac3';
-  g.fillRect(0, 0, cw, ch);
-  const band = (x, y, bw, bh, lw) => {
-    if (bw <= 0.1 || bh <= 0.1) return;
-    g.lineWidth = Math.max(1, lw * Math.min(sx, sy));
-    g.strokeRect(x * sx, y * sy, bw * sx, bh * sy);
-  };
-  g.strokeStyle = '#755c4a';
-  band(0.32, 0.32, w - 0.64, d - 0.64, 0.24);
-  const long = w >= d, L = long ? w : d, S = long ? d : w;
-  if (S > 1.8 && L > 3.2) {
-    const n = Math.max(1, Math.round((L - 1) / 4.2));
-    const step = (L - 1) / n;
-    g.strokeStyle = '#876b57';
-    for (let i = 0; i < n; i++) {
-      const a = 0.5 + i * step + 0.4, len = step - 0.8, ins = Math.min(0.85, S * 0.24);
-      if (long) band(a, ins, len, d - 2 * ins, 0.18);
-      else band(ins, a, w - 2 * ins, len, 0.18);
-    }
-  }
-  const rnd = mulberry32(Math.round(w * 97 + d * 31));
-  const chips = Math.min(9000, Math.round((cw * ch) / 55));
-  for (let i = 0; i < chips; i++) {
-    g.fillStyle = rnd() < 0.5 ? 'rgba(122,98,74,0.16)' : 'rgba(255,252,246,0.24)';
-    g.fillRect(rnd() * cw, rnd() * ch, 1.5, 1.5);
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  return new THREE.MeshStandardMaterial({
-    map: t,
-    roughness: 0.36,
-    metalness: 0.04,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-  });
-}
-
-// Downward-facing architectural 60x60 cm acoustic ceiling grid material (opaque from eye level, culled from high orbit)
 function getAcousticCeilingMaterial() {
   if (texCache.has('ceiling_grid')) return texCache.get('ceiling_grid');
   const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
+  c.width = 128; c.height = 128;
   const g = c.getContext('2d');
   g.fillStyle = '#f4f1ea';
-  g.fillRect(0, 0, 256, 256);
+  g.fillRect(0, 0, 128, 128);
   g.strokeStyle = 'rgba(165,160,150,0.42)';
-  g.lineWidth = 2;
-  for (let p = 0; p <= 256; p += 64) {
-    g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 256); g.stroke();
-    g.beginPath(); g.moveTo(0, p); g.lineTo(256, p); g.stroke();
+  g.lineWidth = 1.5;
+  for (let p = 0; p <= 128; p += 32) {
+    g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 128); g.stroke();
+    g.beginPath(); g.moveTo(0, p); g.lineTo(128, p); g.stroke();
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(0.42, 0.42);
-  // ShapeGeometry rotated -PI/2 around X has front normal +Y; BackSide makes -Y (the underside facing the room) 100% solid & opaque!
   const m = new THREE.MeshStandardMaterial({
     map: tex,
     color: 0xf7f5f0,
     emissive: 0x2c2a26,
-    emissiveIntensity: 0.32,
+    emissiveIntensity: 0.34,
     roughness: 0.92,
     metalness: 0.0,
     side: THREE.BackSide,
@@ -256,41 +231,66 @@ const ledPanelMat = new THREE.MeshStandardMaterial({
   metalness: 0.0,
 });
 
-// Full-height architectural wall segment between two ENU points, sitting cleanly from y = 0 to y = h
-function wall(ax, ay, bx, by, h, t, material, colliders, withTrim = true) {
+// Fast per-floor instanced box batcher (supports arbitrary 3D position, Euler rotation, and scale)
+function createArchBatcher() {
+  const buckets = new Map();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), eul = new THREE.Euler();
+  const p = new THREE.Vector3(), s = new THREE.Vector3();
+
+  function add(material, px, py, pz, sx, sy, sz, rx = 0, ry = 0, rz = 0, collide = false) {
+    if (sx <= 0.004 || sy <= 0.004 || sz <= 0.004) return;
+    let bucket = buckets.get(material);
+    if (!bucket) { bucket = { collide: false, list: [] }; buckets.set(material, bucket); }
+    if (collide) bucket.collide = true;
+    bucket.list.push([px, py, pz, sx, sy, sz, rx, ry, rz]);
+  }
+
+  function flush(group, colliders) {
+    for (const [material, bucket] of buckets) {
+      if (!bucket.list.length) continue;
+      const im = new THREE.InstancedMesh(unitCentered, material, bucket.list.length);
+      bucket.list.forEach(([px, py, pz, sx, sy, sz, rx, ry, rz], i) => {
+        eul.set(rx, ry, rz);
+        q.setFromEuler(eul);
+        im.setMatrixAt(i, m.compose(p.set(px, py, pz), q, s.set(sx, sy, sz)));
+      });
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+      im.castShadow = !material.transparent;
+      im.receiveShadow = !material.transparent;
+      im.name = 'arch-batch';
+      group.add(im);
+      if (bucket.collide && colliders) colliders.push(im);
+    }
+  }
+
+  return { add, flush };
+}
+
+function batchWall(B, ax, ay, bx, by, h, t, material, yCenter = h / 2, withTrim = true) {
   const dx = bx - ax, dz = -(by - ay);
   const len = Math.hypot(dx, dz);
   if (len < 0.05 || h <= 0.02) return null;
-  const m = new THREE.Mesh(new THREE.BoxGeometry(len + t, h, t), material);
-  m.position.set((ax + bx) / 2, h / 2, -(ay + by) / 2);
-  m.rotation.y = -Math.atan2(dz, dx);
-  m.castShadow = true;
-  m.receiveShadow = true;
+  const cx = (ax + bx) / 2, cz = -(ay + by) / 2;
+  const ang = -Math.atan2(dz, dx);
+  B.add(material, cx, yCenter, cz, len + t, h, t, 0, ang, 0, true);
   if (withTrim && h > 2.4) {
     const skirtH = 0.085;
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(len + t + 0.016, skirtH, t + 0.028), mat(SKIRT_COLOR, 0.55));
-    skirt.position.y = -h / 2 + skirtH / 2;
+    B.add(mat(SKIRT_COLOR, 0.55), cx, skirtH / 2, cz, len + t + 0.016, skirtH, t + 0.028, 0, ang, 0, false);
     const dadoBodyH = DADO_H - skirtH;
-    const dado = new THREE.Mesh(new THREE.BoxGeometry(len + t + 0.012, dadoBodyH, t + 0.022), getTravertineMaterial());
-    dado.position.y = -h / 2 + skirtH + dadoBodyH / 2;
-    dado.receiveShadow = true;
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(len + t + 0.02, 0.045, t + 0.04), mat(DADO_CAP, 0.48));
-    cap.position.y = -h / 2 + DADO_H + 0.022;
-    m.add(skirt, dado, cap);
+    B.add(getTravertineMaterial(), cx, skirtH + dadoBodyH / 2, cz, len + t + 0.012, dadoBodyH, t + 0.022, 0, ang, 0, false);
+    B.add(mat(DADO_CAP, 0.48), cx, DADO_H + 0.022, cz, len + t + 0.02, 0.045, t + 0.04, 0, ang, 0, false);
   }
-  if (colliders) colliders.push(m);
-  return m;
+  return { cx, cz, ang };
 }
 
-function rectWalls(group, [x0, y0, x1, y1], h, material, colliders, withTrim = true) {
+function rectWalls(B, [x0, y0, x1, y1], h, material) {
   for (const [a, b, c, d] of [[x0, y0, x1, y0], [x1, y0, x1, y1], [x1, y1, x0, y1], [x0, y1, x0, y0]]) {
-    const w = wall(a, b, c, d, h, WALL_T, material, colliders, withTrim);
-    if (w) group.add(w);
+    batchWall(B, a, b, c, d, h, WALL_T, material, h / 2, true);
   }
 }
 
-// Architectural atrium balustrade (tempered glass panel + stainless steel handrail & posts) for double-height voids
-function atriumBalustrade(group, [x0, y0, x1, y1], colliders) {
+function atriumBalustrade(B, [x0, y0, x1, y1]) {
   const railH = 1.08;
   const steelMat = mat(0x5a6572, 0.35, 0.65);
   const edges = [[x0, y0, x1, y0], [x1, y0, x1, y1], [x1, y1, x0, y1], [x0, y1, x0, y0]];
@@ -298,29 +298,19 @@ function atriumBalustrade(group, [x0, y0, x1, y1], colliders) {
     const dx = bx - ax, dz = -(by - ay), len = Math.hypot(dx, dz);
     if (len < 0.1) continue;
     const ang = -Math.atan2(dz, dx);
-    const curb = new THREE.Mesh(new THREE.BoxGeometry(len + 0.14, 0.12, 0.14), mat(DADO_COLOR, 0.5));
-    curb.position.set((ax + bx) / 2, 0.06, -(ay + by) / 2);
-    curb.rotation.y = ang;
-    const glass = new THREE.Mesh(new THREE.BoxGeometry(len, railH - 0.18, 0.03), railGlassMat);
-    glass.position.set((ax + bx) / 2, 0.12 + (railH - 0.18) / 2, -(ay + by) / 2);
-    glass.rotation.y = ang;
-    const topRail = new THREE.Mesh(new THREE.BoxGeometry(len + 0.12, 0.055, 0.075), steelMat);
-    topRail.position.set((ax + bx) / 2, railH, -(ay + by) / 2);
-    topRail.rotation.y = ang;
-    group.add(curb, glass, topRail);
-    if (colliders) colliders.push(curb);
+    const cx = (ax + bx) / 2, cz = -(ay + by) / 2;
+    B.add(getTravertineMaterial(), cx, 0.06, cz, len + 0.14, 0.12, 0.14, 0, ang, 0, true);
+    B.add(railGlassMat, cx, 0.12 + (railH - 0.18) / 2, cz, len, railH - 0.18, 0.03, 0, ang, 0, false);
+    B.add(steelMat, cx, railH, cz, len + 0.12, 0.055, 0.075, 0, ang, 0, false);
     const nPosts = Math.max(2, Math.round(len / 1.8) + 1);
     for (let i = 0; i < nPosts; i++) {
       const t = i / (nPosts - 1);
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, railH, 8), steelMat);
-      post.position.set(ax + (bx - ax) * t, railH / 2, -(ay + (by - ay) * t));
-      group.add(post);
+      B.add(steelMat, ax + (bx - ax) * t, railH / 2, -(ay + (by - ay) * t), 0.05, railH, 0.05, 0, 0, 0, false);
     }
   }
 }
 
-// Room walls split cleanly around double doorway openings, with full-height lintels, glazed transoms & open oak doors
-function rectWallsWithDoors(group, r, h, material, F, colliders) {
+function rectWallsWithDoors(B, r, h, material, F) {
   const [x0, y0, x1, y1] = r.rect;
   const edges = { s: [x0, y0, x1, y0], e: [x1, y0, x1, y1], n: [x1, y1, x0, y1], w: [x0, y1, x0, y0] };
   const doorW = Math.min(DOOR_W, Math.max(0.95, Math.min(x1 - x0, y1 - y0) * 0.55));
@@ -339,8 +329,7 @@ function rectWallsWithDoors(group, r, h, material, F, colliders) {
   for (const [side, [a, b, c, d]] of Object.entries(edges)) {
     const gaps = side === r.door ? doors.map((at) => ({ at, width: doorW })) : [];
     for (const [ax, ay, bx, by] of edgeWithGaps([a, b], [c, d], gaps)) {
-      const w = wall(ax, ay, bx, by, h, WALL_T, material, colliders, true);
-      if (w) group.add(w);
+      batchWall(B, ax, ay, bx, by, h, WALL_T, material, h / 2, true);
     }
   }
   const horiz = r.door === 'n' || r.door === 's';
@@ -349,41 +338,19 @@ function rectWallsWithDoors(group, r, h, material, F, colliders) {
       ? [at[0] - doorW / 2, at[1], at[0] + doorW / 2, at[1]]
       : [at[0], at[1] - doorW / 2, at[0], at[1] + doorW / 2];
     const lintelH = h - doorH;
-    const lintel = wall(ax, ay, bx, by, lintelH, WALL_T, material, colliders, false);
-    if (lintel) {
-      lintel.position.y = doorH + lintelH / 2;
-      group.add(lintel);
-      if (lintelH > 0.55) {
-        const tr = new THREE.Mesh(new THREE.BoxGeometry(doorW - 0.12, 0.42, WALL_T + 0.03), glassMat);
-        tr.position.copy(lintel.position).setY(doorH + 0.28);
-        tr.rotation.copy(lintel.rotation);
-        group.add(tr);
-      }
+    const lin = batchWall(B, ax, ay, bx, by, lintelH, WALL_T, material, doorH + lintelH / 2, false);
+    if (lin && lintelH > 0.55) {
+      B.add(glassMat, lin.cx, doorH + 0.28, lin.cz, doorW - 0.12, 0.42, WALL_T + 0.03, 0, lin.ang, 0, false);
     }
     doorLeaves(F, r.door, at, doorW, doorH);
   }
 }
 
-function floorPatch(group, [x0, y0, x1, y1], finish) {
-  const w = x1 - x0, d = y1 - y0;
-  if (w <= 0.05 || d <= 0.05) return;
-  let material;
-  if (finish === 'terrazzo') material = terrazzo(w, d);
-  else if (finish === 'tile_cool') material = getPorcelainTileMaterial(w, d, true);
-  else if (finish === 'tile_warm' || finish === 'granite') material = getPorcelainTileMaterial(w, d, false);
-  else material = new THREE.MeshStandardMaterial({ color: finish, roughness: 0.5, metalness: 0.02, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), material);
-  m.rotation.x = -Math.PI / 2;
-  m.position.set((x0 + x1) / 2, 0.012, -(y0 + y1) / 2);
-  m.receiveShadow = true;
-  group.add(m);
-}
-
-// Mullioned exterior windows along perimeter walls aligned cleanly below ceiling soffit
-function exteriorWindows(group, segs, clearH) {
-  const frames = [], panes = [], sills = [];
+function exteriorWindows(B, segs, clearH) {
   const winH = Math.min(1.85, clearH - 1.35);
   const winCenterY = 0.92 + winH / 2;
+  const frameMat = mat(0xf5f4f0, 0.5);
+  const travMat = getTravertineMaterial();
   for (const [ax, ay, bx, by] of segs) {
     const len = Math.hypot(bx - ax, by - ay);
     const n = Math.floor((len - 1.0) / 3.6);
@@ -391,23 +358,12 @@ function exteriorWindows(group, segs, clearH) {
     const ang = -Math.atan2(-(by - ay), bx - ax);
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n;
-      const p = [ax + (bx - ax) * t, ay + (by - ay) * t];
-      frames.push([p, ang]);
-      panes.push([p, ang]);
-      sills.push([p, ang]);
+      const px = ax + (bx - ax) * t, pz = -(ay + (by - ay) * t);
+      B.add(frameMat, px, winCenterY, pz, 2.05, winH + 0.14, EXT_T + 0.06, 0, ang, 0, false);
+      B.add(glassMat, px, winCenterY, pz, 1.86, winH - 0.06, EXT_T + 0.09, 0, ang, 0, false);
+      B.add(travMat, px, 0.90, pz, 2.2, 0.07, EXT_T + 0.14, 0, ang, 0, false);
     }
   }
-  const putInst = (list, geo, material, y) => {
-    if (!list.length) return;
-    const im = new THREE.InstancedMesh(geo, material, list.length);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
-    list.forEach(([[x, yEnu], ang], i) => im.setMatrixAt(i, m.compose(new THREE.Vector3(x, y, -yEnu), q.setFromAxisAngle(up, ang), one)));
-    im.instanceMatrix.needsUpdate = true;
-    group.add(im);
-  };
-  putInst(frames, new THREE.BoxGeometry(2.05, winH + 0.14, EXT_T + 0.06), mat(0xf5f4f0, 0.5), winCenterY);
-  putInst(panes, new THREE.BoxGeometry(1.86, winH - 0.06, EXT_T + 0.09), glassMat, winCenterY);
-  putInst(sills, new THREE.BoxGeometry(2.2, 0.07, EXT_T + 0.14), getTravertineMaterial(), 0.90);
 }
 
 // Switchback stair geometry shared between interior.js and route.js
@@ -448,9 +404,8 @@ export function stairProfile(rect, rise) {
   return { steps, walk, flights, landings, alongX, n, run, width, laneA, laneB, landingDepth };
 }
 
-// Structural reinforced-concrete switchback staircase: individual treads + risers + non-slip nosings +
-// sloped structural concrete stringer slabs + thin half-landing slab (replaces old full-height solid columns!)
-function stairs(group, rect, rise) {
+// Instanced structural reinforced-concrete switchback staircase (treads, nosings, risers, slanted stringers, landing, handrails)
+function stairs(B, rect, rise) {
   const prof = stairProfile(rect, rise);
   const { alongX, run, width, n } = prof;
   const stepRise = rise / n;
@@ -461,64 +416,38 @@ function stairs(group, rect, rise) {
   const treadThick = 0.055;
 
   prof.steps.forEach((s, idx) => {
-    const isFlightA = idx < n / 2;
-    const dirSign = isFlightA ? -1 : 1; // direction of travel along axis
-    // Horizontal tread slab with top face strictly at y = s.h
-    const tread = new THREE.Mesh(
-      new THREE.BoxGeometry(alongX ? run + 0.03 : width, treadThick, alongX ? width : run + 0.03),
-      treadMat
+    const dirSign = idx < n / 2 ? -1 : 1;
+    B.add(
+      treadMat, s.x, s.h - treadThick / 2, -s.y,
+      alongX ? run + 0.03 : width, treadThick, alongX ? width : run + 0.03,
     );
-    tread.position.set(s.x, s.h - treadThick / 2, -s.y);
-    tread.castShadow = true;
-    tread.receiveShadow = true;
-    group.add(tread);
-
-    // Safety non-slip nosing strip at step leading edge
     const noseOffset = -dirSign * (run / 2 - 0.018);
-    const nose = new THREE.Mesh(
-      new THREE.BoxGeometry(alongX ? 0.036 : width - 0.04, 0.012, alongX ? width - 0.04 : 0.036),
-      nosingMat
+    B.add(
+      nosingMat,
+      alongX ? s.x + noseOffset : s.x, s.h - 0.004, alongX ? -s.y : -(s.y + noseOffset),
+      alongX ? 0.036 : width - 0.04, 0.012, alongX ? width - 0.04 : 0.036,
     );
-    nose.position.set(
-      alongX ? s.x + noseOffset : s.x,
-      s.h - 0.004,
-      alongX ? -s.y : -(s.y + noseOffset)
-    );
-    group.add(nose);
-
-    // Vertical riser closing the step face cleanly to the tread below
     const riserOffset = -dirSign * (run / 2);
-    const riser = new THREE.Mesh(
-      new THREE.BoxGeometry(alongX ? 0.035 : width, stepRise, alongX ? width : 0.035),
-      riserMat
+    B.add(
+      riserMat,
+      alongX ? s.x + riserOffset : s.x, s.h - stepRise / 2, alongX ? -s.y : -(s.y + riserOffset),
+      alongX ? 0.035 : width, stepRise, alongX ? width : 0.035,
     );
-    riser.position.set(
-      alongX ? s.x + riserOffset : s.x,
-      s.h - stepRise / 2,
-      alongX ? -s.y : -(s.y + riserOffset)
-    );
-    riser.receiveShadow = true;
-    group.add(riser);
   });
 
-  // Structural reinforced-concrete half-landing slab (0.22m slab thickness, never a giant ground block)
   const landingThick = 0.22;
   for (const l of prof.landings) {
-    const m = new THREE.Mesh(
-      new THREE.BoxGeometry(alongX ? l.alongSize + 0.12 : l.crossSize, landingThick, alongX ? l.crossSize : l.alongSize + 0.12),
-      treadMat
+    B.add(
+      treadMat,
+      alongX ? l.alongC : l.crossC, l.h - landingThick / 2, -(alongX ? l.crossC : l.alongC),
+      alongX ? l.alongSize + 0.12 : l.crossSize, landingThick, alongX ? l.crossSize : l.alongSize + 0.12,
     );
-    m.position.set(alongX ? l.alongC : l.crossC, l.h - landingThick / 2, -(alongX ? l.crossC : l.alongC));
-    m.castShadow = true;
-    m.receiveShadow = true;
-    group.add(m);
   }
 
-  // Sloped structural RC waist slabs underneath Flight A & Flight B + bounded steel handrails
   const railMat = mat(0x46525f, 0.36, 0.65);
   const [x0, y0, x1, y1] = rect;
   const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1, midCross = (cross0 + cross1) / 2;
-  const toXYZ = (along, cross, h) => alongX ? [along, h, -cross] : [cross, h, -along];
+  const toXYZ = (along, cross, h) => (alongX ? [along, h, -cross] : [cross, h, -along]);
 
   for (const f of prof.flights) {
     const len = Math.abs(f.to - f.from), dh = f.hTo - f.hFrom;
@@ -527,19 +456,13 @@ function stairs(group, rect, rise) {
     const hAtMax = f.from < f.to ? f.hTo : f.hFrom;
     const slopeAng = Math.atan2(hAtMax - hAtMin, len);
     const mid = (f.from + f.to) / 2;
-
-    // Continuous sloped reinforced-concrete stringer / waist slab beneath treads
-    const waist = new THREE.Mesh(
-      alongX ? new THREE.BoxGeometry(slopeLen, 0.15, width) : new THREE.BoxGeometry(width, 0.15, slopeLen),
-      soffitMat
+    const [wx, wy, wz] = toXYZ(mid, f.cross, (f.hFrom + f.hTo) / 2 - stepRise * 0.72);
+    B.add(
+      soffitMat, wx, wy, wz,
+      alongX ? slopeLen : width, 0.15, alongX ? width : slopeLen,
+      alongX ? 0 : slopeAng, 0, alongX ? slopeAng : 0,
     );
-    waist.position.set(...toXYZ(mid, f.cross, (f.hFrom + f.hTo) / 2 - stepRise * 0.72));
-    if (alongX) waist.rotation.z = slopeAng; else waist.rotation.x = slopeAng;
-    waist.castShadow = true;
-    waist.receiveShadow = true;
-    group.add(waist);
 
-    // Handrail along the open well side, strictly bounded below `rise - 0.04` so posts never poke into upper storeys
     const insetStart = 0.65;
     const insetEnd = f.hTo >= rise - 0.05 ? Math.min(1.65, len * 0.32) : 0.65;
     const aStart = f.from < f.to ? f.from + insetStart : f.from - insetStart;
@@ -552,21 +475,19 @@ function stairs(group, rect, rise) {
     const rSlopeLen = Math.hypot(rLen, dh * (rLen / len));
     const cross = f.cross + (f.cross < midCross ? 1 : -1) * (width / 2 - 0.05);
 
-    const rail = new THREE.Mesh(
-      alongX ? new THREE.BoxGeometry(rSlopeLen, 0.055, 0.055) : new THREE.BoxGeometry(0.055, 0.055, rSlopeLen),
-      railMat
+    const [rx, ry, rz] = toXYZ(rMid, cross, hMid + railH);
+    B.add(
+      railMat, rx, ry, rz,
+      alongX ? rSlopeLen : 0.055, 0.055, alongX ? 0.055 : rSlopeLen,
+      alongX ? 0 : slopeAng, 0, alongX ? slopeAng : 0,
     );
-    rail.position.set(...toXYZ(rMid, cross, hMid + railH));
-    if (alongX) rail.rotation.z = slopeAng; else rail.rotation.x = slopeAng;
-    group.add(rail);
 
     for (const fr of [0.15, 0.5, 0.85]) {
       const along = aStart + (aEnd - aStart) * fr;
       const frac = (along - Math.min(f.from, f.to)) / len;
       const hSurf = hAtMin + (hAtMax - hAtMin) * frac;
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, railH, 8), railMat);
-      post.position.set(...toXYZ(along, cross, hSurf + railH / 2));
-      group.add(post);
+      const [px, py, pz] = toXYZ(along, cross, hSurf + railH / 2);
+      B.add(railMat, px, py, pz, 0.05, railH, 0.05);
     }
   }
 }
@@ -589,42 +510,35 @@ function doorSign(text_en, text_ar) {
   return new CSS2DObject(el);
 }
 
-// Stairwell enclosure rising full storey height (`rise`) so shaft connects cleanly slab-to-slab with zero gap
-function stairDoor(group, rect, wallH, shaftH, wallMat, floorEn, floorAr, colliders) {
+function stairDoor(group, B, rect, wallH, wallMat, floorEn, floorAr) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
   const along0 = alongX ? x0 : y0, along1 = alongX ? x1 : y1;
   const cross0 = alongX ? y0 : x0, cross1 = alongX ? y1 : x1;
   const mid = (cross0 + cross1) / 2;
   const doorW = 1.25, doorH = 2.25;
-  const pt = (along, cross) => alongX ? [along, cross] : [cross, along];
-  const addShaftWall = (a, b, hVal) => {
-    const w = wall(a[0], a[1], b[0], b[1], hVal, WALL_T, wallMat, colliders, true);
-    if (w) group.add(w);
-    return w;
-  };
-  // Enclose shaft up to full wallH so it meets the ceiling soffit cleanly without protruding above floor ceiling
-  addShaftWall(pt(along0, cross0), pt(along0, cross1), wallH);
-  addShaftWall(pt(along0, cross0), pt(along1, cross0), wallH);
-  addShaftWall(pt(along0, cross1), pt(along1, cross1), wallH);
-  addShaftWall(pt(along1, cross0), pt(along1, mid - doorW / 2), wallH);
-  addShaftWall(pt(along1, mid + doorW / 2), pt(along1, cross1), wallH);
+  const pt = (along, cross) => (alongX ? [along, cross] : [cross, along]);
 
-  const [la, lb] = [pt(along1, mid - doorW / 2), pt(along1, mid + doorW / 2)];
-  const lintel = wall(la[0], la[1], lb[0], lb[1], wallH - doorH, WALL_T, wallMat, colliders, false);
-  if (lintel) {
-    lintel.position.y = doorH + (wallH - doorH) / 2;
-    group.add(lintel);
+  for (const [a, b] of [
+    [pt(along0, cross0), pt(along0, cross1)],
+    [pt(along0, cross0), pt(along1, cross0)],
+    [pt(along0, cross1), pt(along1, cross1)],
+    [pt(along1, cross0), pt(along1, mid - doorW / 2)],
+    [pt(along1, mid + doorW / 2), pt(along1, cross1)],
+  ]) {
+    batchWall(B, a[0], a[1], b[0], b[1], wallH, WALL_T, wallMat, wallH / 2, true);
   }
 
-  // Open stairwell door leaf folded back cleanly inside the stairwell jamb
+  const [la, lb] = [pt(along1, mid - doorW / 2), pt(along1, mid + doorW / 2)];
+  const lintelH = wallH - doorH;
+  batchWall(B, la[0], la[1], lb[0], lb[1], lintelH, WALL_T, wallMat, doorH + lintelH / 2, false);
+
   const hinge = pt(along1, mid + doorW / 2);
   const door = new THREE.Group();
   door.name = 'floor-door';
   door.position.set(hinge[0], 0, -hinge[1]);
   const panel = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.055), mat(0x9b7650, 0.65));
   panel.position.set(doorW / 2, doorH / 2, 0);
-  panel.castShadow = true;
   const vision = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.065), glassMat);
   vision.position.set(doorW * 0.62, doorH * 0.58, 0);
   const handle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.06), mat(0xadb5bd, 0.35, 0.7));
@@ -640,47 +554,39 @@ function stairDoor(group, rect, wallH, shaftH, wallMat, floorEn, floorAr, collid
   return sign;
 }
 
-// Elevator core block with stainless-steel elevator doors, architrave & call panel
-function buildLiftCore(group, r, clearH, colliders) {
+function buildLiftCore(B, r, clearH, wallMat) {
   const [x0, y0, x1, y1] = r.rect;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, clearH, y1 - y0), mat(LIFT_BODY, 0.72, 0.08));
-  body.position.set((x0 + x1) / 2, clearH / 2, -(y0 + y1) / 2);
-  body.castShadow = true;
-  body.receiveShadow = true;
-  group.add(body);
-  if (colliders) colliders.push(body);
+  // Full architectural plaster + travertine marble wainscot enclosure on all 4 sides of elevator shaft
+  rectWalls(B, r.rect, clearH, wallMat);
+  // Solid inner core fill so overhead cutaways never show an empty pit inside the elevator shaft
+  B.add(mat(LIFT_BODY, 0.78, 0.04), (x0 + x1) / 2, clearH / 2, -(y0 + y1) / 2, Math.max(0.2, x1 - x0 - 0.16), clearH - 0.04, Math.max(0.2, y1 - y0 - 0.16), 0, 0, 0, true);
 
   const face = r.door || 'e';
-  const steelMat = mat(0xb5bec7, 0.30, 0.72);
-  const darkGapMat = mat(0x3a4048, 0.5, 0.4);
+  const steelMat = mat(0xbcc5ce, 0.28, 0.76);
+  const frameMat = mat(0x4b535d, 0.42, 0.55);
+  const Out = WALL_T / 2 + 0.028;
   for (const [cx0, cy0, cx1, cy1] of roomCells(r)) {
     const cx = (cx0 + cx1) / 2, cy = (cy0 + cy1) / 2;
     const horiz = face === 'n' || face === 's';
-    const px = face === 'e' ? x1 + 0.02 : face === 'w' ? x0 - 0.02 : cx;
-    const py = face === 'n' ? y1 + 0.02 : face === 's' ? y0 - 0.02 : cy;
-    const doorW = Math.min(1.05, (horiz ? (cx1 - cx0) : (cy1 - cy0)) * 0.68);
-    const cab = new THREE.Mesh(
-      new THREE.BoxGeometry(horiz ? doorW : 0.05, 2.15, horiz ? 0.05 : doorW),
-      steelMat
-    );
-    cab.position.set(px, 2.15 / 2, -py);
-    const seam = new THREE.Mesh(
-      new THREE.BoxGeometry(horiz ? 0.02 : 0.06, 2.15, horiz ? 0.06 : 0.02),
-      darkGapMat
-    );
-    seam.position.set(px, 2.15 / 2, -py);
-    group.add(cab, seam);
+    const px = face === 'e' ? x1 + Out : face === 'w' ? x0 - Out : cx;
+    const py = face === 'n' ? y1 + Out : face === 's' ? y0 - Out : cy;
+    const doorW = Math.min(1.12, (horiz ? (cx1 - cx0) : (cy1 - cy0)) * 0.68);
+    // Dark stainless architrave surround + twin brushed steel elevator leaves + center seam + call button plate
+    B.add(frameMat, px, 2.22 / 2, -py, horiz ? doorW + 0.16 : 0.045, 2.22, horiz ? 0.045 : doorW + 0.16);
+    const pxOut = face === 'e' ? px + 0.015 : face === 'w' ? px - 0.015 : px;
+    const pyOut = face === 'n' ? py + 0.015 : face === 's' ? py - 0.015 : py;
+    B.add(steelMat, pxOut, 2.14 / 2, -pyOut, horiz ? doorW : 0.045, 2.14, horiz ? 0.045 : doorW);
+    B.add(frameMat, pxOut, 2.14 / 2, -pyOut, horiz ? 0.022 : 0.06, 2.14, horiz ? 0.06 : 0.022);
+    B.add(ledPanelMat, pxOut, 2.34, -pyOut, horiz ? 0.26 : 0.05, 0.09, horiz ? 0.05 : 0.26);
   }
 }
 
-// Structural reinforced-concrete columns placed cleanly at open lobby corners (strictly 0..clearH, never in paths)
-function addStructuralColumns(group, f, clearH, colliders) {
+function addStructuralColumns(B, f, clearH) {
   const candidates = [];
   for (const r of f.rooms) {
     if (r.kind !== 'lobby' || !r.open) continue;
     const [x0, y0, x1, y1] = r.rect;
     if ((x1 - x0) < 7.5 || (y1 - y0) < 7.5) continue;
-    // Place columns slightly inset at the structural corners of spacious lobbies
     const inset = 0.35;
     for (const cx of [x0 + inset, x1 - inset]) {
       for (const cy of [y0 + inset, y1 - inset]) {
@@ -690,73 +596,48 @@ function addStructuralColumns(group, f, clearH, colliders) {
       }
     }
   }
-  if (!candidates.length) return;
   const colW = 0.42;
   const shaftMat = getPlasterMaterial('#efe8dc', 'col_plaster');
-  const colGeo = new THREE.BoxGeometry(colW, clearH, colW);
-  const plinthGeo = new THREE.BoxGeometry(colW + 0.06, DADO_H, colW + 0.06);
-  const capGeo = new THREE.BoxGeometry(colW + 0.08, 0.05, colW + 0.08);
-
-  const shaftInst = new THREE.InstancedMesh(colGeo, shaftMat, candidates.length);
-  const plinthInst = new THREE.InstancedMesh(plinthGeo, getTravertineMaterial(), candidates.length);
-  const capInst = new THREE.InstancedMesh(capGeo, mat(DADO_CAP, 0.5), candidates.length);
-  const m = new THREE.Matrix4();
-
-  candidates.forEach(([cx, cy], i) => {
-    shaftInst.setMatrixAt(i, m.makeTranslation(cx, clearH / 2, -cy));
-    plinthInst.setMatrixAt(i, m.makeTranslation(cx, DADO_H / 2, -cy));
-    capInst.setMatrixAt(i, m.makeTranslation(cx, DADO_H + 0.025, -cy));
-  });
-  shaftInst.instanceMatrix.needsUpdate = true;
-  plinthInst.instanceMatrix.needsUpdate = true;
-  capInst.instanceMatrix.needsUpdate = true;
-  shaftInst.castShadow = shaftInst.receiveShadow = true;
-  plinthInst.receiveShadow = true;
-  shaftInst.name = 'structural-columns';
-  group.add(shaftInst, plinthInst, capInst);
-  if (colliders) colliders.push(shaftInst);
+  const travMat = getTravertineMaterial();
+  const capMat = mat(DADO_CAP, 0.5);
+  for (const [cx, cy] of candidates) {
+    B.add(shaftMat, cx, clearH / 2, -cy, colW, clearH, colW, 0, 0, 0, true);
+    B.add(travMat, cx, DADO_H / 2, -cy, colW + 0.06, DADO_H, colW + 0.06);
+    B.add(capMat, cx, DADO_H + 0.025, -cy, colW + 0.08, 0.05, colW + 0.08);
+  }
 }
 
-// Instanced recessed 120x60 cm warm-white architectural LED ceiling panels across rooms & corridors
-function addCeilingLuminaires(group, f, clearH) {
-  const panels = [];
+function addCeilingLuminaires(B, f, clearH) {
+  const bezelMat = mat(0xe4e7eb, 0.4, 0.3);
   for (const r of f.rooms) {
-    if (r.kind === 'void' || r.kind === 'stair' || r.kind === 'lift' || r.kind === 'locker') continue;
+    if (r.kind === 'void' || r.kind === 'lift' || r.kind === 'locker') continue;
+    if (r.kind === 'stair') {
+      // Dedicated warm wall/landing sconce panel at stairwell doorway side
+      const [sx0, sy0, sx1, sy1] = r.rect;
+      const alongX = (sx1 - sx0) >= (sy1 - sy0);
+      const lx = alongX ? sx1 - 0.58 : (sx0 + sx1) / 2;
+      const lz = -(alongX ? (sy0 + sy1) / 2 : sy1 - 0.58);
+      B.add(bezelMat, lx, clearH - 0.015, lz, 0.9, 0.025, 0.45);
+      B.add(ledPanelMat, lx, clearH - 0.032, lz, 0.82, 0.012, 0.38);
+      continue;
+    }
     const [x0, y0, x1, y1] = r.rect;
     const w = x1 - x0, d = y1 - y0;
     if (w < 2.2 || d < 2.2) continue;
-    const nx = Math.max(1, Math.round(w / 4.2));
-    const ny = Math.max(1, Math.round(d / 4.2));
+    const nx = Math.max(1, Math.round(w / 4.5));
+    const ny = Math.max(1, Math.round(d / 4.5));
     const alongX = w >= d;
+    const ang = alongX ? 0 : Math.PI / 2;
     for (let ix = 0; ix < nx; ix++) {
       for (let iy = 0; iy < ny; iy++) {
-        panels.push([x0 + w * ((ix + 0.5) / nx), y0 + d * ((iy + 0.5) / ny), alongX]);
+        const px = x0 + w * ((ix + 0.5) / nx), pz = -(y0 + d * ((iy + 0.5) / ny));
+        B.add(bezelMat, px, clearH - 0.015, pz, 1.18, 0.025, 0.58, 0, ang, 0);
+        B.add(ledPanelMat, px, clearH - 0.032, pz, 1.10, 0.012, 0.50, 0, ang, 0);
       }
     }
   }
-  if (!panels.length) return;
-  const bezelGeo = new THREE.BoxGeometry(1.18, 0.025, 0.58);
-  const glowGeo = new THREE.PlaneGeometry(1.10, 0.50);
-  const bezelInst = new THREE.InstancedMesh(bezelGeo, mat(0xe4e7eb, 0.4, 0.3), panels.length);
-  const glowInst = new THREE.InstancedMesh(glowGeo, ledPanelMat, panels.length);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), eul = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1);
-
-  panels.forEach(([x, y, alongX], i) => {
-    eul.set(0, alongX ? 0 : Math.PI / 2, 0);
-    q.setFromEuler(eul);
-    bezelInst.setMatrixAt(i, m.compose(new THREE.Vector3(x, clearH - 0.015, -y), q, sc));
-    eul.set(Math.PI / 2, 0, alongX ? 0 : Math.PI / 2);
-    q.setFromEuler(eul);
-    glowInst.setMatrixAt(i, m.compose(new THREE.Vector3(x, clearH - 0.03, -y), q, sc));
-  });
-  bezelInst.instanceMatrix.needsUpdate = true;
-  glowInst.instanceMatrix.needsUpdate = true;
-  bezelInst.name = 'ceiling-bezel';
-  glowInst.name = 'ceiling-lights';
-  group.add(bezelInst, glowInst);
 }
 
-// Compute stairwell shaft hole rect leaving solid 1.15m landing threshold at the along1 doorway side
 function stairShaftHoleRect(rect) {
   const [x0, y0, x1, y1] = rect;
   const alongX = (x1 - x0) >= (y1 - y0);
@@ -802,7 +683,6 @@ export function buildInterior(data) {
   const root = new THREE.Group();
   root.name = `interior_${data.building_id}`;
 
-  // Gentle architectural interior fill lighting so eye-level corridors read naturally without synthetic glare
   const indoorHemi = new THREE.HemisphereLight(0xfffaf2, 0xd8cdb8, 0.72);
   indoorHemi.name = 'interior-ambient-fill';
   root.add(indoorHemi);
@@ -819,12 +699,12 @@ export function buildInterior(data) {
     g.name = `floor_${f.id}`;
     g.position.y = f.level;
 
-    // Exact floor-to-floor height and clear floor-to-ceiling soffit height (0.00m wall-to-ceiling gap!)
     const rise = fi < data.floors.length - 1
       ? (data.floors[fi + 1].level - f.level)
       : (data.floors.length > 2 ? (data.floors[2].level - data.floors[1].level) : defaultRise);
     const clearH = Math.max(2.9, rise - SLAB);
     const colliders = [];
+    const B = createArchBatcher();
 
     // 1. Structural floor slab with cutouts for double-height atrium voids AND rising stair shafts from floor below
     const floorHoleRects = f.rooms.filter((r) => r.kind === 'void').map((r) => r.rect);
@@ -842,7 +722,7 @@ export function buildInterior(data) {
     slab.receiveShadow = true;
     g.add(slab);
 
-    // 2. Complete acoustic ceiling soffit at y = clearH (cuts holes strictly for rising stairs & upper voids)
+    // 2. Complete acoustic ceiling soffit at y = clearH (opaque from below, culled from aerial orbit above)
     const ceilingHoleRects = [];
     if (fi < data.floors.length - 1) {
       for (const curStair of f.rooms.filter((r) => r.kind === 'stair')) {
@@ -865,31 +745,38 @@ export function buildInterior(data) {
     const extSegs = [];
     for (let i = 0; i < fp.length; i++) {
       for (const seg of edgeWithGaps(fp[i], fp[(i + 1) % fp.length], f.entrances || [])) {
-        const w = wall(seg[0], seg[1], seg[2], seg[3], clearH, EXT_T, extMat, colliders, true);
-        if (w) { g.add(w); extSegs.push(seg); }
+        batchWall(B, seg[0], seg[1], seg[2], seg[3], clearH, EXT_T, extMat, clearH / 2, true);
+        extSegs.push(seg);
       }
     }
-    exteriorWindows(g, extSegs, clearH);
+    exteriorWindows(B, extSegs, clearH);
 
-    // 4. Interior rooms, open double doorways, stairs, lift cores, structural columns, lighting & furnishings
+    // 4. Batched floor patches, walls, open doors, stairs, lift cores, columns, lighting & furniture
     const labels = [];
     const furniture = createFurnisher();
 
     for (const r of f.rooms) {
       const [x0, y0, x1, y1] = r.rect;
       if (r.kind === 'void') {
-        atriumBalustrade(g, r.rect, colliders);
+        atriumBalustrade(B, r.rect);
       } else {
-        floorPatch(g, r.rect, KIND_FLOOR[r.kind] ?? KIND_FLOOR.room);
+        const w = x1 - x0, d = y1 - y0;
+        if (w > 0.05 && d > 0.05) {
+          B.add(
+            getFloorMaterial(KIND_FLOOR[r.kind] ?? KIND_FLOOR.room),
+            (x0 + x1) / 2, 0.010, -(y0 + y1) / 2,
+            w, 0.012, d,
+          );
+        }
       }
 
       if (!r.open && r.kind !== 'void' && r.kind !== 'lift') {
         if (r.kind === 'stair') {
-          labels.push(stairDoor(g, r.rect, clearH, rise, wallMat, f.name_en, f.name_ar, colliders));
+          labels.push(stairDoor(g, B, r.rect, clearH, wallMat, f.name_en, f.name_ar));
         } else if (r.door) {
-          rectWallsWithDoors(g, r, clearH, wallMat, furniture, colliders);
+          rectWallsWithDoors(B, r, clearH, wallMat, furniture);
         } else {
-          rectWalls(g, r.rect, clearH, wallMat, colliders, true);
+          rectWalls(B, r.rect, clearH, wallMat);
         }
       }
 
@@ -898,25 +785,23 @@ export function buildInterior(data) {
       if (r.split > 1 && r.kind !== 'lift') {
         const alongX = (x1 - x0) >= (y1 - y0);
         for (let k = 1; k < r.split; k++) {
-          const w = alongX
-            ? wall(x0 + (x1 - x0) * (k / r.split), y0, x0 + (x1 - x0) * (k / r.split), y1, clearH, WALL_T, wallMat, colliders, true)
-            : wall(x0, y0 + (y1 - y0) * (k / r.split), x1, y0 + (y1 - y0) * (k / r.split), clearH, WALL_T, wallMat, colliders, true);
-          if (w) g.add(w);
+          if (alongX) {
+            const xk = x0 + (x1 - x0) * (k / r.split);
+            batchWall(B, xk, y0, xk, y1, clearH, WALL_T, wallMat, clearH / 2, true);
+          } else {
+            const yk = y0 + (y1 - y0) * (k / r.split);
+            batchWall(B, x0, yk, x1, yk, clearH, WALL_T, wallMat, clearH / 2, true);
+          }
         }
       }
 
       if (r.kind === 'stair' && fi < data.floors.length - 1) {
-        stairs(g, r.rect, rise);
+        stairs(B, r.rect, rise);
       }
       if (r.kind === 'lift') {
-        buildLiftCore(g, r, clearH, colliders);
+        buildLiftCore(B, r, clearH, wallMat);
       } else if (r.kind === 'locker') {
-        const bh = 1.82;
-        const b = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, bh, y1 - y0), mat(LOCKER_BODY, 0.62, 0.12));
-        b.position.set((x0 + x1) / 2, bh / 2, -(y0 + y1) / 2);
-        b.castShadow = true;
-        b.receiveShadow = true;
-        g.add(b);
+        B.add(mat(LOCKER_BODY, 0.62, 0.12), (x0 + x1) / 2, 0.91, -(y0 + y1) / 2, x1 - x0, 1.82, y1 - y0);
       }
 
       if (r.nolabel) continue;
@@ -934,9 +819,13 @@ export function buildInterior(data) {
       labels.push(lab);
     }
 
-    addStructuralColumns(g, f, clearH, colliders);
-    addCeilingLuminaires(g, f, clearH);
-    furniture.build(g);
+    addStructuralColumns(B, f, clearH);
+    addCeilingLuminaires(B, f, clearH);
+    B.flush(g, colliders);
+    const furnitureGroup = new THREE.Group();
+    furnitureGroup.name = `furniture_${f.id}`;
+    furniture.build(furnitureGroup);
+    g.add(furnitureGroup);
     root.add(g);
 
     return {
@@ -947,18 +836,24 @@ export function buildInterior(data) {
       rise,
       clearH,
       group: g,
+      furnitureGroup,
       labels,
       colliders,
     };
   });
 
-  // Strict per-floor visibility: only floors <= active index render; upper floors & their columns/geometry are occluded/hidden
-  function setFloor(idx) {
+  function setVisibleFloors(maxGeomIdx, labelIdx = maxGeomIdx) {
+    const minGeomIdx = Math.max(0, labelIdx - 1);
     floors.forEach((f, i) => {
-      f.group.visible = i <= idx;
-      for (const l of f.labels) l.visible = i === idx;
+      f.group.visible = i >= minGeomIdx && i <= maxGeomIdx;
+      f.furnitureGroup.visible = i === labelIdx;
+      for (const l of f.labels) l.visible = i === labelIdx;
     });
   }
 
-  return { group: root, floors, setFloor };
+  function setFloor(idx) {
+    setVisibleFloors(idx, idx);
+  }
+
+  return { group: root, floors, setFloor, setVisibleFloors };
 }
