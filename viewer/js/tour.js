@@ -160,8 +160,8 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     const flObj = interior.floors[floor];
     const minFloorY = walker.position.y + TOUR_CONFIG.collision.floorMargin;
 
-    if (segKind === 'stair') {
-      // Analytically contain camera inside the open stairwell shaft hole so neither shaft walls nor landing soffits occlude view
+    if (segKind === 'stair' || segKind === 'landing') {
+      // Analytically contain camera inside the open stairwell shaft hole so neither shaft walls, landing jambs, nor soffits occlude view
       const stairRooms = interior.data?.floors?.[floor]?.rooms?.filter((r) => r.kind === 'stair') || [];
       let bestStair = null, bestD = Infinity;
       for (const sr of stairRooms) {
@@ -305,13 +305,15 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     figure.setHalo(markOn);
 
     const isStairCam = s.kind === 'stair' || s.kind === 'stair_approach' || s.kind === 'landing';
-    const blendK = 1 - Math.exp(-3.2 * Math.max(0.016, dt));
-    inside += ((s.kind === 'out' ? 0 : 1) - inside) * blendK;
+    const blendK = 1 - Math.exp(-5.0 * Math.max(0.016, dt));
+    const justEntered = inside < 0.5 && s.kind !== 'out';
+    inside = s.kind === 'out' ? 0 : 1;
     climb += ((isStairCam ? 1 : 0) - climb) * blendK;
+    if (Math.abs((isStairCam ? 1 : 0) - climb) < 0.005) climb = isStairCam ? 1 : 0;
 
     const lerp2 = (a, b, t) => a + (b - a) * t;
     const ease = (t) => t * t * (3 - 2 * t);
-    const inT = ease(THREE.MathUtils.clamp(inside, 0, 1));
+    const inT = inside;
     const stT = ease(THREE.MathUtils.clamp(climb, 0, 1));
 
     const portrait = camera.aspect < 0.8 ? 1.22 : camera.aspect < 1.1 ? 1.10 : 1;
@@ -342,7 +344,13 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     }
 
     const lookK = s.kind === 'out' ? Math.min(1, k * 3.5) : Math.min(1, k * 1.6);
-    if (k >= 1) look.copy(pos);
+    if (k >= 1 || justEntered) {
+      look.copy(pos);
+      if (justEntered && camPos && camLook) {
+        camPos.copy(want);
+        camLook.copy(pos);
+      }
+    }
     else look.lerp(pos, lookK);
 
     return headingDelta;

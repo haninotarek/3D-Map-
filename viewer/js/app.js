@@ -288,6 +288,13 @@ function setBuildingOnly(on) {
   if (state.root) state.root.visible = !on;
   for (const item of state.items.values()) if (item.label) item.label.visible = !on && state.labelsOn;
   if (highlight) highlight.visible = !on;
+  if (state.camera) {
+    state.camera.near = on ? 0.2 : 1.0;
+    state.camera.updateProjectionMatrix();
+  }
+  if (state.controls) {
+    state.controls.minDistance = on ? 1.5 : 12;
+  }
   state.router?.setIndoorMode?.(on, state.inside ? state.inside.floor : null);   // hide route splines & off-floor highlights indoors
 }
 
@@ -669,9 +676,12 @@ function loop(now) {
   const dtCap = window.__TOUR_SPEED ? 0.35 : 0.1;
   const dt = Math.min(dtCap, (now - (state.lastNow ?? now)) / 1000); state.lastNow = now;
   // QA hook: tests on software WebGL can speed the tour clock (no effect in normal use)
-  if (state.tour && state.tour.update(dt * (window.__TOUR_SPEED || 1))) state.needsRender = true;
-  const changed = state.controls.update();
-  if (changed) state.needsRender = true;
+  const touring = Boolean(state.tour && state.tour.update(dt * (window.__TOUR_SPEED || 1)));
+  if (touring) {
+    state.needsRender = true;
+  } else if (state.controls.update()) {
+    state.needsRender = true;
+  }
   const az = state.controls.getAzimuthalAngle();
   $('compass').firstElementChild.style.transform = `rotate(${THREE.MathUtils.radToDeg(az)}deg)`;
   if (state.needsRender) {

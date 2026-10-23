@@ -225,6 +225,7 @@ export function createWalkerFigure(customSpec = {}) {
   let stairBlend = 0;       // 0 = level ground gait, 1 = stair ascent kinematics
   let turnSmooth = 0;       // smoothed yaw rate for subtle upper-body anticipation lean
   let idleClock = 0;
+  let totalDistance = 0;
 
   const telemetry = {
     minFootY: 0,
@@ -232,7 +233,9 @@ export function createWalkerFigure(customSpec = {}) {
     rightFootY: 0,
     phase: 0,
     walkBlend: 0,
+    blend: 0,
     stairBlend: 0,
+    distanceWalked: 0,
     cadenceHz: 0,
     stanceFoot: 'double',
   };
@@ -288,13 +291,15 @@ export function createWalkerFigure(customSpec = {}) {
   function applyPose(dt, opts) {
     const isObj = opts !== null && typeof opts === 'object';
     const rawSpeed = isObj ? (opts.speed ?? 0) : Number(opts || 0);
-    const ds = isObj ? opts.ds : undefined;
-    const mode = isObj ? (opts.mode || 'walk') : 'walk';
-    const turnRate = isObj ? (opts.turnRate || 0) : 0;
+    const ds = isObj && typeof opts.ds === 'number' ? opts.ds : Math.max(0, rawSpeed * dt);
+    const isStair = isObj ? Boolean(opts.isStair || opts.mode === 'stair') : false;
+    const turnRate = isObj
+      ? (opts.turnRate ?? (dt > 1e-4 && opts.headingDelta ? opts.headingDelta / dt : 0))
+      : 0;
 
-    const moving = rawSpeed > 0.03 && (ds === undefined || ds > 1e-5);
-    const targetWalk = moving ? Math.min(1, 0.35 + rawSpeed * 0.65) : 0;
-    const targetStair = (moving && mode === 'stair') ? 1 : 0;
+    const moving = rawSpeed > 0.03 && ds > 1e-5;
+    const targetWalk = moving ? Math.min(1, 0.42 + rawSpeed * 0.58) : 0;
+    const targetStair = (moving && isStair) ? 1 : 0;
 
     const kBlend = 1 - Math.exp(-Math.max(0, dt) * 8.5);
     const kStair = 1 - Math.exp(-Math.max(0, dt) * 6.5);
@@ -303,15 +308,12 @@ export function createWalkerFigure(customSpec = {}) {
     turnSmooth += (THREE.MathUtils.clamp(turnRate, -2.5, 2.5) - turnSmooth) * (1 - Math.exp(-Math.max(0, dt) * 6.0));
     idleClock += dt;
 
-    // Advance gait phase strictly by real world distance ds when provided (zero foot sliding!)
+    // Advance gait phase strictly by real world distance ds (zero foot sliding!)
     let dPhase = 0;
     if (moving) {
-      if (typeof ds === 'number' && ds >= 0) {
-        const stepLen = THREE.MathUtils.lerp(S.strideLength, S.stairStepRun, stairBlend);
-        dPhase = (ds / Math.max(0.25, stepLen)) * Math.PI;
-      } else {
-        dPhase = dt * (3.6 + 2.4 * Math.min(1, rawSpeed));
-      }
+      totalDistance += ds;
+      const stepLen = THREE.MathUtils.lerp(S.strideLength, S.stairStepRun, stairBlend);
+      dPhase = (ds / Math.max(0.25, stepLen)) * Math.PI;
       phase = (phase + dPhase) % (Math.PI * 2);
     }
     telemetry.cadenceHz = dt > 1e-4 ? +(dPhase / (Math.PI * 2 * dt)).toFixed(2) : 0;
@@ -394,7 +396,9 @@ export function createWalkerFigure(customSpec = {}) {
     telemetry.minFootY = 0;
     telemetry.phase = +phase.toFixed(3);
     telemetry.walkBlend = +walkBlend.toFixed(3);
+    telemetry.blend = telemetry.walkBlend;
     telemetry.stairBlend = +stairBlend.toFixed(3);
+    telemetry.distanceWalked = +totalDistance.toFixed(3);
     telemetry.stanceFoot = walkBlend < 0.08 ? 'double' : (telemetry.leftFootY <= telemetry.rightFootY + 0.004 ? 'left' : 'right');
   }
 
@@ -410,6 +414,7 @@ export function createWalkerFigure(customSpec = {}) {
     walkBlend = 0;
     stairBlend = 0;
     turnSmooth = 0;
+    totalDistance = 0;
     applyPose(0.016, 0);
   }
 
