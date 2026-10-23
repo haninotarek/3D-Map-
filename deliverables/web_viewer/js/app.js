@@ -8,7 +8,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { buildInterior } from './interior.js';
 import { createCollisionWorld } from './collision.js';
-import { createRouter } from './route.js';
+import { createRouter, validateNavigationData } from './route.js';
 import { createTour } from './tour.js';
 import { createVoice } from './voice.js';
 
@@ -699,7 +699,7 @@ function clearRoute() {
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 function loop(now) {
   requestAnimationFrame(loop);
-  if (document.hidden) return;
+  if (document.hidden || state.manualStepping) return;
   if (state.anim) {
     const a = state.anim; const t = Math.min(1, (now - a.start) / a.ms); const k = ease(t);
     state.camera.position.lerpVectors(a.p0, a.p1, k); state.controls.target.lerpVectors(a.t0, a.t1, k);
@@ -749,7 +749,7 @@ async function main() {
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     setTimeout(ensureLabels, 1000);
     const reverseRoute = () => (lastRouteParams ? showRoute({ ...lastRouteParams, reverse: !lastRouteParams.reverse }) : null);
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, reverseRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, reverseRoute, clearRoute, tour: () => state.tour, route: () => tourRes, validateNavigationData,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
     window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
   } catch (err) {

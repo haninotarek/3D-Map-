@@ -34,7 +34,7 @@
   {
    "name": "navigation reaches ARRIVED",
    "ok": true,
-   "detail": "48s"
+   "detail": "22s"
   },
   {
    "name": "inside a building only that building is visible (campus + whole route line hidden)",
@@ -150,6 +150,30 @@
    "y": 0.03
   },
   {
+   "state": "ENTERING_DOOR",
+   "y": 0.08
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.21
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.33
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.46
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.59
+  },
+  {
+   "state": "ENTERING_DOOR",
+   "y": 0.61
+  },
+  {
    "state": "CORRIDOR_NAVIGATION",
    "y": 0.61
   },
@@ -159,7 +183,147 @@
   },
   {
    "state": "CLIMBING",
-   "y": 2.37
+   "y": 0.63
+  },
+  {
+   "state": "CLIMBING",
+   "y": 0.7
+  },
+  {
+   "state": "CLIMBING",
+   "y": 0.76
+  },
+  {
+   "state": "CLIMBING",
+   "y": 0.82
+  },
+  {
+   "state": "CLIMBING",
+   "y": 0.96
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.11
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.26
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.55
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.69
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.84
+  },
+  {
+   "state": "CLIMBING",
+   "y": 1.99
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.13
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.28
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.42
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.57
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.72
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.85
+  },
+  {
+   "state": "CLIMBING",
+   "y": 2.91
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.11
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.25
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.55
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.69
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.84
+  },
+  {
+   "state": "CLIMBING",
+   "y": 3.98
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.13
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.28
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.42
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.57
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.71
+  },
+  {
+   "state": "CLIMBING",
+   "y": 4.86
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.1
+  },
+  {
+   "state": "FLOOR_LANDING",
+   "y": 5.1
   },
   {
    "state": "FLOOR_LANDING",
@@ -167,11 +331,295 @@
   },
   {
    "state": "CLIMBING",
-   "y": 8.26
+   "y": 5.13
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.19
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.25
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.31
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.43
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.56
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.7
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.83
+  },
+  {
+   "state": "CLIMBING",
+   "y": 5.96
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.09
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.22
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.35
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.48
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.61
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.75
+  },
+  {
+   "state": "CLIMBING",
+   "y": 6.88
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.01
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.1
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.17
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.26
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.36
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.49
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.62
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.75
+  },
+  {
+   "state": "CLIMBING",
+   "y": 7.88
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.02
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.15
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.28
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.41
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.54
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.67
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.8
+  },
+  {
+   "state": "CLIMBING",
+   "y": 8.93
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.07
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.1
+  },
+  {
+   "state": "FLOOR_LANDING",
+   "y": 9.1
+  },
+  {
+   "state": "FLOOR_LANDING",
+   "y": 9.11
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.15
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.21
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.27
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.34
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.47
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.6
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.74
+  },
+  {
+   "state": "CLIMBING",
+   "y": 9.87
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.13
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.26
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.39
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.52
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.65
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.79
+  },
+  {
+   "state": "CLIMBING",
+   "y": 10.92
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.05
   },
   {
    "state": "CLIMBING",
    "y": 11.1
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.11
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.2
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.29
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.4
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.53
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.66
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.79
+  },
+  {
+   "state": "CLIMBING",
+   "y": 11.93
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.06
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.19
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.32
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.45
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.58
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.71
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.84
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.98
+  },
+  {
+   "state": "CLIMBING",
+   "y": 13.1
+  },
+  {
+   "state": "FLOOR_LANDING",
+   "y": 13.11
   },
   {
    "state": "CORRIDOR_NAVIGATION",

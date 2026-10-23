@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8080/",
-  "timestamp": "2026-10-23 09:28:39",
+  "timestamp": "2026-10-23 14:05:44",
   "checks": [
     {
       "name": "Boot: application loads cleanly with zero error state",
@@ -25,7 +25,7 @@
     {
       "name": "Architecture: both Engineering Building 1 (`bld_e2`) and Building 2 (`bld_e1`) build 4 full storeys with ceilings & furniture",
       "ok": true,
-      "detail": "{'e2Floors': 4, 'e1Floors': 4, 'floor2Level': 9.1, 'floor2ClearH': 3.75, 'floor2Visible': True, 'floor3Visible': False, 'floor2FurnitureVisible': True, 'hasCeilingMesh': True, 'instancedCount': 9881, 'maxVisibleWorldY': 12.89, 'ceilingLimitY': 12.91}"
+      "detail": "{'e2Floors': 4, 'e1Floors': 4, 'floor2Level': 9.1, 'floor2ClearH': 3.75, 'floor2Visible': True, 'floor3Visible': False, 'floor2FurnitureVisible': True, 'hasCeilingMesh': True, 'instancedCount': 6525, 'maxVisibleWorldY': 12.89, 'ceilingLimitY': 12.91}"
     },
     {
       "name": "Scene Integrity: ZERO 3rd-floor columns or upper geometry visible or protruding when on 2nd floor",
@@ -40,12 +40,12 @@
     {
       "name": "Multi-Building Routing: all Ground, 1st, 2nd & 3rd floor destinations plan cleanly in both Engineering Buildings",
       "ok": true,
-      "detail": "[{'room': 'Room 101', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 0, 'pts': 23}, {'room': 'Room 105', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 55}, {'room': 'Drawing Hall 3', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 55}, {'room': 'Room 204', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 2, 'pts': 79}, {'room': 'Hall 1', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 2, 'pts': 77}]"
+      "detail": "[{'room': 'Cafeteria', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 0, 'pts': 20}, {'room': 'Room 104', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 53}, {'room': 'Drawing Hall 3', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 53}, {'room': 'Drawing Hall 4', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 54}, {'room': 'Room 204', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 2, 'pt"
     },
     {
       "name": "Eye-Level Camera (Ground Atrium): horizontal human eye height (~1.62m) & shallow natural pitch",
       "ok": true,
-      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 0, 'walkerY': 0.612, 'camY': 2.232, 'eyeOffset': 1.62, 'pitchDeg': -2.08, 'dist': 3.91}"
+      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 0, 'walkerY': 0.612, 'camY': 2.232, 'eyeOffset': 1.62, 'pitchDeg': -2.08, 'dist': 3.94}"
     },
     {
       "name": "State Machine: explicit APPROACHING_STAIRS entered on Ground Floor before climbing",
@@ -55,17 +55,17 @@
     {
       "name": "Authoritative Floor Gate: while climbing G->1 (`walkerY > 1.6m`), logical floor remains 0 until landing",
       "ok": true,
-      "detail": "{'state': 'CLIMBING', 'logicalFloor': 0, 'walkerY': 1.603, 'camY': 3.231, 'stairBlend': 1, 'floor3Hidden': True}"
+      "detail": "{'state': 'CLIMBING', 'logicalFloor': 0, 'walkerY': 1.603, 'camY': 3.23, 'stairBlend': 1, 'floor3Hidden': True}"
     },
     {
       "name": "Authoritative Floor Gate: floor updates to 1 ONLY upon verified arrival at First-Floor Landing (`y = 5.11m`)",
       "ok": true,
-      "detail": "{'state': 'FLOOR_LANDING', 'floor': 1, 'walkerY': 5.101}"
+      "detail": "{'state': 'FLOOR_LANDING', 'floor': 1, 'walkerY': 5.1}"
     },
     {
       "name": "Second Floor Navigation: eye-level corridor view on Floor 2 with 3rd floor strictly hidden (`floor3Visible = False`)",
       "ok": true,
-      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 2, 'walkerY': 9.112, 'eyeOffset': 1.588, 'pitchDeg': -1.96, 'floor3Visible': False}"
+      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 2, 'walkerY': 9.112, 'eyeOffset': 1.619, 'pitchDeg': -2.14, 'floor3Visible': False}"
     },
     {
       "name": "Deterministic Progression: full route completes `WALKING -> ENTERING_DOOR -> CORRIDOR -> STAIR -> CLIMB -> LANDING -> CORRIDOR -> ARRIVED`",

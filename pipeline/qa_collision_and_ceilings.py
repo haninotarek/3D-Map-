@@ -61,7 +61,7 @@ async def main():
             timeout=180000,
         )
         # Hide schedule modal when taking clean architectural verification frames
-        await page.evaluate("() => { const s = document.getElementById('sched'); if (s) s.style.display = 'none'; }")
+        await page.evaluate("() => { window.__campus.state.manualStepping = true; const s = document.getElementById('sched'); if (s) s.style.display = 'none'; }")
 
         # Force load both multi-storey engineering interiors (`bld_e2` = Eng 1, `bld_e1` = Eng 2)
         init_meta = await page.evaluate("""async () => {
@@ -181,28 +181,28 @@ async def main():
             const y0 = e2.floors[0].level + 0.012;
             const y1 = e2.floors[1].level + 0.012;
 
-            // A1: Direct perpendicular push into solid stair east wall (`x = 158.0, yPlan = -77.0` south of doorway)
-            const a1 = t.probeMove([159.40, y0, 77.00], [156.50, y0, 77.00], 0, 'bld_e2');
+            // A1: Direct perpendicular push into solid stair_s south wall (`yPlan = -78.20`, west of 1.50m doorway at x=157.15)
+            const a1 = t.probeMove([154.00, y0, 79.40], [154.00, y0, 77.00], 0, 'bld_e2');
 
-            // A2: Angled 35-deg slide along corridor wall (`x = 158.0`, moving south from `-76.2` to `-78.0` while pushing west)
-            const a2 = t.probeMove([158.42, y0, 76.10], [157.10, y0, 78.10], 0, 'bld_e2');
+            // A2: Angled 35-deg slide along south corridor wall (`yPlan = -78.20`, moving east from 152.5 to 154.6 while pushing north)
+            const a2 = t.probeMove([152.50, y0, 78.62], [154.60, y0, 77.30], 0, 'bld_e2');
 
-            // A3: Acute 90-deg corner push + clean recovery back into open corridor
-            const cornerIn = t.probeMove([159.20, y0, 69.20], [157.40, y0, 70.60], 0, 'bld_e2');
-            const cornerOut = t.probeMove(cornerIn.resolved, [159.20, y0, 69.20], 0, 'bld_e2');
+            // A3: Acute 90-deg corner push at south corridor west end (`[137.0, -78.2]`) + clean recovery back into open corridor
+            const cornerIn = t.probeMove([138.20, y0, 79.40], [136.50, y0, 77.60], 0, 'bld_e2');
+            const cornerOut = t.probeMove(cornerIn.resolved, [138.20, y0, 79.40], 0, 'bld_e2');
 
-            // A4: Open 1.60m stairwell doorway (`mid = -74.10`: unobstructed) vs adjacent jamb (`-75.25`: blocked!)
-            const doorPass = t.probeMove([159.20, y0, 74.10], [156.90, y0, 74.10], 0, 'bld_e2');
-            const doorJambBlock = t.probeMove([159.20, y0, 75.25], [156.90, y0, 75.25], 0, 'bld_e2');
+            // A4: Open 1.50m stairwell doorway (`x = 157.15, yPlan = -78.20`: unobstructed) vs adjacent jamb (`x = 155.80`: blocked!)
+            const doorPass = t.probeMove([157.15, y0, 79.30], [157.15, y0, 77.05], 0, 'bld_e2');
+            const doorJambBlock = t.probeMove([155.80, y0, 79.30], [155.80, y0, 77.05], 0, 'bld_e2');
 
-            // A5: Structural 0.42m reinforced-concrete atrium column block (`spine = [160.3, -70.0, 176.2, -55.0]` -> col `[160.65, -69.65]`)
-            const colHit = t.probeMove([162.00, y0, 69.65], [159.80, y0, 69.65], 0, 'bld_e2');
+            // A5: Structural 0.42m reinforced-concrete atrium column block (`lobby = [160.2, -70.0, 176.3, -55.0]` -> col `[160.55, -69.65]`)
+            const colHit = t.probeMove([161.90, y0, 69.65], [159.80, y0, 69.65], 0, 'bld_e2');
 
-            // A6: Floor 1 East Gallery Atrium Glass Balustrade (`void_c` east rail at `x = 171.20`, `yPlan = -62.5`)
-            const railHit = t.probeMove([173.00, y1, 62.50], [170.00, y1, 62.50], 1, 'bld_e2');
+            // A6: Floor 1 East Gallery Atrium Glass Balustrade (`void` east rail at `x = 169.50`, `yPlan = -62.5`)
+            const railHit = t.probeMove([171.30, y1, 62.50], [168.30, y1, 62.50], 1, 'bld_e2');
 
-            // C_GUARD: Low-ceiling overhead penetration guard (`y -> ceilY - 1.20` where `headY > soffitY` outside hole)
-            const ceilGuard = t.probeMove([161.20, 2.80, 62.50], [161.20, 3.60, 62.50], 0, 'bld_e2');
+            // C_GUARD: Low-ceiling overhead penetration guard (`y -> ceilY - 1.20` under East Gallery ceiling slab at `x = 172.0`)
+            const ceilGuard = t.probeMove([172.00, 2.80, 62.50], [172.00, 3.60, 62.50], 0, 'bld_e2');
 
             return { a1, a2, cornerIn, cornerOut, doorPass, doorJambBlock, colHit, railHit, ceilGuard };
         }""")
@@ -210,46 +210,46 @@ async def main():
 
         check(
             'GA_01_direct_perpendicular_wall_stop',
-            group_a['a1']['resolved'][0] >= 158.35
+            group_a['a1']['resolved'][2] >= 78.55
             and group_a['a1']['stats']['wallContacts'] > 0
             and group_a['a1']['audit']['maxPenetration'] <= 1e-3,
-            f"resolvedX={group_a['a1']['resolved'][0]} contacts={group_a['a1']['stats']['wallContacts']} pen={group_a['a1']['audit']['maxPenetration']}",
+            f"resolvedZ={group_a['a1']['resolved'][2]} contacts={group_a['a1']['stats']['wallContacts']} pen={group_a['a1']['audit']['maxPenetration']}",
         )
         check(
             'GA_02_parallel_wall_sliding_smooth_no_penetration',
-            group_a['a2']['resolved'][0] >= 158.35
-            and (group_a['a2']['resolved'][2] - 76.10) >= 1.20
+            group_a['a2']['resolved'][2] >= 78.55
+            and (group_a['a2']['resolved'][0] - 152.50) >= 1.20
             and group_a['a2']['stats']['wallSlides'] > 0
             and group_a['a2']['audit']['maxPenetration'] <= 1e-3,
-            f"resolved={group_a['a2']['resolved']} slidZ={round(group_a['a2']['resolved'][2] - 76.10, 3)}m pen={group_a['a2']['audit']['maxPenetration']}",
+            f"resolved={group_a['a2']['resolved']} slidX={round(group_a['a2']['resolved'][0] - 152.50, 3)}m pen={group_a['a2']['audit']['maxPenetration']}",
         )
         check(
             'GA_03_acute_corner_block_and_clean_recovery',
             group_a['cornerIn']['audit']['maxPenetration'] <= 1e-3
-            and abs(group_a['cornerOut']['resolved'][0] - 159.20) < 0.05
-            and abs(group_a['cornerOut']['resolved'][2] - 69.20) < 0.05
+            and abs(group_a['cornerOut']['resolved'][0] - 138.20) < 0.05
+            and abs(group_a['cornerOut']['resolved'][2] - 79.40) < 0.05
             and group_a['cornerOut']['audit']['maxPenetration'] <= 1e-3,
             f"cornerIn={group_a['cornerIn']['resolved']} recoveredTo={group_a['cornerOut']['resolved']}",
         )
         check(
             'GA_04_open_doorway_unobstructed_vs_adjacent_jamb_blocked',
-            abs(group_a['doorPass']['resolved'][0] - 156.90) < 0.02
+            abs(group_a['doorPass']['resolved'][2] - 77.05) < 0.03
             and group_a['doorPass']['stats']['wallContacts'] == 0
-            and group_a['doorJambBlock']['resolved'][0] >= 158.35
+            and group_a['doorJambBlock']['resolved'][2] >= 78.55
             and group_a['doorJambBlock']['stats']['wallContacts'] > 0,
-            f"openDoorX={group_a['doorPass']['resolved'][0]} jambBlockedX={group_a['doorJambBlock']['resolved'][0]}",
+            f"openDoorZ={group_a['doorPass']['resolved'][2]} jambBlockedZ={group_a['doorJambBlock']['resolved'][2]}",
         )
         check(
             'GA_05_structural_column_blocks_penetration',
             group_a['colHit']['stats']['wallContacts'] > 0
-            and group_a['colHit']['resolved'][0] > 161.05
+            and group_a['colHit']['resolved'][0] > 160.95
             and group_a['colHit']['audit']['maxPenetration'] <= 1e-3,
             f"colResolved={group_a['colHit']['resolved']} tag={group_a['colHit']['stats']['lastBlockingTag']}",
         )
         check(
             'GA_06_atrium_balustrade_railing_blocks_fall',
             group_a['railHit']['stats']['wallContacts'] > 0
-            and group_a['railHit']['resolved'][0] > 171.45
+            and group_a['railHit']['resolved'][0] > 169.75
             and group_a['railHit']['stats']['lastBlockingTag'] == 'railing',
             f"railResolved={group_a['railHit']['resolved']} tag={group_a['railHit']['stats']['lastBlockingTag']}",
         )
@@ -267,20 +267,17 @@ async def main():
             // Find valid upper-floor north & south rooms in BOTH `bld_e2` and `bld_e1` dynamically from roomIndex
             const e2TopSouth = { building: 'Engineering Building 1', room: 'Hall 3', lang: 'ar', roomLabel: 'قاعة 3' };
             const e2TopNorth = { building: 'Engineering Building 1', room: 'Hall 4', lang: 'ar', roomLabel: 'قاعة 4' };
-            const e1Data = window.__campus.state.interiors.get('bld_e1').data;
-            const e1F3Rooms = e1Data.floors[3].rooms.filter(r => r.door && !r.open && r.kind !== 'stair' && r.kind !== 'lift' && r.kind !== 'void' && r.kind !== 'wc');
-            const e1SouthRoom = e1F3Rooms.reduce((a, b) => (a.rect[1] < b.rect[1] ? a : b));
-            const e1NorthRoom = e1F3Rooms.reduce((a, b) => (a.rect[1] > b.rect[1] ? a : b));
-            const e2GroundRoom = window.__campus.state.interiors.get('bld_e2').data.floors[0].rooms.find(r => r.kind === 'lab' && r.door);
+            const e1TopSouth = { building: 'Engineering Building 2', room: 'Hall 3', lang: 'ar', roomLabel: 'قاعة 3' };
+            const e1TopNorth = { building: 'Engineering Building 2', room: 'Hall 4', lang: 'ar', roomLabel: 'قاعة 4' };
 
             const scenarios = [
                 ['B1_e2_south_stairs_G_to_3_ascent', e2TopSouth],
                 ['B2_e2_north_stairs_G_to_3_ascent', e2TopNorth],
-                ['B3_e1_south_stairs_G_to_3_ascent', { building: 'Engineering Building 2', room: e1SouthRoom.name_en, lang: 'ar' }],
-                ['B4_e1_north_stairs_G_to_3_ascent', { building: 'Engineering Building 2', room: e1NorthRoom.name_en, lang: 'ar' }],
-                ['A7_e2_ground_lab_arrival', { building: 'Engineering Building 1', room: e2GroundRoom.name_en, lang: 'ar' }],
+                ['B3_e1_south_stairs_G_to_3_ascent', e1TopSouth],
+                ['B4_e1_north_stairs_G_to_3_ascent', e1TopNorth],
+                ['A7_e2_ground_lab_arrival', { building: 'Engineering Building 1', room: 'Cafeteria', lang: 'ar' }],
                 ['C2_e2_south_stairs_3_to_G_descent', { ...e2TopSouth, reverse: true }],
-                ['C3_e1_north_stairs_3_to_G_descent', { building: 'Engineering Building 2', room: e1NorthRoom.name_en, lang: 'ar', reverse: true }],
+                ['C3_e1_north_stairs_3_to_G_descent', { ...e1TopNorth, reverse: true }],
             ];
 
             const results = {};
@@ -465,7 +462,7 @@ async def main():
                 s.renderer.render(s.scene, s.camera);
                 s.labelRenderer.render(s.scene, s.camera);
             }""")
-            await page.screenshot(path=os.path.join(OUT, filename))
+            await page.screenshot(path=os.path.join(OUT, filename), animations='disabled')
             print(f'Saved visual proof: {filename}', flush=True)
 
         # Helper to advance `Hall 3` tour cleanly to exact semantic states & capture real camera frames
@@ -499,20 +496,27 @@ async def main():
         }""")
         await render_shot('01_character_near_wall_sliding.png')
 
-        # Shot 02: Character passing squarely through open double oak doorway under 2.25m transom
-        await page.evaluate("""() => {
+        # Shot 02: Character passing squarely through open doorway under transom on Floor 3 (`Hall 4` south corridor doorway)
+        await page.evaluate("""async () => {
+            await window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Hall 4', lang: 'ar' });
             const s = window.__campus.state;
-            s.tour.replay();
             while (s.tour.state !== 'ARRIVED') s.tour.update(1 / 30);
-            const w = s.scene.getObjectByName('tour-walker');
-            // Back up slightly to threshold of Hall 3 doorway
             const e2 = s.interiors.get('bld_e2');
             const y3 = e2.floors[3].level + 0.012;
-            w.position.set(174.55, y3, 82.30);
-            w.rotation.y = Math.PI * 0.5;
+            const w = s.scene.getObjectByName('tour-walker');
+            w.position.set(151.0, y3, 43.5);
+            w.rotation.y = Math.PI;
             s.tour.walkerFigure.update(0.12, { speed: 2.0, isStair: false, headingDelta: 0 });
-            s.camera.position.set(171.60, y3 + 1.58, 82.65);
-            s.camera.lookAt(175.80, y3 + 1.28, 82.30);
+            s.interiors.get('bld_e2').setVisibleFloors(3, 3);
+            s.camera.position.set(151.0, y3 + 1.56, 46.2);
+            s.camera.lookAt(151.0, y3 + 1.28, 41.5);
+            await window.__campus.showRoute({ building: 'Engineering Building 1', room: 'Hall 3', lang: 'ar', roomLabel: 'قاعة 3' });
+            const w2 = s.scene.getObjectByName('tour-walker');
+            w2.position.set(151.0, y3, 43.5);
+            w2.rotation.y = Math.PI;
+            s.interiors.get('bld_e2').setVisibleFloors(3, 3);
+            s.camera.position.set(151.0, y3 + 1.56, 46.2);
+            s.camera.lookAt(151.0, y3 + 1.28, 41.5);
         }""")
         await render_shot('02_character_passing_open_doorway.png')
 
@@ -574,10 +578,10 @@ async def main():
 
         # Shots 09..12: Floor-by-Floor Interior Ceiling Verification (`G`, `1`, `2`, `3`)
         floor_cam_specs = [
-            ('09_ceiling_floor_G_atrium_and_corridor.png', 0, [160.8, 2.25, 69.2], [168.5, 4.15, 62.5]),
-            ('10_ceiling_floor_1_gallery_and_corridor.png', 1, [160.6, 6.72, 69.8], [168.5, 7.65, 62.5]),
-            ('11_ceiling_floor_2_corridor_and_labs.png',    2, [160.6, 10.72, 68.5], [160.8, 11.45, 56.0]),
-            ('12_ceiling_floor_3_top_storey_sealed.png',    3, [160.6, 14.72, 76.0], [161.2, 15.40, 62.0]),
+            ('09_ceiling_floor_G_atrium_and_corridor.png', 0, [172.0, 2.25, 62.5], [163.5, 4.15, 62.5]),
+            ('10_ceiling_floor_1_gallery_and_corridor.png', 1, [172.0, 6.72, 62.5], [163.5, 7.65, 62.5]),
+            ('11_ceiling_floor_2_corridor_and_labs.png',    2, [152.0, 10.72, 79.7], [141.0, 11.45, 79.7]),
+            ('12_ceiling_floor_3_top_storey_sealed.png',    3, [152.0, 14.72, 79.7], [141.0, 15.40, 79.7]),
         ]
         for fname, fidx, cpos, clook in floor_cam_specs:
             await page.evaluate(f"""async () => {{

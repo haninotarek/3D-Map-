@@ -234,8 +234,8 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
       if (bestStair) {
         const [rx0, ry0, rx1, ry1] = bestStair.rect;
         const alongX = (rx1 - rx0) >= (ry1 - ry0);
-        const minX = rx0 + 0.52, maxX = alongX ? rx1 - 1.62 : rx1 - 0.52;
-        const minY = ry0 + 0.52, maxY = alongX ? ry1 - 0.52 : ry1 - 1.62;
+        const minX = rx0 + 0.52, maxX = alongX ? rx1 - 1.76 : rx1 - 0.52;
+        const minY = ry0 + 0.52, maxY = alongX ? ry1 - 0.52 : ry1 - 1.76;
         desiredPos.x = THREE.MathUtils.clamp(desiredPos.x, minX, maxX);
         desiredPos.z = -THREE.MathUtils.clamp(-desiredPos.z, minY, maxY);
       }
@@ -255,20 +255,16 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     if (fullDist < 1e-3) return;
     _rayDir.divideScalar(fullDist);
 
-    const colliders = [];
-    const maxCheck = Math.min(interior.floors.length - 1, Math.max(floor, shownGeomFloor));
-    for (let fi = floor; fi <= maxCheck; fi++) {
-      if (interior.floors[fi]?.colliders) colliders.push(...interior.floors[fi].colliders);
-    }
-
     let targetPull = 1.0;
-    if (colliders.length) {
-      _raycaster.set(_anchor, _rayDir);
-      _raycaster.near = 0.05;
-      _raycaster.far = fullDist + TOUR_CONFIG.collision.wallMargin;
-      const hits = _raycaster.intersectObjects(colliders, true);
-      if (hits.length > 0) {
-        const safeDist = Math.max(TOUR_CONFIG.collision.minDist, hits[0].distance - TOUR_CONFIG.collision.wallMargin);
+    if (interior.collisionWorld?.raycastCameraArm) {
+      const hitDist = interior.collisionWorld.raycastCameraArm(
+        floor,
+        _anchor.x, _anchor.y, _anchor.z,
+        desiredPos.x, desiredPos.y, desiredPos.z,
+        TOUR_CONFIG.collision.wallMargin,
+      );
+      if (hitDist !== null) {
+        const safeDist = Math.max(TOUR_CONFIG.collision.minDist, hitDist);
         if (safeDist < fullDist) {
           targetPull = Math.min(1.0, safeDist / fullDist);
           telemetry.cameraCollisionClamps++;
@@ -499,6 +495,14 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     const lookK = activeSeg.kind === 'out' ? 1 - Math.pow(1e-8, motionDt) : k;
     camPos.lerp(want, k);
     camLook.lerp(look, lookK);
+    if (inside > 0.85 && activeSeg.kind !== 'out') {
+      resolveIndoorCameraCollision(camPos, activeSeg.kind);
+      const hd = Math.hypot(camLook.x - camPos.x, camLook.z - camPos.z) || 1;
+      const maxDy = hd * 0.175;
+      if (Math.abs(camLook.y - camPos.y) > maxDy && state !== 'CLIMBING' && state !== 'DESCENDING') {
+        camPos.y = camLook.y - Math.sign(camLook.y - camPos.y) * maxDy;
+      }
+    }
     camera.position.copy(camPos);
     controls.target.copy(camLook);
     camera.lookAt(camLook);
