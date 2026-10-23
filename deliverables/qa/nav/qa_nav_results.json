@@ -1,5 +1,5 @@
 {
- "base": "http://localhost:8080/",
+ "base": "http://127.0.0.1:8080/",
  "checks": [
   {
    "name": "scene loads without error",
@@ -22,9 +22,34 @@
    "detail": ""
   },
   {
+   "name": "voice plan has one instruction per leg (no welcome/halfway repeats)",
+   "ok": true,
+   "detail": "{'steps': ['صباح الخير يا هندسة. عدّي البوابة الرئيسية، وامشي لحد ما توصل عند مبنى هندسة 1.', 'ادخل، واطلع من السلم اللي على اليمين لحد الدور التالت على طول.', 'انت كده في الدور التالت. خش يمين، هتلاقي قاعة 3.'], 'cues': [['greeting_gate', 'go_eng1'], 'stairs_right_floor_3', ['floor_3', 'turn_right']]}"
+  },
+  {
+   "name": "Hall 3 voice: greeting/building, right stair straight to floor 3, then room turn",
+   "ok": true,
+   "detail": "[['greeting_gate', 'go_eng1'], 'stairs_right_floor_3', ['floor_3', 'turn_right']]"
+  },
+  {
    "name": "navigation reaches ARRIVED",
    "ok": true,
-   "detail": "123s"
+   "detail": "93s"
+  },
+  {
+   "name": "inside a building only that building is visible (campus + whole route line hidden)",
+   "ok": true,
+   "detail": "{'rootVisible': False, 'inside': {'id': 'bld_e2', 'floor': 3}, 'interiorVisible': True, 'outdoorRouteVisible': False, 'indoorRouteVisible': False, 'haloVisible': False, 'doorCount': 8, 'doorSigns': [{'text': 'الدور التالت', 'visible': True}, {'text': 'الدور التالت', 'visible': True}], 'camDistToWalker': 3.7, 'visibleLabels': []}"
+  },
+  {
+   "name": "every floor has a stair door with its name plate (destination sign visible on arrival)",
+   "ok": true,
+   "detail": "(8, [{'text': 'الدور التالت', 'visible': True}, {'text': 'الدور التالت', 'visible': True}])"
+  },
+  {
+   "name": "indoors the shot is framed on the walker (close camera, no ground marker under him)",
+   "ok": true,
+   "detail": "{'rootVisible': False, 'inside': {'id': 'bld_e2', 'floor': 3}, 'interiorVisible': True, 'outdoorRouteVisible': False, 'indoorRouteVisible': False, 'haloVisible': False, 'doorCount': 8, 'doorSigns': [{'text': 'الدور التالت', 'visible': True}, {'text': 'الدور التالت', 'visible': True}], 'camDistToWalker': 3.7, 'visibleLabels': []}"
   },
   {
    "name": "state machine used (explicit states)",
@@ -42,6 +67,16 @@
    "detail": ""
   },
   {
+   "name": "staircase is a real switchback (direction turns at every half-landing, not a replayed straight flight)",
+   "ok": true,
+   "detail": "direction reversals on stairs: 6"
+  },
+  {
+   "name": "climb is welded: walker never enters intermediate floors (stays in the stairwell)",
+   "ok": true,
+   "detail": "points outside stairwell on floors 1-2: 0"
+  },
+  {
    "name": "floor transitions are progressive (no teleport)",
    "ok": true,
    "detail": "[-1, 0, 1, 2, 3]"
@@ -49,7 +84,7 @@
   {
    "name": "stairs are walked step by step (no vertical teleport)",
    "ok": true,
-   "detail": "56 stair segments, max step Δy = 0.22500000000000053 m"
+   "detail": "62 stair segments, max step Δy = 0.22500000000000053 m"
   },
   {
    "name": "live nav log shows the major transitions",
@@ -62,14 +97,19 @@
    "detail": "{'supported': True, 'n': 0, 'hasAr': False, 'muted': False}"
   },
   {
-   "name": "mute toggles and persists",
+   "name": "voice list removed; mute and movement-speed icons are shown at 1x",
    "ok": true,
-   "detail": ""
+   "detail": "{'hasMuteIcon': True, 'hasVoicePicker': False, 'hasVoiceMenu': False, 'hasSpeedIcon': True, 'label': '1×', 'rate': 1}"
   },
   {
-   "name": "voice picker lists runtime voices or states unavailability",
+   "name": "movement-speed icon speeds up the tour to 1.5x",
    "ok": true,
-   "detail": "الصوت غير متاح على هذا الجهاز أو المتصفح."
+   "detail": "{'label': '1.5×', 'rate': 1.5}"
+  },
+  {
+   "name": "mute icon toggles the voice",
+   "ok": true,
+   "detail": "{'muted': True, 'icon': '🔇'}"
   },
   {
    "name": "pause works",
@@ -87,6 +127,11 @@
    "detail": ""
   },
   {
+   "name": "leaving the interior restores the whole campus",
+   "ok": true,
+   "detail": "{'rootVisible': True, 'inside': None, 'interiorVisible': False}"
+  },
+  {
    "name": "unknown destination rejected gracefully",
    "ok": true,
    "detail": ""
@@ -102,107 +147,43 @@
  "timeline": [
   {
    "state": "WALKING",
-   "y": 0.9
+   "y": 0.03
   },
   {
    "state": "ENTERING_DOOR",
-   "y": 0.9
-  },
-  {
-   "state": "APPROACHING_STAIRS",
-   "y": 0.9
+   "y": 0.61
   },
   {
    "state": "CLIMBING",
-   "y": 0.86
+   "y": 2.36
+  },
+  {
+   "state": "FLOOR_LANDING",
+   "y": 5.11
   },
   {
    "state": "CLIMBING",
-   "y": 2.23
+   "y": 7.54
   },
   {
    "state": "CLIMBING",
-   "y": 4.61
+   "y": 10.06
+  },
+  {
+   "state": "CLIMBING",
+   "y": 12.87
   },
   {
    "state": "CORRIDOR_NAVIGATION",
-   "y": 5.4
-  },
-  {
-   "state": "CLIMBING",
-   "y": 5.4
-  },
-  {
-   "state": "CLIMBING",
-   "y": 6.28
-  },
-  {
-   "state": "CLIMBING",
-   "y": 6.98
-  },
-  {
-   "state": "CLIMBING",
-   "y": 7.69
-  },
-  {
-   "state": "CLIMBING",
-   "y": 8.39
-  },
-  {
-   "state": "CLIMBING",
-   "y": 9.1
-  },
-  {
-   "state": "CORRIDOR_NAVIGATION",
-   "y": 9.4
-  },
-  {
-   "state": "APPROACHING_STAIRS",
-   "y": 9.4
-  },
-  {
-   "state": "CLIMBING",
-   "y": 9.38
-  },
-  {
-   "state": "CLIMBING",
-   "y": 9.36
-  },
-  {
-   "state": "CLIMBING",
-   "y": 9.33
-  },
-  {
-   "state": "CLIMBING",
-   "y": 9.91
-  },
-  {
-   "state": "CLIMBING",
-   "y": 10.62
-  },
-  {
-   "state": "CLIMBING",
-   "y": 11.32
-  },
-  {
-   "state": "CLIMBING",
-   "y": 12.03
-  },
-  {
-   "state": "CLIMBING",
-   "y": 12.73
-  },
-  {
-   "state": "CORRIDOR_NAVIGATION",
-   "y": 13.4
+   "y": 13.11
   },
   {
    "state": "ARRIVED",
-   "y": 13.4
+   "y": 13.11
   }
  ],
  "summary": {
-  "total": 19,
+  "total": 28,
   "failed": 0
  }
 }

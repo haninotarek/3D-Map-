@@ -37,64 +37,40 @@ The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`). Stude
 
 Website integration options (iframe or native page) and server settings are in [`deliverables/README.md`](deliverables/README.md#website-integration).
 
+## Architecture overview & 3D Engineering Building realism
+
+Both **Engineering Building 1** (`bld_e2`, 100 rooms across 4 storeys `G, 1, 2, 3`) and **Engineering Building 2** (`bld_e1`, 72 rooms across 4 storeys `G, 1, 2, 3`) ship as complete, collision-safe architectural interiors with **100% coverage of all 114 scheduled courses** in `viewer/data/schedules/fall-2026.json`:
+
+| Module | Responsibility |
+|---|---|
+| `viewer/js/walker.js` | **Articulated student rig (`1.75 m`)** — 15-joint human hierarchy (`pelvis`, `spine`, `neck`, `head`, `backpack`, `shoulder-L/R`, `elbow-L/R`, `hip-L/R`, `knee-L/R`, `ankle-L/R`, `sole-L/R`). Gait phase is strictly locked to physical world distance (`dPhase ∝ ds / strideLength`) with closed-form sole kinematics guaranteeing exact `0.000 m` foot contact on ground and stair treads, zero foot sliding while walking or paused, and dedicated knee/hip lift biomechanics during stair climbs (`stairBlend`). |
+| `viewer/js/interior.js` | **PBR university architecture & `InstancedMesh` batcher** — full floor-to-ceiling plaster partitions with travertine stone dado rails & walnut trim (`0.00 m` ceiling gap), acoustic grid soffit ceilings with flush LED luminaires and shaft cutouts, structural reinforced-concrete columns strictly bounded per storey (`clearH`) so upper-floor columns never leak into lower storeys, brushed stainless elevator lobbies, and true stepped concrete switchback staircases (`buildStaircase` / `stairProfile`) with stringers, risers, treads, aluminum nosing strips, landings, balusters, and steel handrails. |
+| `viewer/js/furniture.js` | **Procedural academic room furnishings & doorways** — instanced lecture hall tiered seating, stages & whiteboards, classroom student desks, computer lab workstations with monitors, engineering drawing drafting tables, faculty offices, reception counters, cafeteria tables, rest lounge seating, WCs, double-leaf oak doors with vision panels & handles, and stairwell floor nameplates (`floor-door`). |
+| `viewer/js/route.js` | **Collision-free multi-floor path planner** — grounds entrance thresholds (`door` segments), solves obstacle-inflated `0.5 m` 2D A* corridor paths with visibility string-pulling, emits explicit `stair_approach` and `landing` portal waypoints, traces real switchback stair treads step by step (`max Δy = 0.225 m`), routes cleanly through open room doorways, and scopes destination highlights strictly to the active floor. |
+| `viewer/js/tour.js` | **Deterministic state machine & human eye-level camera (`~1.62 m`)** — monotonic segment sweep (`IDLE → ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → FLOOR_LANDING → ARRIVED`) with authoritative landing verification before incrementing `floor`, smooth horizontal eye-level follow camera (`pitch ≈ -2°`), 3D raycast wall/ceiling clamping, and analytical stairwell shaft containment. |
+| `viewer/js/voice.js` | **Egyptian Arabic voice guidance** — pre-rendered MP3 cues (`viewer/audio/cues/`) with Web Speech API + `espeak-ng` `/__tts` HTTP/1.1 fallback, one concise announcement per route leg, independent speed & mute controls. |
+
 ## Realistic navigation & Arabic voice guidance (وديني)
 
 Selecting **وديني** in the timetable panel starts a guided walk to the room through the real layout:
 
-- **Building-only interior view** — outdoors the camera follows directly behind the walker with him
-  centred in frame and a gentle downward angle, so the surrounding campus buildings stay in shot.
-  The moment he enters a building, the rest of the campus (and the whole orange route line, including
-  the ground marker under the walker) disappears: only that building's interior cutaway stays on
-  screen, and the camera eases into a close follow shot framed on the walker himself at chest height.
-  Leaving or cancelling restores the whole campus.
-- **Progressive staircase traversal** — a real switchback stair core: each storey climbs one lane to a
-  half-landing, turns, and climbs back along the other lane (step by step along the drawn treads,
-  ~22 cm per step, with handrails), floor by floor (G → 1 → 2 → 3). Every floor has its own open
-  stairwell door with the floor's name plate over it («الدور الأول»…): the walker passes the named
-  doors of intermediate floors without entering them and exits only at his destination floor's door —
-  one continuous, realistic ascent. No teleporting: floor transitions happen only at the end of each storey.
-- **Navigation state machine** — the tour runs as explicit states
-  (`IDLE → ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → FLOOR_LANDING → ARRIVED`),
-  shown live on the tour badge; pause, resume, replay, cancel and a movement-speed control
-  (1× / 1.5× / 2×) are available at any time.
-- **Arabic voice guidance** — one short Egyptian-colloquial announcement per leg, spoken slowly and never
-  repeated: a greeting at the main gate («صباح الخير يا هندسة، عدّي البوابة الرئيسية») and a walk
-  straight to the named building, then the stair on the room's side straight to its floor
-  («اطلع من السلم اللي على اليمين للدور التالت على طول» — every intermediate floor is silent), then a turn toward
-  the room («انت كده في الدور التالت، خش يمين»).
-  On-screen captions mirror every spoken instruction.
-- **Fixed guide voice** — the tour card keeps only the mute icon; there is no voice-list picker.
-  The runtime chooses its Arabic fallback voice automatically when a pre-rendered cue is unavailable.
-- The narration uses the browser's built-in speech engine (Web Speech API) as a fallback: no cloud service, no keys, works offline.
+- **Building-only interior view at human eye level (`~1.62 m`)** — outdoors the camera follows smoothly behind the student with surrounding campus buildings framed clearly. Upon crossing the entrance doorway (`ENTERING_DOOR`), the exterior campus and route spline hide automatically, indoor near-plane clipping adjusts cleanly (`near = 0.2 m`), and the camera tracks horizontally behind the student at human standing eye height (`~1.62 m`) with full wall, ceiling, and stairwell shaft collision protection. Leaving or cancelling restores the whole campus.
+- **Authoritative progressive staircase traversal** — each storey climbs one switchback lane to a half-landing, reverses direction, and climbs the opposite flight tread by tread (`max Δy = 0.225 m`) floor by floor (`G → 1 → 2 → 3`). Logical floor state updates **only after** completing corridor approach, ascending every tread of the flight, and reaching the verified upper landing (`FLOOR_LANDING`). Intermediate corridors remain untouched during multi-floor climbs, and upper-floor geometry above the active ceiling remains strictly occluded (`floors[3].group.visible === false` on Floor 2).
+- **Navigation state machine** — explicit states (`IDLE → ROUTE_PLANNING → WALKING → ENTERING_DOOR → CORRIDOR_NAVIGATION → APPROACHING_STAIRS → CLIMBING → FLOOR_LANDING → ARRIVED`) drive the live Arabic status badge, voice cues, and camera behavior; pause, resume, replay, skip, minimize (`–`), mute (`🔊/🔇`), and movement speed (`1× / 1.5× / 2×`) work cleanly at any point.
+- **Arabic voice guidance** — one concise Egyptian-colloquial instruction per route leg («صباح الخير يا هندسة. عدّي البوابة الرئيسية…», «ادخل، واطلع من السلم اللي على اليمين لحد الدور التالت على طول.», «انت كده في الدور التالت. خش يمين، هتلاقي قاعة 3.», «وصلت بالسلامة.»).
 
-The stair geometry walked by the guide is generated by the same function that draws the treads
-(`stairProfile` in `js/interior.js`), so the route always follows the model exactly.
+### Automated verification & visual QA suites
 
-### The production Arabic voice — colloquial, short and slow
+Run the HTTP/1.1 server and execute all three Playwright + WebGL verification suites:
 
-The narration is **pre-rendered** and shipped as 33 small MP3 cues/fragments in `viewer/audio/cues/`: short
-Egyptian-colloquial lines («اطلع من السلم اليمين للدور التالت على طول») spoken slowly — one idea per cue, no distances
-recited. The text sheet lives in `pipeline/tts_render.py`; re-render anytime with an `ar-EG` edge-tts voice:
-`python3 pipeline/tts_render.py` (needs `pip install edge-tts` + `ffmpeg`). The runtime plays the cues
-cache-first (at 0.9× speed, pitch preserved) with a two-level fallback (browser voices → local espeak-ng
-bridge), so the guided tour speaks even on devices with no system voices.
+```bash
+python3 viewer/serve.py 8080 &
+python3 pipeline/smoke_viewer.py http://127.0.0.1:8080/             # 10/10 desktop + mobile smoke checks
+python3 pipeline/qa_engineering_realism.py http://127.0.0.1:8080/   # 16/16 rig, architecture, camera, occlusion & 114/114 timetable checks
+python3 pipeline/qa_navigation.py http://127.0.0.1:8080/            # 28/28 multi-floor switchback stairs, state machine & Arabic voice checks
+```
 
-## Timetable panel (الجداول)
-
-Three term tabs — **الترم الأول** (`data/schedules/fall-2026.json`), **الترم التاني** (`spring-2027.json`) and
-**الميدترم** (`midterm-2026.json`, exam rows with `date` + `from`/`to`) — each classified by
-**سنة أولى → رابعة** and section. Term 2 and the midterm ship as ready placeholders that show
-«لسه منزلش رسميًا» until the faculty publishes them; fill their JSON `classes` or upload a CSV from the
-panel (per-tab, stored in the visitor's browser). Every row with a mapped room gets a «وديني» walk to it.
-
-### Automated navigation QA
-
-`pipeline/qa_navigation.py` (Playwright + headless Chromium / SwiftShader) verifies: route planning to a
-third-floor room, three separate climbing flights with landings, progressive floor transitions
-(`-1 → 0 → 1 → 2 → 3`), step-level stair deltas (max 0.225 m), the full state sequence, voice-module
-safety, the movement-speed control, pause/resume/cancel, and edge cases (unknown destination,
-ground-floor destination).
-Latest run: **19/19 checks passed** (`deliverables/qa/nav/qa_nav_results.json`, screenshots alongside).
+Latest verified run: **54/54 checks passed (`10/10` + `16/16` + `28/28`), `0` console errors, `0` failed HTTP requests**, with full visual before/after proof plates in [`deliverables/qa/comparison/`](deliverables/qa/comparison/) and rendered step captures in [`deliverables/qa/realism/`](deliverables/qa/realism/) and [`deliverables/qa/nav/`](deliverables/qa/nav/).
 
 Known limitations: the indoor map is indicative (see the notes in `data/`), and spoken Arabic requires
 Arabic voices installed on the device (Windows/Android/ChromeOS ship them; otherwise the visual guidance

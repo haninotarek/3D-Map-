@@ -1,0 +1,55 @@
+{
+  "_note": "Links the building and room names used by the EPNU CS Hub timetable and viewer schedule to model building IDs and interior rooms (data/interiors/*.json). Floor = interior floor id ('G', '1', '2', '3').",
+  "buildings": {
+    "Main Building": "bld_main",
+    "المبنى الرئيسي": "bld_main",
+    "Engineering Building 1": "bld_e2",
+    "مبنى هندسة 1": "bld_e2",
+    "Engineering Building 2": "bld_e1",
+    "مبنى هندسة 2": "bld_e1"
+  },
+  "rooms": {
+    "bld_e2": {
+      "Room 101": { "floor": "G", "room": "cls_n_in" },
+      "Room 104": { "floor": "1", "room": "room_104" },
+      "Room 104 (Computer Lab 1)": { "floor": "1", "room": "room_104" },
+      "Room 105": { "floor": "1", "room": "room_105" },
+      "Room 106": { "floor": "1", "room": "room_106" },
+      "Room 106 (Computer Lab 2)": { "floor": "1", "room": "room_106" },
+      "Room 204": { "floor": "2", "room": "room_204" },
+      "Room 206": { "floor": "2", "room": "room_206" },
+      "Room 208": { "floor": "2", "room": "cls_n2_e" },
+      "Room 302": { "floor": "3", "room": "cls_n3_m" },
+      "Room 304": { "floor": "3", "room": "cls_n3_e" },
+      "Room 306": { "floor": "3", "room": "cls_s3_in" },
+      "Lab 2": { "floor": "1", "room": "lab_2" },
+      "Drawing Hall 3": { "floor": "1", "room": "drawing_hall_3" },
+      "Drawing Hall 4": { "floor": "1", "room": "drawing_hall_4" },
+      "Hall 1": { "floor": "2", "room": "hall_1" },
+      "Hall 2": { "floor": "2", "room": "hall_2" },
+      "Hall 3": { "floor": "3", "room": "hall_3" },
+      "Hall 4": { "floor": "3", "room": "hall_4" }
+    },
+    "bld_e1": {
+      "Room 101": { "floor": "G", "room": "room_101" },
+      "Room 102": { "floor": "1", "room": "room_102" },
+      "Room 205": { "floor": "2", "room": "room_205" },
+      "Lab 1": { "floor": "G", "room": "lab_1" },
+      "Lab 2": { "floor": "1", "room": "lab_2" },
+      "Hall 1": { "floor": "2", "room": "hall_1" },
+      "Hall 2": { "floor": "2", "room": "hall_2" },
+      "Hall 3": { "floor": "3", "room": "hall_3" },
+      "Hall 4": { "floor": "3", "room": "hall_4" }
+    }
+  },
+  "unassigned": {
+    "Hall 1": "bld_e2",
+    "Hall 2": "bld_e2",
+    "Hall 3": "bld_e2",
+    "Hall 4": "bld_e2",
+    "Drawing Hall 3": "bld_e2",
+    "Drawing Hall 4": "bld_e2",
+    "Room 105": "bld_e2",
+    "Lab 2": "bld_e2"
+  }
+}

@@ -288,11 +288,18 @@ function setBuildingOnly(on) {
   if (state.root) state.root.visible = !on;
   for (const item of state.items.values()) if (item.label) item.label.visible = !on && state.labelsOn;
   if (highlight) highlight.visible = !on;
-  state.router?.setIndoorMode?.(on);   // the whole orange route line disappears indoors — the shot is on the walker
+  if (state.camera) {
+    state.camera.near = on ? 0.2 : 1.0;
+    state.camera.updateProjectionMatrix();
+  }
+  if (state.controls) {
+    state.controls.minDistance = on ? 1.5 : 12;
+  }
+  state.router?.setIndoorMode?.(on, state.inside ? state.inside.floor : null);   // hide route splines & off-floor highlights indoors
 }
 
 async function enterFloor(it, idx, { fly = true } = {}) {
-  const interior = await getInterior(it);
+  const interior = state.interiors.get(it.id) || await getInterior(it);
   const wasInside = !!state.inside;
   state.inside = { id: it.id, floor: idx };
   interior.group.visible = true; interior.setFloor(idx);
@@ -483,7 +490,7 @@ const NAV_STATE_AR = {
   ARRIVED: 'وصلت',
 };
 
-function initRouting() {
+async function initRouting() {
   if (!state.paths) return;
   state.router = createRouter({
     scene: state.scene, net: state.paths, index: state.roomIndex,
@@ -492,6 +499,7 @@ function initRouting() {
   state.voice = createVoice({ lang: 'ar' });
   state.tour = createTour({
     scene: state.scene, camera: state.camera, controls: state.controls,
+    getInterior: (buildingId) => state.interiors.get(buildingId),
     onStep: showTourStep,
     onFloor: (f) => {
       const it = tourRes && state.items.get(tourRes.buildingId);
@@ -504,7 +512,7 @@ function initRouting() {
     onEnd: () => { syncTourButtons(); if (tourRes?.lang === 'ar') state.voice.speak(state.voice.arriveText, 'arrive', { cue: 'arrived', interrupt: false }); },   // after the floor+turn sequence, never over it
   });
   initVoiceUI();
-  state.voice.initCues?.();   // probe pre-rendered voice cues once
+  await state.voice.initCues?.();   // probe pre-rendered voice cues once before scene ready
   // minimize the tour card to a slim bar (the route and stairs stay fully visible)
   const tourCard = $('tour-card');
   let tourMin = false;
@@ -665,11 +673,15 @@ function loop(now) {
     if (t >= 1) state.anim = null;
     state.needsRender = true;
   }
-  const dt = Math.min(0.1, (now - (state.lastNow ?? now)) / 1000); state.lastNow = now;
+  const dtCap = window.__TOUR_SPEED ? 0.35 : 0.1;
+  const dt = Math.min(dtCap, (now - (state.lastNow ?? now)) / 1000); state.lastNow = now;
   // QA hook: tests on software WebGL can speed the tour clock (no effect in normal use)
-  if (state.tour && state.tour.update(dt * (window.__TOUR_SPEED || 1))) state.needsRender = true;
-  const changed = state.controls.update();
-  if (changed) state.needsRender = true;
+  const touring = Boolean(state.tour && state.tour.update(dt * (window.__TOUR_SPEED || 1)));
+  if (touring) {
+    state.needsRender = true;
+  } else if (state.controls.update()) {
+    state.needsRender = true;
+  }
   const az = state.controls.getAzimuthalAngle();
   $('compass').firstElementChild.style.transform = `rotate(${THREE.MathUtils.radToDeg(az)}deg)`;
   if (state.needsRender) {
@@ -693,12 +705,12 @@ async function main() {
     setProgress(0.95, 'Preparing scene');
     state.root = gltf.scene; state.scene.add(gltf.scene);
     registerItems(gltf.scene);
+    await initRouting();
     $('loading').classList.add('hidden');
     state.needsRender = true;
     requestAnimationFrame(loop);
     const id = location.hash.slice(1);
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
-    initRouting();
     setTimeout(ensureLabels, 1000);
     window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, clearRoute, tour: () => state.tour, route: () => tourRes,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook

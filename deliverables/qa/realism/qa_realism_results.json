@@ -1,0 +1,93 @@
+{
+  "base": "http://127.0.0.1:8080/",
+  "timestamp": "2026-10-23 06:28:46",
+  "checks": [
+    {
+      "name": "Boot: application loads cleanly with zero error state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Character: full 15-joint anatomical hierarchy present (pelvis, spine, neck, head, arms, elbows, hips, knees, ankles, backpack)",
+      "ok": true,
+      "detail": "parts=40, H=1.75m"
+    },
+    {
+      "name": "Character: zero foot sliding on idle & exact 0.000 m sole grounding across idle/walk/stairs",
+      "ok": true,
+      "detail": "idleFoot=0, walkFoot=0, stairFoot=0"
+    },
+    {
+      "name": "Character: distance-driven gait phase & distinct stair-ascent kinematics",
+      "ok": true,
+      "detail": "dist=0.99m, stairBlend=0.994"
+    },
+    {
+      "name": "Architecture: both Engineering Building 1 (`bld_e2`) and Building 2 (`bld_e1`) build 4 full storeys with ceilings & furniture",
+      "ok": true,
+      "detail": "{'e2Floors': 4, 'e1Floors': 4, 'floor2Level': 9.1, 'floor2ClearH': 3.75, 'floor2Visible': True, 'floor3Visible': False, 'floor2FurnitureVisible': True, 'hasCeilingMesh': True, 'instancedCount': 6435, 'maxVisibleWorldY': 12.85, 'ceilingLimitY': 12.91}"
+    },
+    {
+      "name": "Scene Integrity: ZERO 3rd-floor columns or upper geometry visible or protruding when on 2nd floor",
+      "ok": true,
+      "detail": "maxVisibleWorldY=12.85m <= ceiling=12.91m, floor3Visible=False"
+    },
+    {
+      "name": "Timetable Coverage: 100% of all 114 classes across Years 1–4 resolve to real 3D interior rooms",
+      "ok": true,
+      "detail": "114/114 classes mapped"
+    },
+    {
+      "name": "Multi-Building Routing: all Ground, 1st, 2nd & 3rd floor destinations plan cleanly in both Engineering Buildings",
+      "ok": true,
+      "detail": "[{'room': 'Room 101', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 0, 'pts': 24}, {'room': 'Room 105', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 50}, {'room': 'Drawing Hall 3', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 1, 'pts': 49}, {'room': 'Room 204', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 2, 'pts': 71}, {'room': 'Hall 1', 'bld': 'bld_e2', 'ok': True, 'floorIndex': 2, 'pts': 70}]"
+    },
+    {
+      "name": "Eye-Level Camera (Ground Atrium): horizontal human eye height (~1.62m) & shallow natural pitch",
+      "ok": true,
+      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 0, 'walkerY': 0.612, 'camY': 2.232, 'eyeOffset': 1.62, 'pitchDeg': -2.05, 'dist': 3.89}"
+    },
+    {
+      "name": "State Machine: explicit APPROACHING_STAIRS entered on Ground Floor before climbing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Authoritative Floor Gate: while climbing G->1 (`walkerY > 1.6m`), logical floor remains 0 until landing",
+      "ok": true,
+      "detail": "{'state': 'CLIMBING', 'logicalFloor': 0, 'walkerY': 1.605, 'camY': 3.242, 'stairBlend': 1, 'floor3Hidden': True}"
+    },
+    {
+      "name": "Authoritative Floor Gate: floor updates to 1 ONLY upon verified arrival at First-Floor Landing (`y = 5.11m`)",
+      "ok": true,
+      "detail": "{'state': 'FLOOR_LANDING', 'floor': 1, 'walkerY': 5.102}"
+    },
+    {
+      "name": "Second Floor Navigation: eye-level corridor view on Floor 2 with 3rd floor strictly hidden (`floor3Visible = False`)",
+      "ok": true,
+      "detail": "{'state': 'CORRIDOR_NAVIGATION', 'floor': 2, 'walkerY': 9.112, 'eyeOffset': 1.584, 'pitchDeg': -1.93, 'floor3Visible': False}"
+    },
+    {
+      "name": "Deterministic Progression: full route completes `WALKING -> ENTERING_DOOR -> CORRIDOR -> STAIR -> CLIMB -> LANDING -> CORRIDOR -> ARRIVED`",
+      "ok": true,
+      "detail": "ROUTE_PLANNING@null -> WALKING@-1 -> ENTERING_DOOR@0 -> CORRIDOR_NAVIGATION@0 -> APPROACHING_STAIRS@0 -> CLIMBING@0 -> FLOOR_LANDING@1 -> CLIMBING@1 -> FLOOR_LANDING@2 -> CORRIDOR_NAVIGATION@2 -> ARRIVED@2"
+    },
+    {
+      "name": "Zero console/page errors across entire test run",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "Zero failed HTTP requests across entire test run",
+      "ok": true,
+      "detail": "[]"
+    }
+  ],
+  "console_errors": [],
+  "failed_requests": [],
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0
+  }
+}
