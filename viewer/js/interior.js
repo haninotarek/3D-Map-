@@ -259,7 +259,8 @@ export function resolveRoomDoors(interiorData, floorData, r) {
     return { side: sp.side, points: [{ side: sp.side, at: sp.at }] };
   }
 
-  const cells = roomCells(r);
+  // `doors: n` gives one undivided room n doorways (n door slots along its long side, no partition walls)
+  const cells = r.doors > 1 ? roomCells({ rect: r.rect, split: r.doors }) : roomCells(r);
   const [x0, y0, x1, y1] = r.rect;
   const isReachable = getMainCorridorReachable(interiorData, floorData);
 
