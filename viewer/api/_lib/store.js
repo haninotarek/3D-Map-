@@ -1,13 +1,24 @@
 // Key-value storage for the midterm API.
 //  • On Vercel: Upstash Redis over its REST API (connect "Upstash for Redis" from the Vercel Marketplace;
-//    it sets KV_REST_API_URL + KV_REST_API_TOKEN, or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
+//    it sets KV_REST_API_URL + KV_REST_API_TOKEN, or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN, possibly
+//    behind the custom prefix chosen when connecting, e.g. STORAGE_KV_REST_API_URL).
 //  • Locally (dev-server.mjs): a JSON file in viewer/.data/ so everything works without an account.
 // Values are JSON. The seat index is a Redis hash (one field per student ID) so a lookup reads one field.
 import fs from 'node:fs';
 import path from 'node:path';
 
-const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+/** The REST URL + token pair, whatever prefix Vercel gave the variables. */
+function findRedisEnv(env = process.env) {
+  for (const [urlKey, tokenKey] of [['KV_REST_API_URL', 'KV_REST_API_TOKEN'], ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN']]) {
+    for (const k of Object.keys(env)) {
+      if (k !== urlKey && !k.endsWith(`_${urlKey}`)) continue;
+      const token = env[k.slice(0, k.length - urlKey.length) + tokenKey];
+      if (env[k] && token) return { url: env[k].replace(/\/+$/, ''), token };
+    }
+  }
+  return {};
+}
+const { url: URL_, token: TOKEN } = findRedisEnv();
 
 export class StoreError extends Error {}
 
@@ -64,6 +75,10 @@ let store;
 export function getStore() {
   if (store) return store;
   if (URL_ && TOKEN) return (store = redisStore());
-  if (process.env.VERCEL) throw new StoreError('storage not configured: connect Upstash Redis to this Vercel project');
+  if (process.env.VERCEL) {
+    // names only (never values), so a wrong / missing connection is easy to spot
+    const seen = Object.keys(process.env).filter((k) => /KV|REDIS|UPSTASH/.test(k));
+    throw new StoreError(`storage not configured: connect Upstash Redis to this Vercel project, then redeploy (storage variables seen: ${seen.join(', ') || 'none'})`);
+  }
   return (store = fileStore());
 }
