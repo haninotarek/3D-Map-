@@ -378,34 +378,6 @@
           "name_ar": "لوبي الأسانسيرات"
         },
         {
-          "id": "lobby_ne",
-          "kind": "lobby",
-          "rect": [
-            165,
-            24.2,
-            183.56,
-            33.1
-          ],
-          "open": true,
-          "nolabel": true,
-          "name_en": "Lockers area",
-          "name_ar": "مساحة اللوكرز"
-        },
-        {
-          "id": "lockers_ne",
-          "kind": "locker",
-          "rect": [
-            166,
-            31.2,
-            175,
-            31.8
-          ],
-          "open": true,
-          "nolabel": true,
-          "name_en": "Lockers",
-          "name_ar": "لوكرز"
-        },
-        {
           "id": "gallery",
           "kind": "lobby",
           "rect": [
@@ -516,20 +488,6 @@
           "name_ar": "طرقة"
         },
         {
-          "id": "lab_2",
-          "kind": "lab",
-          "rect": [
-            166,
-            4.5,
-            183.56,
-            13
-          ],
-          "door": "w",
-          "front": "n",
-          "name_en": "Lab 2",
-          "name_ar": "معمل 2"
-        },
-        {
           "id": "hall_101",
           "kind": "drawing",
           "rect": [
@@ -539,8 +497,8 @@
             1.5
           ],
           "door": "w",
-          "name_en": "Hall 101",
-          "name_ar": "صالة 101"
+          "name_en": "Hall 101 – Section B",
+          "name_ar": "صالة 101 قطاع B"
         },
         {
           "id": "smart_lab",
@@ -566,8 +524,8 @@
             33.1
           ],
           "door": "s",
-          "name_en": "Toilets",
-          "name_ar": "حمامات"
+          "name_en": "Men's Restrooms",
+          "name_ar": "حمام رجال"
         },
         {
           "id": "room_104",
@@ -731,8 +689,8 @@
             -12.6
           ],
           "door": "n",
-          "name_en": "Toilet",
-          "name_ar": "حمام"
+          "name_en": "Women's Restrooms",
+          "name_ar": "حمام بنات"
         },
         {
           "id": "lockers_s_out_e",
@@ -805,8 +763,8 @@
           "name_ar": "أوضة"
         },
         {
-          "id": "store_s",
-          "kind": "service",
+          "id": "exit_s",
+          "kind": "exit",
           "rect": [
             129,
             -21.5,
@@ -814,8 +772,8 @@
             -12.6
           ],
           "door": "n",
-          "name_en": "Storage",
-          "name_ar": "مخزن"
+          "name_en": "Emergency stair",
+          "name_ar": "سلم طوارئ"
         },
         {
           "id": "room_103",
@@ -873,6 +831,34 @@
           "nolabel": true,
           "name_en": "Lockers",
           "name_ar": "لوكرز"
+        },
+        {
+          "id": "lobby_mid",
+          "kind": "lobby",
+          "rect": [
+            166,
+            1.5,
+            183.56,
+            13
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
+          "id": "lab_2",
+          "kind": "lab",
+          "rect": [
+            165,
+            24.2,
+            183.56,
+            33.1
+          ],
+          "door": "s",
+          "front": "e",
+          "name_en": "Lab 2",
+          "name_ar": "معمل 2"
         }
       ]
     },
