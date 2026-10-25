@@ -131,7 +131,7 @@ function renderSchedDraft() {
         <td><input type="time" data-f="from" value="${esc(e.from)}"></td>
         <td><input type="time" data-f="to" value="${esc(e.to)}"></td>
         <td><input data-f="course" value="${esc(e.course)}" dir="ltr"></td>
-        <td><input data-f="code" value="${esc(e.code)}" dir="ltr" class="code"></td>
+        <td><input data-f="code" value="${esc(e.code)}" dir="ltr" class="in-code"></td>
         <td>${buildingSelect(e.building, 'data-f="building"')}</td>
         <td><button type="button" class="x" data-del-exam="${i}" title="شيل الصف">×</button></td></tr>`).join('')}</tbody>
     </table></div>
@@ -179,24 +179,28 @@ function renderSheetDrafts() {
       const rooms = roomsOf(s.building); const known = rooms.some((r) => r.key === s.room);
       const warns = sheetWarnings(s, i);
       return `<article class="sheet${s.linked ? ' linked' : ''}" data-s="${i}">
-        <header><span class="num">${i + 1}</span><b>${esc(s.source)}</b><span class="badge ${s.linked ? 'ok' : 'warn'}">${s.linked ? '✓ على الخريطة' : 'مش على الخريطة'}</span>
-          <button type="button" class="x" data-del-sheet="${i}" title="شيل الكشف">×</button></header>
+        <header>
+          <span class="num">${i + 1}</span>
+          <div class="sheet-title"><b dir="ltr">${esc(s.course || 'مادة من غير اسم')}</b><small title="${esc(s.source)}">${esc(s.source)}</small></div>
+          <span class="badge ${s.linked ? 'ok' : 'warn'}">${s.linked ? '✓ على الخريطة' : 'مش على الخريطة'}</span>
+          <button type="button" class="x" data-del-sheet="${i}" title="شيل الكشف">×</button>
+        </header>
         <div class="grid">
-          <label>المادة<input data-sf="course" value="${esc(s.course)}" dir="ltr"></label>
-          <label>الكود<input data-sf="code" value="${esc(s.code)}" dir="ltr" class="code"></label>
-          <label>التاريخ<input type="date" data-sf="date" value="${esc(s.date)}"></label>
-          <label>من<input type="time" data-sf="from" value="${esc(s.from)}"></label>
-          <label>إلى<input type="time" data-sf="to" value="${esc(s.to)}"></label>
+          <label class="span-2 full-sm">المادة<input data-sf="course" value="${esc(s.course)}" dir="ltr"></label>
+          <label>الكود<input data-sf="code" value="${esc(s.code)}" dir="ltr" class="in-code"></label>
+          <label>التاريخ<input type="date" data-sf="date" value="${esc(s.date)}"><small class="hint">${esc(s.date ? fmtDate(s.date) : 'اكتب التاريخ')}</small></label>
+          <label>من<input type="time" data-sf="from" value="${esc(s.from)}"><small class="hint">${esc(fmtTime(s.from))}</small></label>
+          <label>إلى<input type="time" data-sf="to" value="${esc(s.to)}"><small class="hint">${esc(fmtTime(s.to))}</small></label>
           <label>المبنى${buildingSelect(s.building, 'data-sf="building"')}</label>
-          <label class="wide">القاعة
+          <label class="span-2">القاعة
             <select data-sf="room">
               ${known ? '' : `<option value="${esc(s.room)}" selected>${esc(s.roomRaw || s.room || 'مش معروفة')} (مش على الخريطة)</option>`}
               ${rooms.map((r) => `<option value="${esc(r.key)}"${r.key === s.room ? ' selected' : ''}>${esc(roomAr(r.key))} · ${esc(FLOOR_AR[r.floor] || '')}</option>`).join('')}
             </select></label>
         </div>
-        ${s.place ? `<p class="muted small">المكتوب في الكشف: ${esc(s.place)}</p>` : ''}
+        ${s.place ? `<p class="place">المكتوب في الكشف: <span>${esc(s.place)}</span></p>` : ''}
         ${warns.map(([k, t]) => `<p class="note ${k}">${esc(t)}</p>`).join('')}
-        <details><summary>${s.students.length} طالب</summary>
+        <details><summary>${s.students.length} طالب في القاعة دي</summary>
           <ol class="students">${s.students.map((x) => `<li><bdi>${esc(x.id)}</bdi> ${esc(x.name)} <small>${esc(x.status)}</small></li>`).join('')}</ol></details>
       </article>`;
     }).join('')}</div>
