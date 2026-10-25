@@ -416,6 +416,22 @@ function renderList() {
     </section>`).join('');
 }
 
+/** "أهلًا يا أحمد، وراك امتحان X يوم … الساعة … في قاعة 3 …" — names the student's next exam (or the only one). */
+function seatGreeting(seat) {
+  const hi = seat.first ? `أهلًا يا ${esc(seat.first)}،` : 'أهلًا،';
+  const own = S.classes.filter((c) => c.seat).sort((a, b) => (whenKey(a) < whenKey(b) ? -1 : 1));
+  if (!own.length) return `${hi} الكود موجود بس مفيش امتحانات متسجلة ليه.`;
+  const now = new Date();
+  const next = own.find((c) => { const t = timeOf(c); return !c.date || new Date(`${c.date}T${t.to || '23:59'}:00`) >= now; });
+  const say = (c, lead = 'امتحان') => { const t = timeOf(c); return `${lead} <b dir="ltr">${esc(c.course)}</b> يوم ${esc(fmtDate(c))}${t.from ? ` الساعة ${esc(fmtTime(t.from))}` : ''} في <b>${esc(whereText(c))}</b>`; };
+  if (!next) return `${hi} ${say(own.at(-1), 'آخر امتحان ليك كان')}. لو عايز تروح القاعة دوس «وديني» تحت.`;
+  const exam = say(next);
+  const n = own.length;
+  return n === 1
+    ? `${hi} وراك ${exam}. دوس «وديني» تحت وهنوصّلك لحد اللجنة.`
+    : `${hi} عندك ${n === 2 ? 'امتحانين' : `${n} امتحانات`}، أقربهم ${exam}. دوس «وديني» جنب أي امتحان وهنوصّلك لحد لجنته.`;
+}
+
 /** "اعرف لجنتك": the student types their ID; /api/midterm?id= answers with their exams and rooms. */
 function renderSeat() {
   const box = $('sched-seat');
@@ -424,7 +440,7 @@ function renderSeat() {
   const st = S.seatState, seat = S.seat;
   const msg = st === 'loading' ? 'بندوّر…'
     : st === 'error' ? 'مش قادرين نوصل للسيرفر دلوقتي، جرّب تاني كمان شوية.'
-    : seat?.found ? `أهلًا يا ${esc(seat.first || 'بطل')} 👋 لقيناك في ${seat.exams.length} ${seat.exams.length === 1 ? 'امتحان' : 'امتحانات'}، ولجنة كل امتحان مكتوبة تحت ومعاها «وديني».`
+    : seat?.found ? seatGreeting(seat)
     : seat && !seat.found ? `الكود <bdi>${esc(seat.id)}</bdi> مش موجود في الكشوف المنشورة لحد دلوقتي. لو الكشوف لسه منزلتش، استنى المعيدين ينزلوها.`
     : 'اكتب الكود بتاعك (زي اللي في الكشف) وهنقولك قاعتك في كل امتحان ونوديك لحد عندها.';
   box.innerHTML = `<form class="seat-box${seat?.found ? ' found' : ''}" data-seat-form>
