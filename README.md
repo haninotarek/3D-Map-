@@ -19,7 +19,7 @@ cd viewer                 # deliverables/web_viewer/ is an identical, deployable
 python3 serve.py 8080     # any static file server works
 # open http://localhost:8080/
 ```
-- The viewer has no build step, no CDN and no external services. Three.js r186 is included in `viewer/lib/three/`.
+- The viewer has no build step and no CDN. Three.js r186 is included in `viewer/lib/three/` and pdf.js 4.10 in `viewer/lib/pdfjs/`. The only external service is the optional midterm API storage (see «Midterm exams» below).
 - It must be served over HTTP; opening it as a `file://` page will not work.
 - Use `?quality=lite` or `?quality=high` to force a model variant.
 - Use `#bld_main` (or any other building ID) to open the viewer with that building selected.
@@ -34,6 +34,30 @@ The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`). Stude
   - `room` can be written as in the printed tables, for example `Hall:3`, `Drawing Hall 3`, `Room:104`, `Lab 2` or `قاعة 1`.
 - **Linking:** each class is linked automatically to its building, and to the room when the indoor map has it (`viewer/data/room_index.json`). The panel shows how many classes are linked.
 - **Storage:** an uploaded timetable is kept in that browser only. **الجدول الأصلي** goes back to the built-in one.
+
+### Midterm exams: TA uploads and «اعرف لجنتك»
+The **الميدترم** tab is filled by the TAs (المعيدين), not by local uploads. Students type their university ID and get the room of each of their exams, with **وديني** to walk there.
+
+- **TA page:** `admin.html` (the **رفع (للمعيدين)** button in the midterm tab opens it). It is protected by one shared TA password that is checked on the server.
+  1. Pick the level (سنة أولى → رابعة).
+  2. **جدول الامتحانات:** upload the exam timetable as Word (.docx), PDF, Excel (.xlsx) or CSV. The expected layout is the printed one: time slots across the top, one row per day with its date, and `Course | CODE` in the cells. Review the rows, fix anything wrong, then press **نشر**.
+  3. **كشوف القاعات:** upload the UNIHUB room sheets (PDF, one room per page). Several files can go in at once. Excel or CSV with an `ID` column (and optionally a room column) also works. Each sheet shows its course, date, time and room, and whether the room is on the 3D map. Pick the room from the list if it is not linked, then press **نشر**. Re-uploading the same exam and room replaces the old sheet.
+  4. **جرّب كود طالب:** check what a student will see for an ID.
+- **Reading files:** files are read in the browser (`viewer/js/midterm-parse.js`, with pdf.js in `viewer/lib/pdfjs/`). Scanned PDFs and photos have no text and are rejected, so ask for the original file. Old `.doc` and `.xls` must be saved as `.docx` / `.xlsx` first.
+- **API:** Vercel Functions in `viewer/api/`.
+  - `GET /api/midterm` returns every level's exams and the rooms used.
+  - `GET /api/midterm?id=…` returns one student's exams and rooms, plus their first name only.
+  - `POST /api/admin` handles the TA actions and needs the password token.
+  - Full names stay on the admin side. ID lookups are rate-limited per IP.
+- **Vercel setup (once):**
+  1. The project's **Root Directory** must be `viewer`.
+  2. Under Storage / Marketplace, add **Upstash for Redis** and connect it to the project. This sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
+  3. Run `node pipeline/hash_admin_password.mjs "<TA password>"` and add the printed `ADMIN_PASSWORD_HASH` under Settings → Environment Variables.
+  4. Redeploy.
+
+  Until this is done, the site keeps working and the midterm tab shows the built-in placeholder.
+- **Local run with the API:** `cd viewer && node dev-server.mjs 8090`, then open `http://localhost:8090/` and `/admin.html`. Put `ADMIN_PASSWORD_HASH=…` in `viewer/.env.local`. Data is kept in `viewer/.data/`; both of these are git-ignored. `python3 serve.py` still works, but without the midterm API.
+- **Checking the file readers:** `node pipeline/test_midterm.mjs <files…>` prints what is read from each file (a file name containing "schedule" / "midterm" is read as a timetable, anything else as room sheets).
 
 Website integration options (iframe or native page) and server settings are in [`deliverables/README.md`](deliverables/README.md#website-integration).
 

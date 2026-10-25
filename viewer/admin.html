@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة المعيدين — الميدترم</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d5c4f%27/%3E%3Cpath d=%27M8 22 16 9l8 13z%27 fill=%27%23ffb066%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <header class="bar">
+    <img src="assets/logo_faculty.png" alt="" width="40" height="40">
+    <div class="bar-title">
+      <h1>لوحة المعيدين</h1>
+      <p>امتحانات الميدترم: جدول الامتحانات وكشوف القاعات</p>
+    </div>
+    <a class="bar-link" href="./">رجوع للخريطة</a>
+    <button type="button" id="logout" class="ghost" hidden>خروج</button>
+  </header>
+
+  <main>
+    <section id="login" class="card login">
+      <div class="lock" aria-hidden="true">🔒</div>
+      <h2>دخول المعيدين بس</h2>
+      <p>الصفحة دي لرفع جداول وكشوف الميدترم. اكتب باسورد المعيدين.</p>
+      <form id="login-form">
+        <input id="pw" type="password" autocomplete="current-password" placeholder="الباسورد" required>
+        <button type="submit" class="primary">دخول</button>
+      </form>
+      <p id="login-err" class="err" role="alert"></p>
+    </section>
+
+    <section id="app" hidden>
+      <div class="step-title"><span>1</span> اختار الدفعة</div>
+      <div id="levels" class="levels" role="tablist" aria-label="الدفعة"></div>
+      <div id="summary" class="summary"></div>
+
+      <nav class="tabs" role="tablist">
+        <button type="button" data-tab="schedule" class="on">جدول الامتحانات</button>
+        <button type="button" data-tab="sheets">كشوف القاعات</button>
+        <button type="button" data-tab="test">جرّب كود طالب</button>
+      </nav>
+
+      <div id="tab-schedule" class="tab">
+        <div class="step-title"><span>2</span> ارفع جدول امتحانات الدفعة</div>
+        <label class="drop" data-kind="schedule">
+          <input type="file" accept=".docx,.pdf,.xlsx,.csv" multiple>
+          <b>اسحب الملف هنا أو دوس للاختيار</b>
+          <small>Word (.docx) أو PDF أو Excel (.xlsx) أو CSV، بنفس شكل الجدول المطبوع: المواعيد فوق، والأيام بالتاريخ على الجنب</small>
+        </label>
+        <div id="sched-review"></div>
+        <div id="sched-current"></div>
+      </div>
+
+      <div id="tab-sheets" class="tab" hidden>
+        <div class="step-title"><span>2</span> ارفع كشوف القاعات (أرقام الطلاب في كل قاعة)</div>
+        <label class="drop" data-kind="sheets">
+          <input type="file" accept=".pdf,.xlsx,.csv,.docx" multiple>
+          <b>اسحب الكشوف هنا أو دوس للاختيار (ممكن كذا ملف مرة واحدة)</b>
+          <small>PDF من UNIHUB (كل صفحة كشف لقاعة) أو Excel / CSV فيه عمود الكود (ID) وعمود القاعة</small>
+        </label>
+        <div id="sheets-review"></div>
+        <div id="sheets-current"></div>
+      </div>
+
+      <div id="tab-test" class="tab" hidden>
+        <div class="step-title"><span>3</span> اتأكد إن الطالب هيلاقي لجنته</div>
+        <form id="test-form" class="inline">
+          <input id="test-id" inputmode="numeric" placeholder="كود الطالب، مثلًا 23411001" required>
+          <button type="submit" class="primary">دوّر</button>
+        </form>
+        <div id="test-out"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

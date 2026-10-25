@@ -5,6 +5,9 @@
 // published) and midterm-2026.json (midterm exams, placeholder until published).
 // An uploaded CSV / JSON replaces the ACTIVE tab's table in this browser only.
 // Every class/exam is linked to a building and, where the indoor map has it, to a room (data/room_index.json).
+// The midterm tab reads what TAs published on admin.html from /api/midterm when the API is there (Vercel or
+// dev-server.mjs), and a student can type their ID to get the room of each of their exams.
+import { arDigits, canonRoom, canonBuilding, roomAr, BUILDING_AR } from './rooms.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE_KEY = 'epnu.schedule.v1';               // legacy upload (applied to term 1)
@@ -22,14 +25,16 @@ const isExams = () => S.data?.kind === 'exams';
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_AR = { Sunday: 'الأحد', Monday: 'الاثنين', Tuesday: 'الثلاثاء', Wednesday: 'الأربعاء', Thursday: 'الخميس', Friday: 'الجمعة', Saturday: 'السبت' };
 const TYPE_AR = { lecture: 'محاضرة', section: 'سكشن', lab: 'معمل', midterm: 'ميدترم' };
-const BUILDING_AR = { 'Engineering Building 1': 'مبنى هندسة 1', 'Engineering Building 2': 'مبنى هندسة 2', 'Main Building': 'المبنى الرئيسي' };
 const BUILDING_SHORT = { 'Engineering Building 1': 'مبنى 1', 'Engineering Building 2': 'مبنى 2' };
 
-const S = { data: null, source: 'built-in', index: null, floorsAr: {}, datasets: {}, defaults: {}, sources: {}, prefs: { term: 'term1', level: 1, section: 0, day: 'all', q: '' }, classes: [] };
+const S = { data: null, source: 'built-in', index: null, floorsAr: {}, datasets: {}, defaults: {}, sources: {}, prefs: { term: 'term1', level: 1, section: 0, day: 'all', q: '', seatId: '' }, classes: [],
+  api: false, seat: null, seatState: '' };
+const MIDTERM_API = 'api/midterm';
+const codeKey = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const examKey = (c) => `${c.date}|${codeKey(c.code) || String(c.course || '').toLowerCase()}`;
 
 // ---------------------------------------------------------------- small helpers
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const arDigits = (s) => String(s).replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
 const fmtTime = (hhmm) => { let [h, m] = hhmm.split(':').map(Number); const pm = h >= 12; if (h > 12) h -= 12; return `${h}:${String(m).padStart(2, '0')}${pm ? ' م' : ' ص'}`; };
 function load(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
@@ -56,24 +61,6 @@ function sectionsText(list) {
   return (list.length === 1 ? 'سكشن ' : 'سكاشن ') + runs.map(([x, y]) => (x === y ? x : `${x}‏–${y}`)).join('، ');
 }
 
-/** Free text from a timetable ("Hall:3", "Drawing Hall: 3", "قاعة 1", "معمل2", "Room:104") -> canonical key. */
-export function canonRoom(text) {
-  const t = arDigits(String(text || '')).toLowerCase().replace(/[:：]/g, ' ').replace(/\s+/g, ' ').trim();
-  let m;
-  if ((m = t.match(/drawing\s*hall\s*(\d+)/)) || (m = t.match(/قاعة\s*(?:ال)?رسم\s*(\d+)/))) return `Drawing Hall ${m[1]}`;
-  if ((m = t.match(/(?:lecture\s*)?hall\s*(\d+)/)) || (m = t.match(/قاع[ةه]\s*(\d+)/))) return `Hall ${m[1]}`;
-  if ((m = t.match(/(?:room|class\s*room)\s*(\d+)/)) || (m = t.match(/(?:غرف[ةه]|فصل|روم)\s*(\d+)/))) return `Room ${m[1]}`;
-  if ((m = t.match(/lab\s*(\d+)/)) || (m = t.match(/معمل\s*(\d+)/))) return `Lab ${m[1]}`;
-  return String(text || '').trim();
-}
-export function canonBuilding(text) {
-  const t = arDigits(String(text || '')).toLowerCase();
-  if (!t.trim()) return '';
-  if (/main|رئيس/.test(t)) return 'Main Building';
-  const n = (t.match(/(\d)/) || [])[1];
-  if (/eng|هندس|مبن|building|bld/.test(t) && n) return `Engineering Building ${n}`;
-  return '';
-}
 const DAY_ALIASES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday',
   'الأحد': 'Sunday', 'الاحد': 'Sunday', 'الاثنين': 'Monday', 'الإثنين': 'Monday', 'الثلاثاء': 'Tuesday', 'الأربعاء': 'Wednesday', 'الاربعاء': 'Wednesday', 'الخميس': 'Thursday', 'الجمعة': 'Friday', 'السبت': 'Saturday' };
 function canonDay(d) { const s = String(d || '').trim(); return DAY_ALIASES[s] || DAY_ALIASES[s.slice(0, 3).toLowerCase()] || s; }
@@ -85,15 +72,6 @@ function canonType(t, course) {
   if (/lec|محاضر/.test(s)) return 'lecture';
   return /project/i.test(course || '') ? 'lecture' : 'section';
 }
-function roomAr(key) {
-  let m;
-  if ((m = key.match(/^Drawing Hall (\d+)$/))) return `قاعة رسم ${m[1]}`;
-  if ((m = key.match(/^Hall (\d+)$/))) return `قاعة ${m[1]}`;
-  if ((m = key.match(/^Lab (\d+)$/))) return `معمل ${m[1]}`;
-  if ((m = key.match(/^Room (\d+)$/))) return `غرفة ${m[1]}`;
-  return key;
-}
-
 // ---------------------------------------------------------------- data
 /** Turns a level's raw rows into linked class/exam objects. Exam rows may carry date + from/to. */
 function linkLevel(lv, kind) {
@@ -112,13 +90,36 @@ function linkLevel(lv, kind) {
       id: `${S.prefs.term}-${lv.level}-${i}`, level: lv.level, day, date,
       period: Number(arDigits(r.period)) || 0, from: String(r.from || '').trim(), to: String(r.to || '').trim(),
       course: String(r.course || '').trim(), type: kind === 'exams' ? 'midterm' : canonType(r.type, r.course), group: String(r.group || '').trim(),
-      sections: parseSections(r.sections), roomRaw: String(r.room || '').trim(), room, building, buildingId: bId,
+      sections: parseSections(r.sections), roomRaw: String(r.roomRaw || r.room || '').trim(), room, building, buildingId: bId,
       floor: hit ? hit.floor : null, link: hit ? 'room' : bId ? 'building' : 'none',
+      code: String(r.code || '').trim(), rooms: Array.isArray(r.rooms) ? r.rooms : [],
     };
   });
 }
 function rebuild() {
   S.classes = (S.data.levels || []).flatMap((lv) => linkLevel(lv, S.data.kind));
+  // a student who typed their ID sees their own exams with their room, in place of the level's rows
+  if (isExams() && S.seat?.found) {
+    const own = S.seat.exams;
+    const keys = new Set(own.map(examKey));
+    S.classes = S.classes.filter((c) => !keys.has(examKey(c)))
+      .concat(linkLevel({ level: 0, classes: own }, 'exams').map((c, i) => ({ ...c, id: `seat-${i}`, level: own[i].level, seat: true, seq: own[i].seq })));
+  }
+}
+
+/** /api/midterm levels -> the midterm tab's data shape. An exam held in one room links straight to it. */
+function fromApi(api, base) {
+  const byLevel = new Map((api.levels || []).map((l) => [l.level, l]));
+  return {
+    ...base, published: true,
+    levels: base.levels.map((lv) => ({
+      ...lv,
+      classes: (byLevel.get(lv.level)?.exams || []).map((e) => ({
+        date: e.date, from: e.from, to: e.to, course: e.course, code: e.code, building: e.building || e.rooms?.[0]?.building || '',
+        room: e.rooms?.length === 1 ? e.rooms[0].room : e.room || '', roomRaw: e.rooms?.length === 1 ? e.rooms[0].roomRaw : '', rooms: e.rooms || [],
+      })),
+    })),
+  };
 }
 
 /** Empty سنة أولى→رابعة skeleton, used if a term file is missing. */
@@ -136,9 +137,11 @@ function applyTerm(term) {
 }
 
 async function loadData() {
-  const [idx, interior, ...termData] = await Promise.all([
+  const [idx, interior, api, ...termData] = await Promise.all([
     fetch('data/room_index.json').then((r) => r.json()).catch(() => ({ buildings: {}, rooms: {} })),
     fetch('data/interiors/bld_e2.json').then((r) => r.json()).catch(() => null),
+    // only there on Vercel / dev-server.mjs; a plain static server answers 404 and the built-in file is used
+    fetch(MIDTERM_API).then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null)).catch(() => null),
     ...TERMS.map((t) => fetch(t.file).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(() => skeleton(t))),
   ]);
   S.index = idx;
@@ -149,6 +152,12 @@ async function loadData() {
     S.datasets[t.id] = stored?.levels ? stored : termData[i];
     S.sources[t.id] = stored?.levels ? (stored._source || 'ملف مرفوع') : 'built-in';
   });
+  S.api = Boolean(api?.levels);
+  if (S.api) {   // TA-published midterm data wins over the built-in placeholder and any local upload
+    S.defaults.midterm = S.datasets.midterm = fromApi(api, termData[TERMS.findIndex((t) => t.id === 'midterm')]);
+    S.sources.midterm = 'api';
+    S.apiUpdated = api.updatedAt;
+  }
   S.prefs = { ...S.prefs, ...load(PREFS_KEY, {}) };
   if (!TERMS.some((t) => t.id === S.prefs.term)) S.prefs.term = 'term1';
   applyTerm(S.prefs.term);
@@ -245,7 +254,7 @@ function fmtDate(c) {
 function whenKey(c) { const p = timeOf(c); return `${c.date || String(DAYS.indexOf(c.day)).padStart(2, '0')}T${p.from || '99:99'}`; }
 function mine() {
   const { level, section } = S.prefs;
-  return S.classes.filter((c) => c.level === level && (!section || !c.sections.length || c.sections.includes(section)));
+  return S.classes.filter((c) => (c.seat || c.level === level) && (!section || !c.sections.length || c.sections.includes(section)));
 }
 function filtered() {
   const q = S.prefs.q.trim().toLowerCase();
@@ -316,13 +325,18 @@ function daySelect() {
 }
 
 function whereText(c) {
-  const parts = [roomAr(c.room)];
+  if (!c.seat && c.rooms?.length > 1) {   // several rooms: the student's own ID tells which one
+    const names = [...new Set(c.rooms.map((r) => roomAr(r.room || r.roomRaw)))];
+    return `${names.length} لجان: ${names.join('، ')} · ${BUILDING_SHORT[c.building] || BUILDING_AR[c.building] || c.building} — اكتب كودك فوق عشان تعرف لجنتك`;
+  }
+  const parts = [c.room ? roomAr(c.room) : isExams() ? 'القاعة لسه منزلتش' : ''];
   if (c.building) parts.push(BUILDING_SHORT[c.building] || BUILDING_AR[c.building] || c.building);
   if (c.floor != null && S.floorsAr[c.floor]) parts.push(S.floorsAr[c.floor]);
-  return parts.join(' · ');
+  return parts.filter(Boolean).join(' · ');
 }
 /** HTML: each part isolated with <bdi> so English group names and number ranges keep their order in RTL. */
 function whoText(c) {
+  if (c.seat) return `<b class="mine">لجنتك</b> · <bdi>رقمك في الكشف ${esc(c.seq)}</bdi>`;
   const g = c.group === 'Weekly' ? 'كل أسبوع' : c.group ? `Group ${c.group}` : '';
   return [g, sectionsText(c.sections)].filter(Boolean).map((s) => `<bdi>${esc(s)}</bdi>`).join(' · ');
 }
@@ -333,7 +347,7 @@ function session(c, { showCourse = false } = {}) {
   const tip = c.link === 'room' ? 'القاعة على الخريطة' : c.link === 'building' ? 'المبنى بس، القاعة لسه مش على الخريطة' : 'المكان مش معروف';
   return `<div class="ses t-${c.type}" data-id="${c.id}">
     <div class="ses-main">
-      ${showCourse ? `<div class="ses-course" dir="ltr">${esc(c.course)}</div>` : ''}
+      ${showCourse ? `<div class="ses-course" dir="ltr">${esc(c.course)}${c.code ? ` <small>${esc(c.code)}</small>` : ''}</div>` : ''}
       <div class="ses-when">${esc(fmtDate(c))} · ${esc(time)}</div>
       <div class="ses-who">${whoText(c)}</div>
       <div class="ses-where" title="${esc(tip)}">${esc(whereText(c))}</div>
@@ -370,7 +384,7 @@ function notYetHTML() {
     <div class="ny-icon" aria-hidden="true">🗓️</div>
     <h4>${esc(title)}</h4>
     <p>أول ما ينزل هيظهر هنا على طول، مصنّف حسب سنة أولى وتانية وتالتة ورابعة.</p>
-    <button type="button" data-upload>رفع جدول CSV</button>
+    <button type="button" data-upload>${isExams() ? 'دخول المعيدين لرفع الجدول' : 'رفع جدول CSV'}</button>
   </div>`;
 }
 
@@ -402,9 +416,55 @@ function renderList() {
     </section>`).join('');
 }
 
+/** "اعرف لجنتك": the student types their ID; /api/midterm?id= answers with their exams and rooms. */
+function renderSeat() {
+  const box = $('sched-seat');
+  box.hidden = !(isExams() && S.api);
+  if (box.hidden) return;
+  const st = S.seatState, seat = S.seat;
+  const msg = st === 'loading' ? 'بندوّر…'
+    : st === 'error' ? 'مش قادرين نوصل للسيرفر دلوقتي، جرّب تاني كمان شوية.'
+    : seat?.found ? `أهلًا يا ${esc(seat.first || 'بطل')} 👋 لقيناك في ${seat.exams.length} ${seat.exams.length === 1 ? 'امتحان' : 'امتحانات'}، ولجنة كل امتحان مكتوبة تحت ومعاها «وديني».`
+    : seat && !seat.found ? `الكود <bdi>${esc(seat.id)}</bdi> مش موجود في الكشوف المنشورة لحد دلوقتي. لو الكشوف لسه منزلتش، استنى المعيدين ينزلوها.`
+    : 'اكتب الكود بتاعك (زي اللي في الكشف) وهنقولك قاعتك في كل امتحان ونوديك لحد عندها.';
+  box.innerHTML = `<form class="seat-box${seat?.found ? ' found' : ''}" data-seat-form>
+    <label for="seat-id">اعرف لجنتك بالكود</label>
+    <div class="seat-row">
+      <input id="seat-id" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="مثلًا 23411001" value="${esc(S.prefs.seatId || '')}">
+      <button type="submit">${seat?.found ? 'تحديث' : 'دوّر'}</button>
+      ${seat ? '<button type="button" class="seat-clear" data-seat-clear title="امسح الكود">×</button>' : ''}
+    </div>
+    <p class="seat-msg">${msg}</p>
+  </form>`;
+}
+async function lookupSeat(id, { quiet = false } = {}) {
+  id = arDigits(id).replace(/\D/g, '');
+  if (id.length < 5) { if (!quiet) toast('اكتب الكود صح (أرقام بس).', 'err'); return; }
+  S.prefs.seatId = id; S.seatState = 'loading'; renderSeat();
+  try {
+    const r = await fetch(`${MIDTERM_API}?id=${encodeURIComponent(id)}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    S.seat = j; S.seatState = '';
+    if (j.found && j.exams.length) {   // jump to the student's own level
+      const count = {}; for (const e of j.exams) count[e.level] = (count[e.level] || 0) + 1;
+      S.prefs.level = Number(Object.entries(count).sort((a, b) => b[1] - a[1])[0][0]) || S.prefs.level;
+      S.prefs.day = 'all'; S.prefs.section = 0;
+    }
+  } catch { S.seatState = 'error'; }
+  rebuild(); render();
+}
+
 function renderStats() {
   const lv = S.classes.filter((c) => c.level === S.prefs.level);
   const rooms = lv.filter((c) => c.link === 'room').length;
+  if (S.source === 'api') {
+    const when = S.apiUpdated ? new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }).format(new Date(S.apiUpdated)) : '';
+    $('sched-src').innerHTML = `منشور من المعيدين${when ? ` · آخر تحديث ${esc(when)}` : ''} · ${rooms} من ${lv.length} امتحان متربط بقاعة على الخريطة`;
+    $('sched-reset').hidden = true; $('sched-template').hidden = true;
+    return;
+  }
+  $('sched-template').hidden = false;
   $('sched-src').innerHTML = !S.classes.length && S.source === 'built-in'
     ? `${esc(termOf().label)}: لسه منزلش رسميًا — الهيكل جاهز لسنة أولى لحد رابعة، وتقدر ترفع CSV`
     : `${S.source === 'built-in' ? 'الجدول الرسمي' : 'من ملف: ' + esc(S.source)} · ${rooms} من ${lv.length} ${isExams() ? 'امتحان متربط' : 'محاضرة متربطة'} بقاعة على الخريطة`;
@@ -413,10 +473,11 @@ function renderStats() {
 
 function render() {
   if (!S.data.levels.some((l) => l.level === S.prefs.level)) S.prefs.level = S.data.levels[0]?.level ?? 1;
-  termTabs(); levelChips(); sectionSelect(); daySelect(); renderNext(); renderList(); renderStats();
+  termTabs(); levelChips(); sectionSelect(); daySelect(); renderSeat(); renderNext(); renderList(); renderStats();
+  $('sched-upload').lastChild.textContent = isExams() ? 'رفع (للمعيدين)' : 'رفع جدول';
   $('sched-term').textContent = S.data.term_ar || '';
   $('sched-search').placeholder = isExams() ? 'دوّر على مادة أو قاعة امتحان…' : 'دوّر على مادة أو قاعة…';
-  save(PREFS_KEY, { term: S.prefs.term, level: S.prefs.level, section: S.prefs.section, day: S.prefs.day });
+  save(PREFS_KEY, { term: S.prefs.term, level: S.prefs.level, section: S.prefs.section, day: S.prefs.day, seatId: S.prefs.seatId });
 }
 function setTerm(term) {
   if (!TERMS.some((t) => t.id === term)) return;
@@ -444,6 +505,12 @@ function setOpen(open) {
 }
 
 // ---------------------------------------------------------------- init
+/** Midterm data comes from TAs only (password page); the term tabs keep the local CSV / JSON upload. */
+function openUpload() {
+  if (isExams()) window.open('admin.html', '_blank', 'noopener');
+  else $('sched-file').click();
+}
+
 function wire() {
   $('sched-terms').addEventListener('click', (e) => { const b = e.target.closest('[data-term]'); if (b) setTerm(b.dataset.term); });
   $('sched-levels').addEventListener('click', (e) => { const b = e.target.closest('[data-level]'); if (!b) return; S.prefs.level = +b.dataset.level; S.prefs.section = 0; render(); });
@@ -451,7 +518,8 @@ function wire() {
   $('sched-day').addEventListener('change', (e) => { S.prefs.day = e.target.value; render(); });
   $('sched-search').addEventListener('input', (e) => { S.prefs.q = e.target.value; renderList(); });
   $('sched').addEventListener('click', (e) => {
-    if (e.target.closest('[data-upload]')) { $('sched-file').click(); return; }
+    if (e.target.closest('[data-upload]')) { openUpload(); return; }
+    if (e.target.closest('[data-seat-clear]')) { S.seat = null; S.prefs.seatId = ''; S.seatState = ''; rebuild(); render(); return; }
     const b = e.target.closest('[data-go]'); if (!b) return;
     const c = S.classes.find((x) => x.id === b.dataset.go); if (c) go(c);
   });
@@ -465,7 +533,11 @@ function wire() {
     syncTabs(v === 'campus' ? null : v);
   });
 
-  $('sched-upload').addEventListener('click', () => $('sched-file').click());
+  $('sched').addEventListener('submit', (e) => {
+    if (!e.target.closest('[data-seat-form]')) return;
+    e.preventDefault(); lookupSeat($('seat-id').value);
+  });
+  $('sched-upload').addEventListener('click', openUpload);
   $('sched-file').addEventListener('change', async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try {
@@ -496,6 +568,7 @@ async function init() {
   try { await loadData(); } catch (err) { console.warn('timetable not loaded', err); return; }
   $('sched-search').value = '';
   wire(); render();
+  if (S.api && S.prefs.seatId) lookupSeat(S.prefs.seatId, { quiet: true });   // remembered on this device only
   const wide = !window.matchMedia('(max-width: 720px)').matches;
   setOpen(load('epnu.schedule.open', wide));
   syncTabs(null);

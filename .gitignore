@@ -8,3 +8,7 @@ analysis/restart_smoke/
 __pycache__/
 *.pyc
 *.blend1
+
+# Midterm API local dev data / secrets (viewer/dev-server.mjs)
+viewer/.data/
+viewer/.env.local

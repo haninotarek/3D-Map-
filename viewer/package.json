@@ -1,0 +1,10 @@
+{
+  "name": "epnu-campus-viewer",
+  "private": true,
+  "type": "module",
+  "description": "EPNU 3D campus guide: static site + midterm API (Vercel Functions in api/)",
+  "scripts": {
+    "dev": "node dev-server.mjs 8080"
+  },
+  "engines": { "node": ">=20" }
+}
