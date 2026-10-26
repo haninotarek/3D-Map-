@@ -345,7 +345,7 @@ html.sched-open #sched { display: flex; }
   padding: 8px 4px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
 .term-tabs button:hover { color: var(--s-ink); }
 .term-tabs button.on { background: #fff; color: var(--s-ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); }
-.term-tabs button[data-term="midterm"].on { color: var(--mid); }
+.term-tabs button.exam.on { color: var(--mid); }
 
 .search { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 0 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06); border: 1px solid #f0f0f0; }
@@ -388,6 +388,12 @@ html.sched-open #sched { display: flex; }
 .ses-when { font-size: 0.86rem; font-weight: 700; color: var(--s-ink); }
 .ses-who { font-size: 0.8rem; font-weight: 600; color: #4b5563; }
 .ses-where { font-size: 0.78rem; color: var(--s-muted); line-height: 1.45; }
+/* a row with a known place: tap it to see the room inside the building (js/schedule.js showPlace) */
+.ses.placeable { cursor: pointer; }
+.ses.placeable:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
+.ses.placeable .ses-where { color: #4b5563; }
+.ses.placeable:hover .ses-where { color: var(--s-accent); }
+.ses-where .pin { color: var(--s-accent); font-weight: 700; margin-inline-end: 4px; }
 .ses-side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 8px; flex: none; }
 .pill { font-size: 0.72rem; font-weight: 700; color: #fff; background: var(--c, var(--lec)); padding: 3px 10px; border-radius: 999px; }
 .ses.t-lecture { --c: var(--lec); }
@@ -404,8 +410,6 @@ html.sched-open #sched { display: flex; }
 .not-yet .ny-icon { font-size: 1.7rem; line-height: 1; }
 .not-yet h4 { margin: 10px 0 6px; font-size: 0.98rem; color: var(--s-ink); }
 .not-yet p { margin: 0 0 14px; font-size: 0.84rem; color: var(--s-muted); line-height: 1.7; }
-.not-yet button { border: none; background: var(--s-ink); color: #fff; border-radius: 12px; padding: 9px 16px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
-.not-yet button:hover { background: #374151; }
 
 /* midterm: "اعرف لجنتك" — the student's ID gives the room of each of their exams (/api/midterm?id=) */
 #sched-seat { margin-top: 14px; }
@@ -424,17 +428,8 @@ html.sched-open #sched { display: flex; }
 .ses-who .mine { color: var(--sec); }
 .ses-course small { font-weight: 600; color: var(--s-muted); font-size: 0.75rem; }
 
-/* footer: source + upload */
-.sched-foot { border-top: 1px solid var(--s-line); padding: 10px 16px 14px; background: #fff; }
-#sched-src { font-size: 0.74rem; color: var(--s-muted); margin-bottom: 8px; line-height: 1.5; }
-.foot-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.foot-actions button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--s-line); background: #fff; color: var(--s-ink); border-radius: 12px;
-  padding: 8px 12px; font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
-.foot-actions button:hover { background: var(--s-soft); }
-.foot-actions button[hidden] { display: none; }
-.foot-actions button.primary { background: var(--s-ink); border-color: var(--s-ink); color: #fff; }
-.foot-actions button.primary:hover { background: #374151; }
-.sched-toast { position: absolute; left: 14px; right: 14px; bottom: 100px; padding: 12px 14px; border-radius: 14px; font-size: 0.85rem; line-height: 1.6;
+/* toast (seat lookup messages) */
+.sched-toast { position: absolute; left: 14px; right: 14px; bottom: 16px; padding: 12px 14px; border-radius: 14px; font-size: 0.85rem; line-height: 1.6;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 .sched-toast.err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
 .sched-toast[hidden] { display: none; }

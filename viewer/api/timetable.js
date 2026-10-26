@@ -1,7 +1,7 @@
-// Public midterm API (Vercel Function).
-//   GET /api/midterm            -> every level's exams with their rooms (no student data)
-//   GET /api/midterm?id=2341…   -> that student's exams and rooms (first name only, as a check)
-import { publicView, lookup } from './_lib/midterm.js';
+// Public timetable API (Vercel Function), read by the student panel (js/schedule.js).
+//   GET /api/timetable          -> TA-published term timetables + the exam period TAs made visible (no student data)
+//   GET /api/timetable?id=2341… -> that student's rooms in the visible exam period (first name only, as a check)
+import { publicView, lookup } from './_lib/timetable.js';
 import { getStore } from './_lib/store.js';
 import { clientIp } from './_lib/auth.js';
 

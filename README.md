@@ -25,39 +25,44 @@ python3 serve.py 8080     # any static file server works
 - Use `#bld_main` (or any other building ID) to open the viewer with that building selected.
 
 ### Timetables (الجداول)
-The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`). Students pick their level and section, see their next class, and press **وديني** to get walking directions to the room.
+The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`).
+- Students pick their level and section and see their next class.
+- **Tapping a class or exam** opens its building on the right floor and highlights the room, with no walk.
+- **وديني** gives walking directions to the room.
+- Students cannot upload or change anything; only TAs can (see below).
 
-- **Data:** the Computer Science timetable is in `viewer/data/schedules/fall-2026.json`.
-- **Upload a new timetable:** press **رفع جدول** and choose a CSV or JSON file. **تنزيل CSV** downloads the current timetable in the same format, ready to edit in Excel.
-- **CSV columns:** `level, day, period, course, type, group, sections, room, building`. Arabic headers and day names work too.
-  - `sections` takes `1:5` (sections 1 to 5) or `3,4`.
-  - `room` can be written as in the printed tables, for example `Hall:3`, `Drawing Hall 3`, `Room:104`, `Lab 2` or `قاعة 1`.
-- **Linking:** each class is linked automatically to its building, and to the room when the indoor map has it (`viewer/data/room_index.json`). The panel shows how many classes are linked.
-- **Storage:** an uploaded timetable is kept in that browser only. **الجدول الأصلي** goes back to the built-in one.
+- **Tabs:** **الترم الأول** and **الترم التاني** are always there. A third exam tab (**الميدترم**, **نص السنة** or **آخر السنة**) shows only while TAs have made it visible, and disappears when they set it back to «مخفي».
+- **Built-in data:** `viewer/data/schedules/fall-2026.json` (term 1) and `spring-2027.json` (term 2). A level whose timetable TAs published on the TA page uses the published one instead.
+- **Linking:** each class is linked automatically to its building, and to the room when the indoor map has it (`viewer/data/room_index.json`).
 
-### Midterm exams: TA uploads and «اعرف لجنتك»
-The **الميدترم** tab is filled by the TAs (المعيدين), not by local uploads. Students type their university ID and get the room of each of their exams, with **وديني** to walk there.
-
-- **TA page:** `admin.html` (the **رفع (للمعيدين)** button in the midterm tab opens it). It is protected by one shared TA password that is checked on the server.
-  1. Pick the level (سنة أولى → رابعة).
-  2. **جدول الامتحانات:** upload the exam timetable as Word (.docx), PDF, Excel (.xlsx) or CSV. The expected layout is the printed one: time slots across the top, one row per day with its date, and `Course | CODE` in the cells. Review the rows, fix anything wrong, then press **نشر**.
-  3. **كشوف القاعات:** upload the UNIHUB room sheets (PDF, one room per page). Several files can go in at once. Excel or CSV with an `ID` column (and optionally a room column) also works. Each sheet shows its course, date, time and room, and whether the room is on the 3D map. Pick the room from the list if it is not linked, then press **نشر**. Re-uploading the same exam and room replaces the old sheet.
-  4. **جرّب كود طالب:** check what a student will see for an ID.
+### TA page (لوحة المعيدين) and «اعرف لجنتك»
+- **TA page:** `admin.html`. There is no link to it in the student panel, so TAs open it directly. It is protected by one shared TA password that is checked on the server.
+  1. **تبويب الامتحانات عند الطلاب:** choose which exam tab students see: مخفي, الميدترم, نص السنة or آخر السنة.
+  2. Pick the section (الترم الأول, الترم التاني, الميدترم, امتحانات نص السنة, امتحانات آخر السنة), then the level (سنة أولى → رابعة).
+  3. **Term sections:**
+     - Press **عدّل الجدول ده** to edit the current timetable in a table, or upload an Excel / CSV / JSON file. **نزّل الجدول** gives the current one as CSV, ready to edit in Excel.
+     - The columns are `level, day, period, course, type, group, sections, room, building`. Arabic headers and day names work too.
+     - Review the rows, then press **نشر**. **رجّع للجدول الأصلي** goes back to the built-in data for that level.
+  4. **Exam sections**, each with its own data:
+     - **جدول الامتحانات:** upload the exam timetable as Word (.docx), PDF, Excel (.xlsx) or CSV, or edit the published one. The printed layout works: time slots across the top, one row per day with its date, and `Course | CODE` in the cells.
+     - **كشوف القاعات:** upload the UNIHUB room sheets (PDF, one room per page; several files at once), or Excel / CSV with an `ID` column. Pick the room from the list if it is not linked to the map. Re-uploading the same exam and room replaces the old sheet.
+     - **جرّب كود طالب:** shows what a student will see for an ID in the visible exam period.
+- **«اعرف لجنتك»:** in the exam tab, a student types their ID and sees each of their exams with its room and «وديني».
 - **Reading files:** files are read in the browser (`viewer/js/midterm-parse.js`, with pdf.js in `viewer/lib/pdfjs/`). Scanned PDFs and photos have no text and are rejected, so ask for the original file. Old `.doc` and `.xls` must be saved as `.docx` / `.xlsx` first.
-- **API:** Vercel Functions in `viewer/api/`.
-  - `GET /api/midterm` returns every level's exams and the rooms used.
-  - `GET /api/midterm?id=…` returns one student's exams and rooms, plus their first name only.
+- **API:** Vercel Functions in `viewer/api/`; the data layout is described at the top of `viewer/api/_lib/timetable.js`.
+  - `GET /api/timetable` returns the published term timetables and the visible exam period (no student data).
+  - `GET /api/timetable?id=…` returns one student's rooms in the visible exam period, plus their first name only.
   - `POST /api/admin` handles the TA actions and needs the password token.
   - Full names stay on the admin side. ID lookups are rate-limited per IP.
 - **Vercel setup (once):**
   1. The project's **Root Directory** must be `viewer`.
-  2. Under Storage / Marketplace, add **Upstash for Redis** and connect it to the project. This sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
+  2. Under Storage / Marketplace, add **Upstash for Redis** and connect it to the project.
   3. Run `node pipeline/hash_admin_password.mjs "<TA password>"` and add the printed `ADMIN_PASSWORD_HASH` under Settings → Environment Variables.
   4. Redeploy.
 
-  Until this is done, the site keeps working and the midterm tab shows the built-in placeholder.
-- **Local run with the API:** `cd viewer && node dev-server.mjs 8090`, then open `http://localhost:8090/` and `/admin.html`. Put `ADMIN_PASSWORD_HASH=…` in `viewer/.env.local`. Data is kept in `viewer/.data/`; both of these are git-ignored. `python3 serve.py` still works, but without the midterm API.
-- **Checking the file readers:** `node pipeline/test_midterm.mjs <files…>` prints what is read from each file (a file name containing "schedule" / "midterm" is read as a timetable, anything else as room sheets).
+  Without this, the site still works with the built-in term timetables and no exam tab.
+- **Local run with the API:** `cd viewer && node dev-server.mjs 8090`, then open `http://localhost:8090/` and `/admin.html`. Put `ADMIN_PASSWORD_HASH=…` in `viewer/.env.local`. Data is kept in `viewer/.data/`; both of these are git-ignored. `python3 serve.py` still works, but without the API (built-in timetables only).
+- **Checking the file readers:** `node pipeline/test_midterm.mjs <files…>` prints what is read from each file (a file name containing "schedule" / "midterm" is read as an exam timetable, anything else as room sheets).
 
 Website integration options (iframe or native page) and server settings are in [`deliverables/README.md`](deliverables/README.md#website-integration).
 

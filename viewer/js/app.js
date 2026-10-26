@@ -241,17 +241,23 @@ function showInfo(it) {
 }
 
 // ---------------------------------------------------------------- interior cutaway
+const interiorLoads = new Map();   // building id -> in-flight load, so two callers never build the same interior twice
 async function getInterior(it) {
   if (state.interiors.has(it.id)) return state.interiors.get(it.id);
-  const r = await fetch(it.info.interior, { cache: 'no-cache' });
-  if (!r.ok) throw new Error(`${it.info.interior}: ${r.status}`);
-  const data = await r.json();
-  const interior = buildInterior(data);
-  interior.data = data;
-  interior.group.visible = false;
-  state.scene.add(interior.group);
-  state.interiors.set(it.id, interior);
-  return interior;
+  if (interiorLoads.has(it.id)) return interiorLoads.get(it.id);
+  const load = (async () => {
+    const r = await fetch(it.info.interior, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(`${it.info.interior}: ${r.status}`);
+    const data = await r.json();
+    const interior = buildInterior(data);
+    interior.data = data;
+    interior.group.visible = false;
+    state.scene.add(interior.group);
+    state.interiors.set(it.id, interior);
+    return interior;
+  })().finally(() => interiorLoads.delete(it.id));
+  interiorLoads.set(it.id, load);
+  return load;
 }
 
 // Slim floor rail on the right (top floor first, then ground, then "exit"), shown for buildings with an interior.
@@ -311,6 +317,7 @@ async function enterFloor(it, idx, { fly = true } = {}) {
   setBuildingOnly(true);
   togglePanel('info-panel', false);   // keep the floor plan clear; the rail stays
   syncFloorButtons();
+  syncRoomFocus();
   // look down into the floor from the plaza side; keep the user's view when only switching floors
   const level = interior.floors[idx].level;
   if (!fly) { /* the caller frames the view */ } else if (!wasInside) {
@@ -324,6 +331,7 @@ async function enterFloor(it, idx, { fly = true } = {}) {
 }
 
 function exitInterior(refly) {
+  clearRoomFocus();
   if (!state.inside) return;
   const it = state.items.get(state.inside.id);
   const interior = state.interiors.get(state.inside.id);
@@ -680,19 +688,75 @@ function syncTourButtons() {
   $('tour-play').setAttribute('aria-label', playing ? tt.pause : tt.play);
 }
 
-function clearRoute() {
+/** Ends a route / guided walk (no camera move). */
+function stopRoute() {
   if (state.router) state.router.clear();
   if (state.tour) state.tour.stop();
   if (state.voice) state.voice.cancel();
   setGateBarrierOpen(false);
-  ensureLabels();
   tourRes = null;
-  exitInterior();
   document.documentElement.classList.remove('touring');
   togglePanel('route-panel', false);
   $('tour-card').classList.add('hidden');
+}
+function clearRoute() {
+  stopRoute();
+  ensureLabels();
+  exitInterior();
   flyTo(state.overview.pos, state.overview.target);
   state.needsRender = true;
+}
+
+// ---------------------------------------------------------------- "where is it?" (tapping a class in the timetable)
+let roomFocus = null;   // highlight + name pin of the room shown by showRoom(); shown on its own floor only
+function clearRoomFocus() {
+  if (!roomFocus) return;
+  roomFocus.removeFromParent();
+  roomFocus.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); if (o.isCSS2DObject) o.element.remove(); });
+  roomFocus = null;
+}
+function syncRoomFocus() {
+  if (!roomFocus) return;
+  const on = !!state.inside && state.inside.id === roomFocus.userData.building && state.inside.floor === roomFocus.userData.floor;
+  roomFocus.visible = on;
+  roomFocus.traverse((o) => { if (o.isCSS2DObject) o.visible = on; });
+}
+/** Opens the room's building on the room's floor, highlights the room and frames it from above — no walk.
+ *  Falls back to selecting the building when the room is not on the indoor map. */
+async function showRoom({ building, room, roomLabel }) {
+  if (!state.router) return { ok: false };
+  stopRoute();
+  const r = state.router.resolve(building, room);
+  const it = r.buildingId ? state.items.get(r.buildingId) : null;
+  if (!it) return { ok: false };
+  select(it.id, false);
+  const interior = it.info.interior && r.roomId ? await getInterior(it).catch(() => null) : null;
+  const fi = interior ? interior.data.floors.findIndex((f) => String(f.id) === String(r.floorId)) : -1;
+  const rm = fi >= 0 ? interior.data.floors[fi].rooms.find((x) => x.id === r.roomId) : null;
+  if (!rm) { flyToItem(it); return { ok: false, building: it.id }; }
+  clearRoomFocus();
+  await enterFloor(it, fi, { fly: false });
+  const level = interior.floors[fi].level;
+  const [x0, y0, x1, y1] = rm.rect;
+  const centre = new THREE.Vector3((x0 + x1) / 2, level, -(y0 + y1) / 2);
+  const g = new THREE.Group();
+  g.userData = { building: it.id, floor: fi };
+  // an orange floor tint over the whole room + its outline, so it reads at a glance between the desks
+  const box = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 0.3, 0.12, y1 - y0 - 0.3),
+    new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.55, depthWrite: false }));
+  box.position.set(centre.x, level + 0.08, centre.z); box.renderOrder = 18;
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(x1 - x0 - 0.3, 2.6, y1 - y0 - 0.3)), new THREE.LineBasicMaterial({ color: 0xff7a1a }));
+  edges.position.set(centre.x, level + 1.35, centre.z);
+  const el = document.createElement('div');
+  el.className = 'route-pin end'; el.textContent = roomLabel || room;
+  const pin = new CSS2DObject(el); pin.position.set(centre.x, level + 8, centre.z);   // above the room's own name label
+  g.add(box, edges, pin);
+  state.scene.add(g);
+  roomFocus = g; syncRoomFocus();
+  const d = Math.max(x1 - x0, y1 - y0, 8);
+  flyTo(new THREE.Vector3(centre.x - (0.7 * d + 8), level + 1.2 * d + 16, centre.z + 0.8 * d + 10), centre);
+  state.needsRender = true;
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------- loop
@@ -749,7 +813,7 @@ async function main() {
     if (state.items.has(id)) setTimeout(() => select(id, true), 300);
     setTimeout(ensureLabels, 1000);
     const reverseRoute = () => (lastRouteParams ? showRoute({ ...lastRouteParams, reverse: !lastRouteParams.reverse }) : null);
-    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, reverseRoute, clearRoute, tour: () => state.tour, route: () => tourRes, validateNavigationData,
+    window.__campus = { state, select, step, items: () => [...state.items.keys()], quality, enterFloor: (id, i) => enterFloor(state.items.get(id), i), exitInterior, showRoute, showRoom, reverseRoute, clearRoute, tour: () => state.tour, route: () => tourRes, validateNavigationData,
       overview: () => { clearSelection(); flyTo(state.overview.pos, state.overview.target); } };   // QA / integration hook
     window.dispatchEvent(new Event('campus:ready'));   // js/schedule.js waits for this
   } catch (err) {

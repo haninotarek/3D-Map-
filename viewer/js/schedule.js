@@ -1,35 +1,33 @@
-// Timetable side panel (Arabic, RTL): term tabs (الترم الأول / الترم التاني / الميدترم), then
-// سنة أولى→رابعة / section / day filters, search, the next class or exam, and "وديني"
-// which asks the 3D view (window.__campus.showRoute) to walk to the room.
-// Data: data/schedules/fall-2026.json (term 1), spring-2027.json (term 2, placeholder until
-// published) and midterm-2026.json (midterm exams, placeholder until published).
-// An uploaded CSV / JSON replaces the ACTIVE tab's table in this browser only.
+// Timetable side panel (Arabic, RTL): tabs الترم الأول / الترم التاني, plus one exam tab (الميدترم, نص السنة
+// or آخر السنة) only while TAs have made it visible on admin.html. Then سنة أولى→رابعة / section / day filters,
+// search, the next class or exam, tapping a row to see its room inside the building, and "وديني" which asks
+// the 3D view (window.__campus.showRoute) to walk there.
+// Data: the built-in data/schedules/fall-2026.json (term 1) and spring-2027.json (term 2); where TAs published a
+// level's timetable, /api/timetable replaces that level. Exams come only from /api/timetable, and a student can
+// type their ID there to get the room of each of their exams. Students cannot upload anything.
 // Every class/exam is linked to a building and, where the indoor map has it, to a room (data/room_index.json).
-// The midterm tab reads what TAs published on admin.html from /api/midterm when the API is there (Vercel or
-// dev-server.mjs), and a student can type their ID to get the room of each of their exams.
 import { arDigits, canonRoom, canonBuilding, roomAr, BUILDING_AR } from './rooms.js';
 
 const $ = (id) => document.getElementById(id);
-const STORE_KEY = 'epnu.schedule.v1';               // legacy upload (applied to term 1)
-const storeKeyFor = (term) => `epnu.schedule.v2.${term}`;   // uploads are per term tab
 const PREFS_KEY = 'epnu.schedule.prefs.v1';
+const API = 'api/timetable';
 const TERMS = [
   { id: 'term1', label: 'الترم الأول', kind: 'classes', file: 'data/schedules/fall-2026.json' },
   { id: 'term2', label: 'الترم التاني', kind: 'classes', file: 'data/schedules/spring-2027.json' },
-  { id: 'midterm', label: 'الميدترم', kind: 'exams', file: 'data/schedules/midterm-2026.json' },
 ];
+const EXAM_TABS = { midterm: 'الميدترم', midyear: 'نص السنة', final: 'آخر السنة' };
 const LEVEL_AR = { 1: 'سنة أولى', 2: 'سنة تانية', 3: 'سنة تالتة', 4: 'سنة رابعة' };
 const levelName = (l) => LEVEL_AR[l?.level] || l?.name_ar || `سنة ${l?.level ?? ''}`;
-const termOf = () => TERMS.find((t) => t.id === S.prefs.term) || TERMS[0];
+const tabs = () => (S.exam ? [...TERMS, S.exam] : TERMS);
+const termOf = () => tabs().find((t) => t.id === S.prefs.term) || TERMS[0];
 const isExams = () => S.data?.kind === 'exams';
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_AR = { Sunday: 'الأحد', Monday: 'الاثنين', Tuesday: 'الثلاثاء', Wednesday: 'الأربعاء', Thursday: 'الخميس', Friday: 'الجمعة', Saturday: 'السبت' };
-const TYPE_AR = { lecture: 'محاضرة', section: 'سكشن', lab: 'معمل', midterm: 'ميدترم' };
+const TYPE_AR = { lecture: 'محاضرة', section: 'سكشن', lab: 'معمل', midterm: 'امتحان' };
 const BUILDING_SHORT = { 'Engineering Building 1': 'مبنى 1', 'Engineering Building 2': 'مبنى 2' };
 
-const S = { data: null, source: 'built-in', index: null, floorsAr: {}, datasets: {}, defaults: {}, sources: {}, prefs: { term: 'term1', level: 1, section: 0, day: 'all', q: '', seatId: '' }, classes: [],
-  api: false, seat: null, seatState: '' };
-const MIDTERM_API = 'api/midterm';
+const S = { data: null, index: null, floorsAr: {}, datasets: {}, exam: null, api: false, prefs: { term: 'term1', level: 1, section: 0, day: 'all', q: '', seatId: '' }, classes: [],
+  seat: null, seatState: '' };
 const codeKey = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const examKey = (c) => `${c.date}|${codeKey(c.code) || String(c.course || '').toLowerCase()}`;
 
@@ -66,7 +64,6 @@ const DAY_ALIASES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednes
 function canonDay(d) { const s = String(d || '').trim(); return DAY_ALIASES[s] || DAY_ALIASES[s.slice(0, 3).toLowerCase()] || s; }
 function canonType(t, course) {
   const s = String(t || '').toLowerCase();
-  if (/mid|exam|ميد|امتحان/.test(s)) return 'midterm';
   if (/lab|معمل/.test(s)) return 'lab';
   if (/sec|سكشن|تمارين/.test(s)) return 'section';
   if (/lec|محاضر/.test(s)) return 'lecture';
@@ -107,9 +104,26 @@ function rebuild() {
   }
 }
 
-/** /api/midterm levels -> the midterm tab's data shape. An exam held in one room links straight to it. */
-function fromApi(api, base) {
-  const byLevel = new Map((api.levels || []).map((l) => [l.level, l]));
+/** Empty سنة أولى→رابعة skeleton, used if a term file is missing and as the base of an exam tab. */
+function skeleton(label, kind) {
+  return {
+    term_ar: label, kind, published: false,
+    periods: [{ n: 1, from: '10:00', to: '11:15' }, { n: 2, from: '11:20', to: '12:30' }, { n: 3, from: '12:35', to: '13:45' }, { n: 4, from: '13:50', to: '15:00' }],
+    levels: [1, 2, 3, 4].map((n) => ({ level: n, name_ar: LEVEL_AR[n], building: n === 1 ? 'Engineering Building 1' : 'Engineering Building 2', sections: 0, classes: [] })),
+  };
+}
+/** A term's built-in data with the levels TAs published swapped in (level name / default building kept). */
+function withPublished(base, published = []) {
+  if (!published.length) return base;
+  const byLevel = new Map(published.map((l) => [l.level, l]));
+  const levels = base.levels.map((lv) => (byLevel.has(lv.level) ? { ...lv, classes: byLevel.get(lv.level).classes } : lv));
+  for (const l of published) if (!levels.some((lv) => lv.level === l.level)) levels.push({ level: l.level, name_ar: LEVEL_AR[l.level], classes: l.classes });
+  return { ...base, levels: levels.sort((a, b) => a.level - b.level) };
+}
+/** The visible exam period from the API -> the exam tab's data. An exam held in one room links straight to it. */
+function examData(exam) {
+  const base = skeleton(`امتحانات ${EXAM_TABS[exam.period] || ''}`.trim(), 'exams');
+  const byLevel = new Map((exam.levels || []).map((l) => [l.level, l]));
   return {
     ...base, published: true,
     levels: base.levels.map((lv) => ({
@@ -121,18 +135,9 @@ function fromApi(api, base) {
     })),
   };
 }
-
-/** Empty سنة أولى→رابعة skeleton, used if a term file is missing. */
-function skeleton(t) {
-  return {
-    term_ar: t.label, kind: t.kind, published: false,
-    periods: [{ n: 1, from: '10:00', to: '11:15' }, { n: 2, from: '11:20', to: '12:30' }, { n: 3, from: '12:35', to: '13:45' }, { n: 4, from: '13:50', to: '15:00' }],
-    levels: [1, 2, 3, 4].map((n) => ({ level: n, name_ar: LEVEL_AR[n], building: n === 1 ? 'Engineering Building 1' : 'Engineering Building 2', sections: 0, classes: [] })),
-  };
-}
 function applyTerm(term) {
   S.prefs.term = term;
-  S.data = S.datasets[term]; S.default = S.defaults[term]; S.source = S.sources[term];
+  S.data = S.datasets[term];
   rebuild();
 }
 
@@ -140,96 +145,21 @@ async function loadData() {
   const [idx, interior, api, ...termData] = await Promise.all([
     fetch('data/room_index.json').then((r) => r.json()).catch(() => ({ buildings: {}, rooms: {} })),
     fetch('data/interiors/bld_e2.json').then((r) => r.json()).catch(() => null),
-    // only there on Vercel / dev-server.mjs; a plain static server answers 404 and the built-in file is used
-    fetch(MIDTERM_API).then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null)).catch(() => null),
-    ...TERMS.map((t) => fetch(t.file).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(() => skeleton(t))),
+    // only there on Vercel / dev-server.mjs; a plain static server answers 404 and the built-in files are used
+    fetch(API).then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null)).catch(() => null),
+    ...TERMS.map((t) => fetch(t.file).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(() => skeleton(t.label, t.kind))),
   ]);
   S.index = idx;
   if (interior) for (const f of interior.floors) S.floorsAr[f.id] = f.name_ar;
-  TERMS.forEach((t, i) => {
-    S.defaults[t.id] = termData[i];
-    const stored = load(storeKeyFor(t.id), null) || (t.id === 'term1' ? load(STORE_KEY, null) : null);
-    S.datasets[t.id] = stored?.levels ? stored : termData[i];
-    S.sources[t.id] = stored?.levels ? (stored._source || 'ملف مرفوع') : 'built-in';
-  });
-  S.api = Boolean(api?.levels);
-  if (S.api) {   // TA-published midterm data wins over the built-in placeholder and any local upload
-    S.defaults.midterm = S.datasets.midterm = fromApi(api, termData[TERMS.findIndex((t) => t.id === 'midterm')]);
-    S.sources.midterm = 'api';
-    S.apiUpdated = api.updatedAt;
+  S.api = Boolean(api?.terms);
+  TERMS.forEach((t, i) => { S.datasets[t.id] = withPublished({ ...termData[i], kind: 'classes' }, api?.terms?.[t.id]); });
+  if (api?.exam && EXAM_TABS[api.exam.period]) {
+    S.exam = { id: api.exam.period, label: EXAM_TABS[api.exam.period], kind: 'exams' };
+    S.datasets[S.exam.id] = examData(api.exam);
   }
   S.prefs = { ...S.prefs, ...load(PREFS_KEY, {}) };
-  if (!TERMS.some((t) => t.id === S.prefs.term)) S.prefs.term = 'term1';
+  if (!tabs().some((t) => t.id === S.prefs.term)) S.prefs.term = 'term1';
   applyTerm(S.prefs.term);
-}
-
-// ---------------------------------------------------------------- upload (CSV or JSON)
-const CSV_COLS = ['level', 'day', 'period', 'course', 'type', 'group', 'sections', 'room', 'building'];
-const EXAM_CSV_COLS = ['level', 'date', 'day', 'from', 'to', 'course', 'room', 'building', 'sections'];
-
-function parseCsv(text) {
-  const rows = []; let row = [], cell = '', q = false;
-  text = text.replace(/^﻿/, '');
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
-    else if (c === '"') q = true;
-    else if (c === ',' || c === ';' || c === '\t') { row.push(cell); cell = ''; }
-    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
-    else cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows.filter((r) => r.some((x) => x.trim()));
-}
-
-/** Accepts our JSON shape, a flat JSON array of rows, or CSV with the CSV_COLS header (Arabic headers work too). */
-function importText(name, text) {
-  let levels;
-  if (/\.json$/i.test(name) || /^\s*[[{]/.test(text)) {
-    const j = JSON.parse(text);
-    if (j.levels) levels = j.levels;
-    else if (Array.isArray(j)) levels = groupRows(j);
-    else throw new Error('ملف JSON مش بالشكل المتوقع');
-  } else {
-    const rows = parseCsv(text);
-    const head = rows.shift().map((h) => h.trim().toLowerCase());
-    const alias = { 'الفرقة': 'level', 'الفرقه': 'level', 'السنة': 'level', 'السنه': 'level', 'المستوى': 'level', 'اليوم': 'day', 'التاريخ': 'date', 'الفترة': 'period', 'الفتره': 'period', 'من': 'from', 'إلى': 'to', 'الى': 'to', 'المادة': 'course', 'الماده': 'course',
-      'النوع': 'type', 'الجروب': 'group', 'المجموعة': 'group', 'السكاشن': 'sections', 'السكشن': 'sections', 'القاعة': 'room', 'القاعه': 'room', 'المكان': 'room', 'المبنى': 'building', 'المبني': 'building' };
-    const cols = head.map((h) => alias[h] || h);
-    if (!cols.includes('course') || !cols.includes('room') || !(cols.includes('day') || cols.includes('date')) || !(cols.includes('period') || cols.includes('from')))
-      throw new Error('لازم يكون في الملف أعمدة: course, room و(day أو date) و(period أو from)');
-    levels = groupRows(rows.map((r) => Object.fromEntries(cols.map((c, i) => [c, (r[i] ?? '').trim()]))));
-  }
-  if (!levels.length || !levels.some((l) => (l.classes || []).length)) throw new Error('الملف مفيهوش محاضرات');
-  // keep level names / default buildings from the built-in data when the upload does not say
-  for (const l of levels) {
-    const d = S.default.levels.find((x) => x.level === l.level) || {};
-    l.name_ar ||= d.name_ar || LEVEL_AR[l.level] || `سنة ${l.level}`; l.building ||= d.building || ''; l.sections ??= d.sections ?? 0;
-  }
-  return { ...S.default, levels: levels.sort((a, b) => a.level - b.level), _source: name };
-}
-function groupRows(rows) {
-  const by = new Map();
-  for (const r of rows) {
-    const lv = Number(arDigits(r.level || 1)) || 1;
-    if (!by.has(lv)) by.set(lv, { level: lv, classes: [] });
-    by.get(lv).classes.push(r);
-  }
-  return [...by.values()];
-}
-function exportCsv() {
-  const exams = isExams();
-  const lines = [(exams ? EXAM_CSV_COLS : CSV_COLS).join(',')];
-  const q = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v ?? ''));
-  for (const l of S.data.levels) for (const row of l.classes) {
-    const r = Array.isArray(row) ? { day: row[0], period: row[1], course: row[2], type: row[3], group: row[4], sections: row[5], room: row[6], building: row[7] } : row;
-    lines.push(exams
-      ? [l.level, r.date || '', r.day || '', r.from || '', r.to || '', r.course, r.room, r.building || '', r.sections || ''].map(q).join(',')
-      : [l.level, r.day, r.period, r.course, r.type, r.group, r.sections, r.room, r.building || ''].map(q).join(','));
-  }
-  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `epnu-${S.prefs.term}-timetable.csv` });
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function toast(html, kind = 'ok') {
@@ -259,9 +189,9 @@ function mine() {
 function filtered() {
   const q = S.prefs.q.trim().toLowerCase();
   return mine().filter((c) => (S.prefs.day === 'all' || c.day === S.prefs.day)
-    && (!q || [c.course, c.roomRaw, roomAr(c.room), c.room, BUILDING_AR[c.building] || c.building, TYPE_AR[c.type], DAY_AR[c.day], fmtDate(c)].join(' ').toLowerCase().includes(q)));
+    && (!q || [c.course, c.code, c.roomRaw, roomAr(c.room), c.room, BUILDING_AR[c.building] || c.building, TYPE_AR[c.type], DAY_AR[c.day], fmtDate(c)].join(' ').toLowerCase().includes(q)));
 }
-/** The next midterm exam (by real date when present) for the chosen level / section. */
+/** The next exam (by real date when present) for the chosen level / section. */
 function nextExam(now = new Date()) {
   const out = [];
   for (const c of mine()) {
@@ -301,8 +231,8 @@ function nextClass(now = new Date()) {
 
 // ---------------------------------------------------------------- rendering
 function termTabs() {
-  $('sched-terms').innerHTML = TERMS.map((t) =>
-    `<button type="button" role="tab" aria-selected="${t.id === S.prefs.term}" class="${t.id === S.prefs.term ? 'on' : ''}" data-term="${t.id}">${t.label}</button>`).join('');
+  $('sched-terms').innerHTML = tabs().map((t) =>
+    `<button type="button" role="tab" aria-selected="${t.id === S.prefs.term}" class="${t.id === S.prefs.term ? 'on' : ''}${t.kind === 'exams' ? ' exam' : ''}" data-term="${t.id}">${t.label}</button>`).join('');
 }
 function levelChips() {
   $('sched-levels').innerHTML = S.data.levels.map((l) =>
@@ -340,21 +270,22 @@ function whoText(c) {
   const g = c.group === 'Weekly' ? 'كل أسبوع' : c.group ? `Group ${c.group}` : '';
   return [g, sectionsText(c.sections)].filter(Boolean).map((s) => `<bdi>${esc(s)}</bdi>`).join(' · ');
 }
-/** One class as a light row: when, who, where, type pill and "وديني". */
+/** One class as a light row: when, who, where, type pill and "وديني". Tapping the row shows the room. */
 function session(c, { showCourse = false } = {}) {
   const p = timeOf(c);
   const time = p.from ? `${fmtTime(p.from).replace(/ [صم]$/, '')}–${fmtTime(p.to)}` : '';
-  const tip = c.link === 'room' ? 'القاعة على الخريطة' : c.link === 'building' ? 'المبنى بس، القاعة لسه مش على الخريطة' : 'المكان مش معروف';
-  return `<div class="ses t-${c.type}" data-id="${c.id}">
+  const tip = c.link === 'room' ? 'دوس عشان تشوف القاعة جوه المبنى' : c.link === 'building' ? 'دوس عشان تشوف المبنى (القاعة لسه مش على الخريطة)' : 'المكان مش معروف';
+  const place = c.link !== 'none';
+  return `<div class="ses t-${c.type}${place ? ' placeable' : ''}" data-id="${c.id}"${place ? ` role="button" tabindex="0" title="${esc(tip)}"` : ''}>
     <div class="ses-main">
       ${showCourse ? `<div class="ses-course" dir="ltr">${esc(c.course)}${c.code ? ` <small>${esc(c.code)}</small>` : ''}</div>` : ''}
       <div class="ses-when">${esc(fmtDate(c))} · ${esc(time)}</div>
       <div class="ses-who">${whoText(c)}</div>
-      <div class="ses-where" title="${esc(tip)}">${esc(whereText(c))}</div>
+      <div class="ses-where">${place ? '<span class="pin" aria-hidden="true">⌖</span>' : ''}${esc(whereText(c))}</div>
     </div>
     <div class="ses-side">
       <span class="pill">${TYPE_AR[c.type]}</span>
-      ${c.link !== 'none' ? `<button type="button" class="go" data-go="${c.id}">وديني <span aria-hidden="true">←</span></button>` : ''}
+      ${c.link === 'room' ? `<button type="button" class="go" data-go="${c.id}">وديني <span aria-hidden="true">←</span></button>` : ''}
     </div>
   </div>`;
 }
@@ -376,15 +307,13 @@ function renderNext() {
   box.innerHTML = `<div class="next-head"><span class="dot${n.live ? ' live' : ''}"></span>${head} · <b>${esc(when)}</b></div>${session(n.c, { showCourse: true })}`;
 }
 
-/** Shown while a tab (term 2 / midterm) has no published rows yet — the structure is ready. */
+/** Shown while a tab has no rows yet — the structure is ready. */
 function notYetHTML() {
-  const t = termOf();
-  const title = isExams() ? 'جدول امتحانات الميدترم لسه منزلش رسميًا' : `جدول ${t.label} لسه منزلش رسميًا`;
+  const title = isExams() ? `جدول ${S.data.term_ar} لسه منزلش` : `جدول ${termOf().label} لسه منزلش رسميًا`;
   return `<div class="not-yet">
     <div class="ny-icon" aria-hidden="true">🗓️</div>
     <h4>${esc(title)}</h4>
     <p>أول ما ينزل هيظهر هنا على طول، مصنّف حسب سنة أولى وتانية وتالتة ورابعة.</p>
-    <button type="button" data-upload>${isExams() ? 'دخول المعيدين لرفع الجدول' : 'رفع جدول CSV'}</button>
   </div>`;
 }
 
@@ -400,7 +329,7 @@ function renderList() {
   if (isExams()) {   // exams read best chronologically, grouped by exam day
     const byDay = new Map();
     for (const c of list) { const k = fmtDate(c); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(c); }
-    host.innerHTML = `<div class="list-title">امتحانات الميدترم <small>${list.length}</small></div>` +
+    host.innerHTML = `<div class="list-title">${esc(S.data.term_ar)} <small>${list.length}</small></div>` +
       [...byDay].map(([day, cs]) => `<section class="course">
         <div class="course-head"><h4>${esc(day)}</h4><span>${esc(levelName(lv))}</span></div>
         ${cs.map((c) => session(c, { showCourse: true })).join('')}
@@ -432,7 +361,7 @@ function seatGreeting(seat) {
     : `${hi} عندك ${n === 2 ? 'امتحانين' : `${n} امتحانات`}، أقربهم ${exam}. دوس «وديني» جنب أي امتحان وهنوصّلك لحد لجنته.`;
 }
 
-/** "اعرف لجنتك": the student types their ID; /api/midterm?id= answers with their exams and rooms. */
+/** "اعرف لجنتك": the student types their ID; /api/timetable?id= answers with their exams and rooms. */
 function renderSeat() {
   const box = $('sched-seat');
   box.hidden = !(isExams() && S.api);
@@ -458,7 +387,7 @@ async function lookupSeat(id, { quiet = false } = {}) {
   if (id.length < 5) { if (!quiet) toast('اكتب الكود صح (أرقام بس).', 'err'); return; }
   S.prefs.seatId = id; S.seatState = 'loading'; renderSeat();
   try {
-    const r = await fetch(`${MIDTERM_API}?id=${encodeURIComponent(id)}`);
+    const r = await fetch(`${API}?id=${encodeURIComponent(id)}`);
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     S.seat = j; S.seatState = '';
@@ -471,36 +400,30 @@ async function lookupSeat(id, { quiet = false } = {}) {
   rebuild(); render();
 }
 
-function renderStats() {
-  const lv = S.classes.filter((c) => c.level === S.prefs.level);
-  const rooms = lv.filter((c) => c.link === 'room').length;
-  if (S.source === 'api') {
-    const when = S.apiUpdated ? new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }).format(new Date(S.apiUpdated)) : '';
-    $('sched-src').innerHTML = `منشور من المعيدين${when ? ` · آخر تحديث ${esc(when)}` : ''} · ${rooms} من ${lv.length} امتحان متربط بقاعة على الخريطة`;
-    $('sched-reset').hidden = true; $('sched-template').hidden = true;
-    return;
-  }
-  $('sched-template').hidden = false;
-  $('sched-src').innerHTML = !S.classes.length && S.source === 'built-in'
-    ? `${esc(termOf().label)}: لسه منزلش رسميًا — الهيكل جاهز لسنة أولى لحد رابعة، وتقدر ترفع CSV`
-    : `${S.source === 'built-in' ? 'الجدول الرسمي' : 'من ملف: ' + esc(S.source)} · ${rooms} من ${lv.length} ${isExams() ? 'امتحان متربط' : 'محاضرة متربطة'} بقاعة على الخريطة`;
-  $('sched-reset').hidden = S.source === 'built-in';
-}
-
 function render() {
   if (!S.data.levels.some((l) => l.level === S.prefs.level)) S.prefs.level = S.data.levels[0]?.level ?? 1;
-  termTabs(); levelChips(); sectionSelect(); daySelect(); renderSeat(); renderNext(); renderList(); renderStats();
-  $('sched-upload').lastChild.textContent = isExams() ? 'رفع (للمعيدين)' : 'رفع جدول';
+  termTabs(); levelChips(); sectionSelect(); daySelect(); renderSeat(); renderNext(); renderList();
   $('sched-term').textContent = S.data.term_ar || '';
   $('sched-search').placeholder = isExams() ? 'دوّر على مادة أو قاعة امتحان…' : 'دوّر على مادة أو قاعة…';
   save(PREFS_KEY, { term: S.prefs.term, level: S.prefs.level, section: S.prefs.section, day: S.prefs.day, seatId: S.prefs.seatId });
 }
 function setTerm(term) {
-  if (!TERMS.some((t) => t.id === term)) return;
+  if (!tabs().some((t) => t.id === term)) return;
   applyTerm(term); S.prefs.day = 'all'; S.prefs.section = 0; render();
 }
 
 // ---------------------------------------------------------------- 3D link
+const small = () => window.matchMedia('(max-width: 720px)').matches;
+/** Tapping a class / exam: show its room inside the building (no walk), or the building when the room is not mapped. */
+function showPlace(c) {
+  const campus = window.__campus; if (!campus) return;
+  if (c.link === 'room' && campus.showRoom) campus.showRoom({ building: c.building, room: c.room, roomLabel: roomAr(c.room) });
+  else if (c.buildingId) { campus.clearRoute(); campus.select(c.buildingId, true); }
+  else return;
+  if (small()) setOpen(false);
+  syncTabs(c.buildingId);
+}
+/** "وديني": the guided walk to the room. */
 function go(c) {
   const campus = window.__campus; if (!campus) return;
   if (c.link === 'room') {
@@ -508,7 +431,7 @@ function go(c) {
   } else if (c.buildingId) {
     campus.clearRoute(); campus.select(c.buildingId, true);
   }
-  if (window.matchMedia('(max-width: 720px)').matches) setOpen(false);
+  if (small()) setOpen(false);
   syncTabs(c.buildingId);
 }
 function syncTabs(id) {
@@ -521,23 +444,23 @@ function setOpen(open) {
 }
 
 // ---------------------------------------------------------------- init
-/** Midterm data comes from TAs only (password page); the term tabs keep the local CSV / JSON upload. */
-function openUpload() {
-  if (isExams()) window.open('admin.html', '_blank', 'noopener');
-  else $('sched-file').click();
-}
-
 function wire() {
   $('sched-terms').addEventListener('click', (e) => { const b = e.target.closest('[data-term]'); if (b) setTerm(b.dataset.term); });
   $('sched-levels').addEventListener('click', (e) => { const b = e.target.closest('[data-level]'); if (!b) return; S.prefs.level = +b.dataset.level; S.prefs.section = 0; render(); });
   $('sched-section').addEventListener('change', (e) => { S.prefs.section = +e.target.value; render(); });
   $('sched-day').addEventListener('change', (e) => { S.prefs.day = e.target.value; render(); });
   $('sched-search').addEventListener('input', (e) => { S.prefs.q = e.target.value; renderList(); });
+  const byId = (id) => S.classes.find((x) => x.id === id);
   $('sched').addEventListener('click', (e) => {
-    if (e.target.closest('[data-upload]')) { openUpload(); return; }
     if (e.target.closest('[data-seat-clear]')) { S.seat = null; S.prefs.seatId = ''; S.seatState = ''; rebuild(); render(); return; }
-    const b = e.target.closest('[data-go]'); if (!b) return;
-    const c = S.classes.find((x) => x.id === b.dataset.go); if (c) go(c);
+    const b = e.target.closest('[data-go]');
+    if (b) { const c = byId(b.dataset.go); if (c) go(c); return; }
+    const row = e.target.closest('.ses.placeable');
+    if (row) { const c = byId(row.dataset.id); if (c) showPlace(c); }
+  });
+  $('sched').addEventListener('keydown', (e) => {
+    if ((e.key !== 'Enter' && e.key !== ' ') || !e.target.matches('.ses.placeable')) return;
+    e.preventDefault(); const c = byId(e.target.dataset.id); if (c) showPlace(c);
   });
   $('sched-toggle').addEventListener('click', () => setOpen(!document.documentElement.classList.contains('sched-open')));
   $('sched-close').addEventListener('click', () => setOpen(false));
@@ -548,32 +471,9 @@ function wire() {
     if (v === 'campus') window.__campus.overview(); else window.__campus.select(v, true);
     syncTabs(v === 'campus' ? null : v);
   });
-
   $('sched').addEventListener('submit', (e) => {
     if (!e.target.closest('[data-seat-form]')) return;
     e.preventDefault(); lookupSeat($('seat-id').value);
-  });
-  $('sched-upload').addEventListener('click', openUpload);
-  $('sched-file').addEventListener('change', async (e) => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    try {
-      const term = S.prefs.term;
-      const data = importText(f.name, await f.text());
-      S.datasets[term] = data; S.sources[term] = f.name; S.data = data; S.source = f.name; rebuild();
-      save(storeKeyFor(term), data);
-      const all = S.classes.length, rooms = S.classes.filter((c) => c.link === 'room').length, bld = S.classes.filter((c) => c.link === 'building').length;
-      if (!S.data.levels.some((l) => l.level === S.prefs.level)) S.prefs.level = S.data.levels[0].level;
-      render();
-      toast(`اترفع <b>${esc(f.name)}</b> على تبويب «${esc(termOf().label)}»: ${all} ${isExams() ? 'امتحان' : 'محاضرة'}.<br>${rooms} متربطة بقاعة على الخريطة · ${bld} بالمبنى بس${all - rooms - bld ? ` · ${all - rooms - bld} مكانها مش معروف` : ''}.`);
-    } catch (err) {
-      toast(`الملف ما اتقريش: ${esc(err.message || err)}`, 'err');
-    }
-  });
-  $('sched-template').addEventListener('click', exportCsv);
-  $('sched-reset').addEventListener('click', () => {
-    const term = S.prefs.term;
-    try { localStorage.removeItem(storeKeyFor(term)); if (term === 'term1') localStorage.removeItem(STORE_KEY); } catch { /* ignore */ }
-    S.datasets[term] = S.defaults[term]; S.sources[term] = 'built-in'; applyTerm(term); render(); toast(`رجعنا لجدول «${esc(termOf().label)}» الأصلي.`);
   });
   // keep the "next class" card fresh
   setInterval(renderNext, 60 * 1000);
@@ -584,8 +484,8 @@ async function init() {
   try { await loadData(); } catch (err) { console.warn('timetable not loaded', err); return; }
   $('sched-search').value = '';
   wire(); render();
-  if (S.api && S.prefs.seatId) lookupSeat(S.prefs.seatId, { quiet: true });   // remembered on this device only
-  const wide = !window.matchMedia('(max-width: 720px)').matches;
+  if (S.exam && S.prefs.seatId) lookupSeat(S.prefs.seatId, { quiet: true });   // remembered on this device only
+  const wide = !small();
   setOpen(load('epnu.schedule.open', wide));
   syncTabs(null);
 }

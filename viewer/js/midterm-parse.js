@@ -398,12 +398,62 @@ export function sheetsFromTable(table, extraLines = []) {
   return [...byRoom.values()];
 }
 
+// ---------------------------------------------------------------- term (class) timetables
+const DAY_NAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday',
+  'الأحد': 'Sunday', 'الاحد': 'Sunday', 'الاثنين': 'Monday', 'الإثنين': 'Monday', 'الثلاثاء': 'Tuesday', 'الأربعاء': 'Wednesday', 'الاربعاء': 'Wednesday', 'الخميس': 'Thursday', 'الجمعة': 'Friday', 'السبت': 'Saturday' };
+export function canonDay(d) { const s = norm(d); return DAY_NAMES[s] || DAY_NAMES[s.slice(0, 3).toLowerCase()] || ''; }
+export function canonType(t, course) {
+  const s = norm(t).toLowerCase();
+  if (/lab|معمل/.test(s)) return 'lab';
+  if (/sec|سكشن|تمارين/.test(s)) return 'section';
+  if (/lec|محاضر/.test(s)) return 'lecture';
+  return /project/i.test(course || '') ? 'lecture' : 'section';
+}
+const TERM_COLS = { level: /^(level|الفرقة|الفرقه|السنة|السنه|المستوى|الدفعة)$/i, day: /^(day|اليوم)$/i, period: /^(period|الفترة|الفتره|المحاضرة رقم)$/i,
+  from: /^(from|من|start)$/i, to: /^(to|إلى|الى|end)$/i, course: /^(course|المادة|الماده|المقرر)$/i, type: /^(type|النوع)$/i,
+  group: /^(group|الجروب|المجموعة|المجموعه)$/i, sections: /^(sections?|السكاشن|السكشن)$/i, room: /^(room|القاعة|القاعه|المكان)$/i, building: /^(building|المبنى|المبني)$/i };
+function termRow(r) {
+  const t = parseTimes(`${r.from || ''} - ${r.to || ''}`);
+  return {
+    level: Number(arDigits(r.level)) || null, day: canonDay(r.day), period: Number(arDigits(r.period)) || 0,
+    from: t?.from || '', to: t?.to || '', course: norm(r.course), type: canonType(r.type, r.course), group: norm(r.group),
+    sections: norm(r.sections), room: r.room ? canonRoom(r.room) : '', building: canonBuilding(r.building),
+  };
+}
+/** A row list with a header naming the columns (same columns as the site's old CSV download). */
+export function termFromTable(table) {
+  const cells = table.map((r) => r.map((c) => norm(c)));
+  const h = cells.findIndex((r) => r.some((c) => TERM_COLS.course.test(c)) && r.some((c) => TERM_COLS.day.test(c)));
+  if (h < 0) return [];
+  const col = Object.fromEntries(Object.entries(TERM_COLS).map(([k, re]) => [k, cells[h].findIndex((c) => re.test(c))]));
+  return cells.slice(h + 1).map((r) => termRow(Object.fromEntries(Object.keys(col).map((k) => [k, col[k] >= 0 ? r[col[k]] || '' : '']))))
+    .filter((c) => c.day && c.course);
+}
+/** The site's own JSON (data/schedules/*.json shape: levels[].classes as arrays or objects) or a flat row array. */
+export function termFromJson(j) {
+  const rows = [];
+  const push = (level, row) => {
+    const r = Array.isArray(row) ? { day: row[0], period: row[1], course: row[2], type: row[3], group: row[4], sections: row[5], room: row[6], building: row[7] } : row;
+    rows.push({ ...termRow({ ...r, level: r.level ?? level }), level: Number(r.level ?? level) || null });
+  };
+  if (Array.isArray(j?.levels)) for (const lv of j.levels) for (const row of lv.classes || []) push(lv.level, row);
+  else if (Array.isArray(j)) for (const row of j) push(row.level, row);
+  return rows.filter((c) => c.day && c.course);
+}
+
 // ---------------------------------------------------------------- one entry point per upload
-/** kind: 'schedule' | 'sheets'. Returns { exams, level } or { sheets }. */
+/** kind: 'schedule' | 'sheets' | 'term'. Returns { exams, level }, { sheets } or { classes }. */
 export async function parseFile(name, buf, kind, pdfjs) {
   const ext = (String(name).match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase();
   if (['png', 'jpg', 'jpeg', 'webp', 'heic'].includes(ext)) throw new Error('ده صورة — ارفع الملف الأصلي (Word أو PDF أو Excel)');
   if (ext === 'doc' || ext === 'xls') throw new Error(`صيغة .${ext} القديمة مش مدعومة — افتحه واحفظه ${ext === 'doc' ? '.docx' : '.xlsx'}`);
+  if (kind === 'term') {
+    if (ext === 'json') return { classes: termFromJson(JSON.parse(new TextDecoder().decode(buf))) };
+    if (ext === 'pdf') throw new Error('جدول الترم يترفع Excel أو CSV (نزّل الجدول الحالي من الزرار، عدّل عليه، وارفعه)');
+    const tables = ext === 'xlsx' ? await readXlsx(buf) : ext === 'docx' ? (await readDocx(buf)).tables : ext === 'csv' || ext === 'txt' ? [readCsv(new TextDecoder().decode(buf))] : null;
+    if (!tables) throw new Error('الصيغ المدعومة لجدول الترم: Excel (.xlsx) أو CSV أو JSON');
+    return { classes: tables.flatMap(termFromTable) };
+  }
   if (ext === 'pdf') {
     const pages = await readPdf(buf, pdfjs);
     if (kind === 'schedule') return scheduleFromPdf(pages);

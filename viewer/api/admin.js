@@ -1,14 +1,27 @@
 // TA (معيدين) API for admin.html (Vercel Function). POST JSON { action, … }; every action except "login"
 // needs "Authorization: Bearer <token>" from login.
-//   login        { password }                    -> { token, expiresAt }
-//   state        {}                              -> every level's schedule and sheets (with students)
-//   saveSchedule { level, exams, source }        -> publishes that level's exam timetable
-//   addSheets    { level, sheets }               -> publishes room sheets (same exam + room replaces)
-//   deleteSheet  { level, id }
-//   clear        { level, what: schedule|sheets|all }
+//   login        { password }                         -> { token, expiresAt }
+//   state        { section, level? }                  -> settings, counts for every section, and the chosen section's data
+//   setVisible   { exam: midterm|midyear|final|'' }   -> which exam tab students see ('' hides it)
+//   saveTerm     { term, level, classes, source }     -> publishes one level's class timetable
+//   clearTerm    { term, level }                      -> back to the built-in timetable for that level
+//   saveSchedule { period, level, exams, source }     -> publishes one level's exam timetable
+//   addSheets    { period, level, sheets }            -> publishes room sheets (same exam + room replaces)
+//   deleteSheet  { period, level, id }
+//   clear        { period, level, what: schedule|sheets|all }
 import { login, verify } from './_lib/auth.js';
-import { LEVELS, getLevel, saveSchedule, addSheets, deleteSheet, clearLevel, levelOf } from './_lib/midterm.js';
+import {
+  LEVELS, TERMS, EXAMS, levelOf, termOf, examOf, getSettings, setVisibleExam, summary,
+  getTerm, saveTerm, clearTerm, getExamLevel, saveSchedule, addSheets, deleteSheet, clearExamLevel,
+} from './_lib/timetable.js';
 import { getStore } from './_lib/store.js';
+
+async function state(section) {
+  const out = { settings: await getSettings(), summary: await summary(), storage: getStore().kind, section, levels: {} };
+  if (TERMS[section]) for (const L of LEVELS) out.levels[L] = await getTerm(section, L);
+  else if (EXAMS[section]) for (const L of LEVELS) out.levels[L] = await getExamLevel(section, L);
+  return out;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -18,15 +31,14 @@ export default async function handler(req, res) {
     if (body.action === 'login') return res.status(200).json(await login(req, body.password));
     if (!verify(req)) return res.status(401).json({ error: 'سجّل دخول تاني', relogin: true });
     switch (body.action) {
-      case 'state': {
-        const levels = {};
-        for (const L of LEVELS) levels[L] = await getLevel(L);
-        return res.status(200).json({ levels, storage: getStore().kind });
-      }
-      case 'saveSchedule': return res.status(200).json(await saveSchedule(levelOf(body.level), body.exams, body.source));
-      case 'addSheets': return res.status(200).json(await addSheets(levelOf(body.level), body.sheets));
-      case 'deleteSheet': await deleteSheet(levelOf(body.level), String(body.id)); return res.status(200).json({ ok: true });
-      case 'clear': await clearLevel(levelOf(body.level), body.what); return res.status(200).json({ ok: true });
+      case 'state': return res.status(200).json(await state(String(body.section || '')));
+      case 'setVisible': return res.status(200).json(await setVisibleExam(body.exam ? examOf(body.exam) : ''));
+      case 'saveTerm': return res.status(200).json(await saveTerm(termOf(body.term), levelOf(body.level), body.classes, body.source));
+      case 'clearTerm': await clearTerm(termOf(body.term), levelOf(body.level)); return res.status(200).json({ ok: true });
+      case 'saveSchedule': return res.status(200).json(await saveSchedule(examOf(body.period), levelOf(body.level), body.exams, body.source));
+      case 'addSheets': return res.status(200).json(await addSheets(examOf(body.period), levelOf(body.level), body.sheets));
+      case 'deleteSheet': await deleteSheet(examOf(body.period), levelOf(body.level), String(body.id)); return res.status(200).json({ ok: true });
+      case 'clear': await clearExamLevel(examOf(body.period), levelOf(body.level), body.what); return res.status(200).json({ ok: true });
       default: return res.status(400).json({ error: 'action مش معروف' });
     }
   } catch (err) {
