@@ -1,5 +1,5 @@
 {
-  "_note": "Indicative interior layout of Engineering Building 2 (bld_e1). NOT a survey. First floor: rooms and their order follow the hand-drawn plan (Oct 2026), read with the top of the sheet = east (the spine): the left column is the north wing (toilets, 104, 105, 104, 105, lockers, 105, stair; across the corridor 106, lockers, 106), the right column is the south wing (toilet, lockers, 101, 102, lockers, a crossed-out room; across the corridor 103, lockers, 103, Lab 1); \"loc\" on the sketch = a locker row along the corridor. East row of the spine, as redrawn by the faculty (Oct 2026): Hall 101 – Section B, a passage, then the Smart System Lab in the south-east corner; Lab 2 at the north end. Rooms 104, 105 and 106 are each one room with two doors (104 spans the old 104/105/104, 105 the two 105s next to the stair). Repeated numbers are kept as drawn. Finishes follow the two walk-through videos. Ground floor: same scheme as Engineering Building 1, room uses estimated. Coordinates are local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Rect = [x0, y0, x1, y1]. \"split\": n draws n equal rooms with one label. \"door\": n|s|e|w is the wall with the doorway (one per split room); \"front\": n|s|e|w is the wall the seats face (board/screen); \"tables\": an open area furnished with study tables. Second (2) and Third (3) floors continue the same twin-wing + east spine column grid for multi-floor navigation and Fall 2026 timetable classes.",
+  "_note": "Indicative interior layout of Engineering Building 2 (bld_e1). NOT a survey. First floor: rooms and their order follow the hand-drawn plan (Oct 2026), read with the top of the sheet = east (the spine): the left column is the north wing (toilets, 104, 105, 104, 105, lockers, 105, stair; across the corridor 106, lockers, 106), the right column is the south wing (toilet, lockers, 101, 102, lockers, a crossed-out room; across the corridor 103, lockers, 103, Lab 1); \"loc\" on the sketch = a locker row along the corridor. East row of the spine, as redrawn by the faculty (Oct 2026): Hall 101 – Section B, a passage, then the Smart System Lab in the south-east corner; Lab 2 at the north end. Rooms 104, 105 and 106 are each one room with two doors (104 spans the old 104/105/104, 105 the two 105s next to the stair). Repeated numbers are kept as drawn. Finishes follow the two walk-through videos. Ground floor: same scheme as Engineering Building 1, room uses estimated. Coordinates are local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Rect = [x0, y0, x1, y1]. \"split\": n draws n equal rooms with one label. \"door\": n|s|e|w is the wall with the doorway (one per split room); \"front\": n|s|e|w is the wall the seats face (board/screen); \"tables\": an open area furnished with study tables. Second floor (2) follows the faculty's annotated plan (Oct 2026): Hall 2 and Hall 1 in the north and south corners of the east row with the lobby between; north wing 206, 207, 210 and the emergency stair outside, 208, 209 and Hall 201 inside; south wing 201, 202, 205 and the emergency stair outside, 203, 204 and Lab 3 inside. The third floor (3) continues the same twin-wing + east spine column grid for multi-floor navigation and Fall 2026 timetable classes.",
   "building_id": "bld_e1",
   "name_en": "Engineering Building 2",
   "name_ar": "مبنى الهندسة 2",
@@ -881,17 +881,74 @@
           "name_ar": "أسانسيرات"
         },
         {
+          "id": "hall_2",
+          "kind": "hall",
+          "rect": [
+            171.2,
+            17.1,
+            183.56,
+            33.1
+          ],
+          "door": "w",
+          "front": "e",
+          "name_en": "Lecture Hall 2",
+          "name_ar": "قاعة 2"
+        },
+        {
+          "id": "hall_1",
+          "kind": "hall",
+          "rect": [
+            171,
+            -21.5,
+            183.56,
+            -2.7
+          ],
+          "door": "w",
+          "front": "e",
+          "name_en": "Lecture Hall 1",
+          "name_ar": "قاعة 1"
+        },
+        {
           "id": "lobby_n",
           "kind": "lobby",
           "rect": [
             159,
             13.8,
-            183.56,
+            171.2,
             24.2
           ],
           "open": true,
+          "nolabel": true,
           "name_en": "Lift lobby",
           "name_ar": "لوبي الأسانسيرات"
+        },
+        {
+          "id": "lobby_ne",
+          "kind": "lobby",
+          "rect": [
+            165,
+            24.2,
+            171.2,
+            33.1
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
+          "id": "lobby_e_n",
+          "kind": "lobby",
+          "rect": [
+            171.2,
+            13.8,
+            183.56,
+            17.1
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
         },
         {
           "id": "spine",
@@ -908,6 +965,34 @@
           "name_ar": "ممر"
         },
         {
+          "id": "lobby_mid",
+          "kind": "lobby",
+          "rect": [
+            166,
+            -2.7,
+            183.56,
+            13.8
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
+          "id": "lobby_mid_s",
+          "kind": "lobby",
+          "rect": [
+            166,
+            -8.8,
+            171,
+            -2.7
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
           "id": "lobby_s",
           "kind": "lobby",
           "rect": [
@@ -919,6 +1004,34 @@
           "open": true,
           "name_en": "Lift lobby",
           "name_ar": "لوبي الأسانسيرات"
+        },
+        {
+          "id": "corr_e",
+          "kind": "lobby",
+          "rect": [
+            166,
+            -12.6,
+            171,
+            -8.8
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Corridor",
+          "name_ar": "طرقة"
+        },
+        {
+          "id": "lobby_se",
+          "kind": "lobby",
+          "rect": [
+            165,
+            -21.5,
+            171,
+            -12.6
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
         },
         {
           "id": "corr_n",
@@ -949,34 +1062,6 @@
           "name_ar": "طرقة"
         },
         {
-          "id": "corr_e",
-          "kind": "lobby",
-          "rect": [
-            166,
-            -12.6,
-            183.56,
-            -8.8
-          ],
-          "open": true,
-          "nolabel": true,
-          "name_en": "Corridor",
-          "name_ar": "طرقة"
-        },
-        {
-          "id": "hall_2",
-          "kind": "hall",
-          "rect": [
-            165,
-            24.2,
-            183.56,
-            33.1
-          ],
-          "door": "s",
-          "front": "e",
-          "name_en": "Lecture Hall 2",
-          "name_ar": "قاعة 2"
-        },
-        {
           "id": "wc_m",
           "kind": "wc",
           "rect": [
@@ -990,74 +1075,113 @@
           "name_ar": "حمام الرجال"
         },
         {
-          "id": "lab_n",
-          "kind": "lab",
+          "id": "room_206",
+          "kind": "room",
           "rect": [
-            128,
+            149.6,
             24.2,
             160.4,
             33.1
           ],
           "door": "s",
           "front": "e",
-          "name_en": "Engineering lab",
-          "name_ar": "معمل هندسي"
+          "name_en": "Room 206",
+          "name_ar": "قاعة 206"
         },
         {
-          "id": "room_205",
+          "id": "room_207",
           "kind": "room",
           "rect": [
-            136.1,
+            138.8,
+            24.2,
+            149.6,
+            33.1
+          ],
+          "door": "s",
+          "front": "e",
+          "name_en": "Room 207",
+          "name_ar": "قاعة 207"
+        },
+        {
+          "id": "room_210",
+          "kind": "room",
+          "rect": [
+            128.0,
+            24.2,
+            138.8,
+            33.1
+          ],
+          "door": "s",
+          "front": "e",
+          "name_en": "Room 210",
+          "name_ar": "قاعة 210"
+        },
+        {
+          "id": "exit_n",
+          "kind": "exit",
+          "rect": [
+            124.63,
+            24.2,
+            128,
+            33.1
+          ],
+          "name_en": "Emergency stair",
+          "name_ar": "سلم طوارئ"
+        },
+        {
+          "id": "room_208",
+          "kind": "room",
+          "rect": [
+            140.88,
             13.14,
-            149,
+            149.0,
             21
           ],
           "door": "n",
           "front": "e",
-          "name_en": "Classroom 205",
-          "name_ar": "قاعة 205"
+          "name_en": "Room 208",
+          "name_ar": "قاعة 208"
         },
         {
-          "id": "cls_n_in_w",
+          "id": "room_209",
           "kind": "room",
+          "rect": [
+            132.75,
+            13.14,
+            140.88,
+            21
+          ],
+          "door": "n",
+          "front": "e",
+          "name_en": "Room 209",
+          "name_ar": "قاعة 209"
+        },
+        {
+          "id": "hall_201",
+          "kind": "drawing",
           "rect": [
             124.63,
             13.14,
-            136.1,
+            132.75,
             21
           ],
           "door": "n",
-          "front": "e",
-          "name_en": "Classroom",
-          "name_ar": "قاعة دراسية"
+          "name_en": "Hall 201",
+          "name_ar": "صالة 201"
         },
         {
-          "id": "hall_1",
-          "kind": "hall",
+          "id": "lockers_n",
+          "kind": "locker",
           "rect": [
-            166,
-            -8.8,
-            183.56,
-            1.5
+            144.5,
+            21,
+            148.7,
+            21.6
           ],
-          "door": "w",
-          "front": "e",
-          "name_en": "Lecture Hall 1",
-          "name_ar": "قاعة 1"
-        },
-        {
-          "id": "hall_1_ext",
-          "kind": "lab",
-          "rect": [
-            177.2,
-            -17.6,
-            183.3,
-            -2.4
-          ],
-          "door": "w",
-          "front": "s",
-          "name_en": "Seminar lab",
-          "name_ar": "معمل سيمينار"
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lockers",
+          "name_ar": "لوكرز"
         },
         {
           "id": "wc_f",
@@ -1073,48 +1197,101 @@
           "name_ar": "حمام البنات"
         },
         {
-          "id": "lab_s_out",
-          "kind": "lab",
+          "id": "room_201",
+          "kind": "room",
           "rect": [
-            133.4,
+            153.5,
             -21.5,
             160.4,
             -12.6
           ],
-          "split": 2,
           "door": "n",
           "front": "e",
-          "name_en": "Engineering labs",
-          "name_ar": "معامل هندسية"
+          "name_en": "Room 201",
+          "name_ar": "قاعة 201"
         },
         {
-          "id": "lab_s_in",
+          "id": "room_202",
+          "kind": "room",
+          "rect": [
+            145.3,
+            -21.5,
+            153.5,
+            -12.6
+          ],
+          "door": "n",
+          "front": "e",
+          "name_en": "Room 202",
+          "name_ar": "قاعة 202"
+        },
+        {
+          "id": "room_205",
+          "kind": "room",
+          "rect": [
+            133.4,
+            -21.5,
+            145.3,
+            -12.6
+          ],
+          "door": "n",
+          "front": "e",
+          "name_en": "Room 205",
+          "name_ar": "قاعة 205"
+        },
+        {
+          "id": "exit_s",
+          "kind": "exit",
+          "rect": [
+            129,
+            -21.5,
+            133.4,
+            -12.6
+          ],
+          "door": "n",
+          "name_en": "Emergency stair",
+          "name_ar": "سلم طوارئ"
+        },
+        {
+          "id": "room_203",
+          "kind": "room",
+          "rect": [
+            140.94,
+            -9.3,
+            149.0,
+            -1.23
+          ],
+          "door": "s",
+          "front": "e",
+          "name_en": "Room 203",
+          "name_ar": "قاعة 203"
+        },
+        {
+          "id": "room_204",
+          "kind": "room",
+          "rect": [
+            132.89,
+            -9.3,
+            140.94,
+            -1.23
+          ],
+          "door": "s",
+          "front": "e",
+          "name_en": "Room 204",
+          "name_ar": "قاعة 204"
+        },
+        {
+          "id": "lab_3",
           "kind": "lab",
           "rect": [
             124.83,
             -9.3,
-            149,
+            132.89,
             -1.23
           ],
-          "split": 2,
           "door": "s",
           "front": "e",
-          "name_en": "Computer labs",
-          "name_ar": "معامل حاسب"
-        },
-        {
-          "id": "lockers_n",
-          "kind": "locker",
-          "rect": [
-            144.5,
-            21,
-            148.7,
-            21.6
-          ],
-          "open": true,
-          "nolabel": true,
-          "name_en": "Lockers",
-          "name_ar": "لوكرز"
+          "name_en": "Lab 3",
+          "name_ar": "معمل 3"
         },
         {
           "id": "lockers_s",

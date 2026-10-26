@@ -1,5 +1,5 @@
 {
-  "_note": "Links the building and room names used by the EPNU CS Hub timetable (backend Seed/ReferenceData.cs) to model building IDs and interior rooms (data/interiors/*.json). Building names are matched first; 'unassigned' covers timetable rooms that have no building in the timetable (today the Level Two halls; Level One is set to Engineering Building 1), matched by room name only, so they are shown as assumed until the faculty confirms them. Floor = interior floor id. Engineering Building 2 (bld_e1) has its ground and first floor mapped so far; its Room 205 and Halls 1-4 are not on the indoor map yet.",
+  "_note": "Links the building and room names used by the EPNU CS Hub timetable (backend Seed/ReferenceData.cs) to model building IDs and interior rooms (data/interiors/*.json). Building names are matched first; 'unassigned' covers timetable rooms that have no building in the timetable (today the Level Two halls; Level One is set to Engineering Building 1), matched by room name only, so they are shown as assumed until the faculty confirms them. Floor = interior floor id. Engineering Building 2 (bld_e1): ground, first and second floor follow the faculty's plans (second floor: Rooms 201-210, Lab 3, Hall 201, Halls 1 and 2); Halls 3 and 4 are on the third floor.",
   "buildings": {
     "Main Building": "bld_main",
     "المبنى الرئيسي": "bld_main",
@@ -151,6 +151,54 @@
       "Hall 4": {
         "floor": "3",
         "room": "hall_4"
+      },
+      "Room 201": {
+        "floor": "2",
+        "room": "room_201"
+      },
+      "Room 202": {
+        "floor": "2",
+        "room": "room_202"
+      },
+      "Room 203": {
+        "floor": "2",
+        "room": "room_203"
+      },
+      "Room 204": {
+        "floor": "2",
+        "room": "room_204"
+      },
+      "Room 206": {
+        "floor": "2",
+        "room": "room_206"
+      },
+      "Room 207": {
+        "floor": "2",
+        "room": "room_207"
+      },
+      "Room 208": {
+        "floor": "2",
+        "room": "room_208"
+      },
+      "Room 209": {
+        "floor": "2",
+        "room": "room_209"
+      },
+      "Room 210": {
+        "floor": "2",
+        "room": "room_210"
+      },
+      "Lab 3": {
+        "floor": "2",
+        "room": "lab_3"
+      },
+      "Hall 201": {
+        "floor": "2",
+        "room": "hall_201"
+      },
+      "صالة 201": {
+        "floor": "2",
+        "room": "hall_201"
       }
     }
   },
