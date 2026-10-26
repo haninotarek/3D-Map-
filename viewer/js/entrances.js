@@ -98,6 +98,9 @@ export function createEntrances(scene) {
   function update(dt, walker, insideId = null) {
     let moving = false;
     for (const d of doors) {
+      // inside a building the campus model is hidden, so other buildings' doors would float in the void
+      const show = !insideId || d.building === insideId;
+      if (d.group.visible !== show) { d.group.visible = show; moving = true; }
       const showLintel = d.building === insideId;
       if (d.lintel && d.lintel.visible !== showLintel) { d.lintel.visible = showLintel; moving = true; }
       const want = walker && Math.hypot(walker.x - d.at[0], -walker.z - d.at[1]) < OPEN_NEAR ? 1 : 0;
