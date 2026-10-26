@@ -11,6 +11,7 @@ import { createCollisionWorld } from './collision.js';
 import { createRouter, validateNavigationData } from './route.js';
 import { createTour } from './tour.js';
 import { createVoice } from './voice.js';
+import { createEntrances } from './entrances.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -782,6 +783,8 @@ function loop(now) {
   if (state.inside) {
     state.interiors.get(state.inside.id)?.syncCameraCutaway?.(state.camera.position.y, Boolean(state.tour?.active));
   }
+  const walkerPos = state.tour?.active ? state.tour.walkerFigure.group.parent.position : null;
+  if (state.entrances?.update(dt, walkerPos, state.inside?.id || null)) state.needsRender = true;
   const az = state.controls.getAzimuthalAngle();
   $('compass').firstElementChild.style.transform = `rotate(${THREE.MathUtils.radToDeg(az)}deg)`;
   if (state.needsRender) {
@@ -805,6 +808,11 @@ async function main() {
     setProgress(0.95, 'Preparing scene');
     state.root = gltf.scene; state.scene.add(gltf.scene);
     registerItems(gltf.scene);
+    // a real door at every building entrance (the model's facades are solid there)
+    state.entrances = createEntrances(state.scene);
+    for (const it of state.items.values()) {
+      if (it.info.interior) fetch(it.info.interior).then((r) => r.json()).then((d) => { state.entrances.add(d); state.needsRender = true; }).catch(() => {});
+    }
     await initRouting();
     $('loading').classList.add('hidden');
     state.needsRender = true;

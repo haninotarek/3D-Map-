@@ -267,17 +267,19 @@ function cafe(F, fr) {
 
 function lobby(F, fr, desk) {
   if (!desk) return;
-  // Reception desk against the east feature wall facing incoming visitors, clear of entrance & stair paths
-  const u = desk.depth / 2 - 1.65;
+  // Reception desk against the feature wall `desk` names, facing incoming visitors, with the staff chairs behind it.
+  // The frame's front (+u) is the entrance side, so the desk and the corner plants sit at -u: never in the doorway
+  // or on the walk from the entrance to the stairs.
+  const u = -(desk.depth / 2 - 1.65);
   put(F, desk, C.counter, u, 0, 0, 0.65, 3.2, 1.08);
   put(F, desk, C.darkWood, u, 0, 1.08, 0.78, 3.32, 0.05);
-  chair(F, desk, u + 0.72, -0.6, 1);
-  chair(F, desk, u + 0.72, 0.6, 1);
+  chair(F, desk, u - 0.72, -0.6, -1);
+  chair(F, desk, u - 0.72, 0.6, -1);
   for (const side of [-1, 1]) {
-    put(F, desk, C.sofa, desk.depth / 4, side * (desk.width / 2 - 0.55), 0, 2.0, 0.6, 0.44);
-    put(F, desk, C.sofa, desk.depth / 4, side * (desk.width / 2 - 0.26), 0.44, 2.0, 0.12, 0.38);
-    put(F, desk, C.pot, desk.depth / 2 - 0.55, side * (desk.width / 2 - 0.55), 0, 0.42, 0.42, 0.42);
-    put(F, desk, C.plant, desk.depth / 2 - 0.55, side * (desk.width / 2 - 0.55), 0.42, 0.58, 0.58, 0.88);
+    put(F, desk, C.sofa, -desk.depth / 4, side * (desk.width / 2 - 0.55), 0, 2.0, 0.6, 0.44);
+    put(F, desk, C.sofa, -desk.depth / 4, side * (desk.width / 2 - 0.26), 0.44, 2.0, 0.12, 0.38);
+    put(F, desk, C.pot, -(desk.depth / 2 - 0.55), side * (desk.width / 2 - 0.55), 0, 0.42, 0.42, 0.42);
+    put(F, desk, C.plant, -(desk.depth / 2 - 0.55), side * (desk.width / 2 - 0.55), 0.42, 0.58, 0.58, 0.88);
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "_note": "Indicative interior layout of Engineering Building 2 (bld_e1). NOT a survey. First floor: rooms and their order follow the hand-drawn plan (Oct 2026), read with the top of the sheet = east (the spine): the left column is the north wing (toilets, 104, 105, 104, 105, lockers, 105, stair; across the corridor 106, lockers, 106), the right column is the south wing (toilet, lockers, 101, 102, lockers, a crossed-out room; across the corridor 103, lockers, 103, Lab 1); \"loc\" on the sketch = a locker row along the corridor. East row of the spine, as corrected by the faculty: Smart System Lab in the east bump, Hall 101 and Lab 2 next to it with open space between them. Repeated numbers are kept as drawn. Finishes follow the two walk-through videos. Ground floor: same scheme as Engineering Building 1, room uses estimated. Coordinates are local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Rect = [x0, y0, x1, y1]. \"split\": n draws n equal rooms with one label. \"door\": n|s|e|w is the wall with the doorway (one per split room); \"front\": n|s|e|w is the wall the seats face (board/screen); \"tables\": an open area furnished with study tables. Second (2) and Third (3) floors continue the same twin-wing + east spine column grid for multi-floor navigation and Fall 2026 timetable classes.",
+  "_note": "Indicative interior layout of Engineering Building 2 (bld_e1). NOT a survey. First floor: rooms and their order follow the hand-drawn plan (Oct 2026), read with the top of the sheet = east (the spine): the left column is the north wing (toilets, 104, 105, 104, 105, lockers, 105, stair; across the corridor 106, lockers, 106), the right column is the south wing (toilet, lockers, 101, 102, lockers, a crossed-out room; across the corridor 103, lockers, 103, Lab 1); \"loc\" on the sketch = a locker row along the corridor. East row of the spine, as redrawn by the faculty (Oct 2026): Hall 101 – Section B, a passage, then the Smart System Lab in the south-east corner; Lab 2 at the north end. Room 106 is one room with two doors. Repeated numbers are kept as drawn. Finishes follow the two walk-through videos. Ground floor: same scheme as Engineering Building 1, room uses estimated. Coordinates are local ENU metres (x = East, y = North), the same frame as data/osm_footprints_local.json. Rect = [x0, y0, x1, y1]. \"split\": n draws n equal rooms with one label. \"door\": n|s|e|w is the wall with the doorway (one per split room); \"front\": n|s|e|w is the wall the seats face (board/screen); \"tables\": an open area furnished with study tables. Second (2) and Third (3) floors continue the same twin-wing + east spine column grid for multi-floor navigation and Fall 2026 timetable classes.",
   "building_id": "bld_e1",
   "name_en": "Engineering Building 2",
   "name_ar": "مبنى الهندسة 2",
@@ -423,7 +423,7 @@
           "rect": [
             165,
             -21.5,
-            183.56,
+            172.5,
             -12.6
           ],
           "open": true,
@@ -437,7 +437,7 @@
           "rect": [
             166,
             -20.4,
-            183.3,
+            172.2,
             -19.8
           ],
           "open": true,
@@ -479,7 +479,7 @@
           "rect": [
             166,
             -12.6,
-            183.56,
+            172.5,
             -8.8
           ],
           "open": true,
@@ -491,10 +491,10 @@
           "id": "hall_101",
           "kind": "drawing",
           "rect": [
-            166,
-            -8.8,
+            172.5,
+            -4.2,
             183.56,
-            1.5
+            11.6
           ],
           "door": "w",
           "name_en": "Hall 101 – Section B",
@@ -504,10 +504,10 @@
           "id": "smart_lab",
           "kind": "lab",
           "rect": [
-            177.2,
-            -17.6,
-            183.3,
-            -2.4
+            172.5,
+            -21.5,
+            183.56,
+            -8.0
           ],
           "door": "w",
           "front": "s",
@@ -627,7 +627,7 @@
           "id": "room_106",
           "kind": "room",
           "rect": [
-            136.1,
+            124.63,
             13.14,
             144.2,
             21
@@ -635,7 +635,8 @@
           "door": "n",
           "front": "e",
           "name_en": "Room 106",
-          "name_ar": "قاعة 106"
+          "name_ar": "قاعة 106",
+          "doors": 2
         },
         {
           "id": "lockers_n_in",
@@ -650,20 +651,6 @@
           "nolabel": true,
           "name_en": "Lockers",
           "name_ar": "لوكرز"
-        },
-        {
-          "id": "room_106_b",
-          "kind": "room",
-          "rect": [
-            124.63,
-            13.14,
-            136.1,
-            21
-          ],
-          "door": "n",
-          "front": "e",
-          "name_en": "Room 106",
-          "name_ar": "قاعة 106"
         },
         {
           "id": "lockers_n",
@@ -837,9 +824,37 @@
           "kind": "lobby",
           "rect": [
             166,
-            1.5,
+            -8.8,
+            172.5,
+            13
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
+          "id": "lobby_e_n",
+          "kind": "lobby",
+          "rect": [
+            172.5,
+            11.6,
             183.56,
             13
+          ],
+          "open": true,
+          "nolabel": true,
+          "name_en": "Lobby",
+          "name_ar": "اللوبي"
+        },
+        {
+          "id": "lobby_e_mid",
+          "kind": "lobby",
+          "rect": [
+            172.5,
+            -8.0,
+            183.56,
+            -4.2
           ],
           "open": true,
           "nolabel": true,

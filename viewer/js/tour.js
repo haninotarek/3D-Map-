@@ -371,6 +371,12 @@ export function createTour({ scene, camera, controls, onStep, onFloor, onProgres
     const cw = activeCollisionWorld(s.kind);
     if (cw) {
       cw.sweepMove(_prevPos, _intendedPos, walker.position, floorHint, collisionTelemetry);
+      // Never let an obstacle hold the walker back for good: its height follows the path (stairs), so a walker
+      // stuck a metre behind would float up through the ceiling. Rejoin the path instead.
+      if (Math.hypot(walker.position.x - _intendedPos.x, walker.position.z - _intendedPos.z) > 1.0) {
+        walker.position.copy(_intendedPos);
+        collisionTelemetry.pathRejoins = (collisionTelemetry.pathRejoins || 0) + 1;
+      }
       recordAuditAt(walker.position.x, walker.position.y, walker.position.z, s.kind, floorHint);
     } else {
       walker.position.copy(_intendedPos);
