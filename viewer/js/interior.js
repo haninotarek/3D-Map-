@@ -96,7 +96,22 @@ function stairEastBlocked(interiorData, rect) {
 export function stairDoorSpec(interiorData, stairRoom) {
   const [x0, y0, x1, y1] = stairRoom.rect;
   const alongX = (x1 - x0) >= (y1 - y0);
-  if (alongX && stairEastBlocked(interiorData, stairRoom.rect)) {
+  const blocked = alongX && stairEastBlocked(interiorData, stairRoom.rect);
+  if (alongX && stairRoom.door === 'e') {
+    // A floor may open its stairwell eastward even when lifts sit east of the shaft higher up
+    // (Engineering Building 1 ground floor: the right stair's door faces the lobby by the main entrance).
+    const midY = (y0 + y1) / 2;
+    return {
+      side: 'e',
+      doorW: 1.50,
+      eastLanding: blocked ? 1.65 : 1.50,
+      at: [x1, midY],
+      outside: [x1 + 1.35, midY],
+      landingMid: [x1 - 0.85, midY],
+      signPos: [x1 + 0.42, midY],
+    };
+  }
+  if (blocked) {
     // East wall borders lift shafts on upper floors (`bld_e2`): open directly from the 1.65 m East Landing
     // onto the 3.0 m North Corridor (`stair_n`) or 3.0 m South Corridor (`stair_s`).
     const eastLanding = 1.65;
@@ -1208,11 +1223,10 @@ export function buildInterior(data) {
     g.add(slab);
 
     // 2. Solid 4 cm acoustic ceiling slab at y = clearH on EVERY occupied floor (`G`, `1`, `2`, `3`)
-    const ceilingHoleRects = [];
+    //    No ceiling over any stairwell, on any floor (top floor included): the shaft stays open above the stairs.
+    const ceilingHoleRects = f.rooms.filter((r) => r.kind === 'stair')
+      .map(({ rect: [sx0, sy0, sx1, sy1] }) => [sx0 + 0.02, sy0 + 0.02, sx1 - 0.02, sy1 - 0.02]);
     if (fi < data.floors.length - 1) {
-      for (const curStair of f.rooms.filter((r) => r.kind === 'stair')) {
-        ceilingHoleRects.push(stairShaftHoleRect(curStair.rect, data));
-      }
       for (const nextVoid of data.floors[fi + 1].rooms.filter((r) => r.kind === 'void')) {
         ceilingHoleRects.push(nextVoid.rect);
       }
@@ -1257,11 +1271,23 @@ export function buildInterior(data) {
       if (r.kind === 'void') {
         atriumBalustrade(B, r.rect);
       } else if (r.kind !== 'locker') {
-        const w = x1 - x0, d = y1 - y0;
+        // Floor finish. Over a stairwell rising from the floor below, only the arrival landing gets a floor:
+        // a full patch would lie across the open shaft and the walker would climb up through it.
+        // (The stair below may differ by a few cm, as in Engineering Building 1, so match by overlap.)
+        let [px0, py0, px1, py1] = r.rect;
+        const below = r.kind === 'stair' && fi > 0
+          ? data.floors[fi - 1].rooms.find((s) => s.kind === 'stair'
+            && Math.min(s.rect[2], x1) - Math.max(s.rect[0], x0) > 1 && Math.min(s.rect[3], y1) - Math.max(s.rect[1], y0) > 1)
+          : null;
+        if (below) {
+          const hole = stairShaftHoleRect(below.rect, data);
+          if ((x1 - x0) >= (y1 - y0)) px0 = hole[2]; else py0 = hole[3];
+        }
+        const w = px1 - px0, d = py1 - py0;
         if (w > 0.05 && d > 0.05) {
           B.add(
             getFloorMaterial(KIND_FLOOR[r.kind] ?? KIND_FLOOR.room),
-            (x0 + x1) / 2, 0.010, -(y0 + y1) / 2,
+            (px0 + px1) / 2, 0.010, -(py0 + py1) / 2,
             w, 0.012, d,
           );
         }

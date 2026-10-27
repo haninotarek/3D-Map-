@@ -671,17 +671,19 @@ export function createRouter({ scene, getItem, getInterior, net, index }) {
           }
 
           const landY = fk1.level + FLOOR_PATCH_Y;
+          // the upper floor's own stair door (a floor can open its stairwell on another side than the one below)
+          const upSpec = stairDoorSpec(data, fk1.rooms.find((x) => x.id === stairId) || stair);
           if (k + 1 < floorIndex) {
             // Verified intermediate landing strictly inside solid East Landing (`midOutside === 0`!)
             add([landX, prof.laneB], landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
-            add(sp.landingMid, landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+            add([landX, upSpec.landingMid[1]], landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
             add([landX, prof.laneA], landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
           } else {
             // Verified destination floor landing -> orthogonal exit through center of double fire doors
             add([landX, prof.laneB], landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
-            add(sp.landingMid, landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
-            add(sp.at, landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
-            add(sp.outside, landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+            add(upSpec.landingMid, landY, climbStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+            add(upSpec.at, landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
+            add(upSpec.outside, landY, floorStep, k + 1, 'landing', { verifiedLanding: k + 1 });
           }
         }
         if (blocked) notes.push(t.noStairs);

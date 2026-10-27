@@ -16,7 +16,7 @@
         {"id": "lobby", "kind": "lobby", "rect": [160.34, -70.0, 186.91, -55.0], "open": true, "name_en": "Lobby", "name_ar": "اللوبي"},
         {"id": "cafeteria", "kind": "cafe", "rect": [164.5, -78.2, 186.91, -70.0], "name_en": "Cafeteria", "name_ar": "الكافتريا"},
         {"id": "stair_n", "kind": "stair", "rect": [148, -55, 158, -46.5], "name_en": "Left stair", "name_ar": "السلم الشمال"},
-        {"id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70.14], "name_en": "Right stair", "name_ar": "السلم اليمين"},
+        {"id": "stair_s", "kind": "stair", "rect": [148, -78.2, 158, -70.14], "door": "e", "name_en": "Right stair", "name_ar": "السلم اليمين"},
         {"id": "off_n_out_e", "kind": "office", "rect": [159.3, -43.5, 186.91, -35.0], "split": 2, "name_en": "Admin offices", "name_ar": "مكاتب إدارية"},
         {"id": "wc_m", "kind": "wc", "rect": [150.8, -43.5, 159.3, -35.0], "name_en": "Men's WC", "name_ar": "حمام الرجال"},
         {"id": "off_n_out_w", "kind": "office", "rect": [125.23, -43.5, 150.8, -35.0], "split": 3, "name_en": "Admin offices", "name_ar": "مكاتب إدارية"},
