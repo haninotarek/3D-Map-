@@ -12,7 +12,7 @@
 import { login, verify } from './_lib/auth.js';
 import {
   LEVELS, TERMS, EXAMS, levelOf, termOf, examOf, getSettings, setVisibleExam, summary,
-  getTerm, saveTerm, clearTerm, getExamLevel, saveSchedule, addSheets, deleteSheet, clearExamLevel,
+  getTerm, saveTerm, clearTerm, getExamLevel, saveSchedule, addSheets, deleteSheet, clearExamLevel, refreshPublicView,
 } from './_lib/timetable.js';
 import { getStore } from './_lib/store.js';
 
@@ -30,17 +30,20 @@ export default async function handler(req, res) {
   try {
     if (body.action === 'login') return res.status(200).json(await login(req, body.password));
     if (!verify(req)) return res.status(401).json({ error: 'سجّل دخول تاني', relogin: true });
+    if (body.action === 'state') return res.status(200).json(await state(String(body.section || '')));
+    let out;
     switch (body.action) {
-      case 'state': return res.status(200).json(await state(String(body.section || '')));
-      case 'setVisible': return res.status(200).json(await setVisibleExam(body.exam ? examOf(body.exam) : ''));
-      case 'saveTerm': return res.status(200).json(await saveTerm(termOf(body.term), levelOf(body.level), body.classes, body.source));
-      case 'clearTerm': await clearTerm(termOf(body.term), levelOf(body.level)); return res.status(200).json({ ok: true });
-      case 'saveSchedule': return res.status(200).json(await saveSchedule(examOf(body.period), levelOf(body.level), body.exams, body.source));
-      case 'addSheets': return res.status(200).json(await addSheets(examOf(body.period), levelOf(body.level), body.sheets));
-      case 'deleteSheet': await deleteSheet(examOf(body.period), levelOf(body.level), String(body.id)); return res.status(200).json({ ok: true });
-      case 'clear': await clearExamLevel(examOf(body.period), levelOf(body.level), body.what); return res.status(200).json({ ok: true });
+      case 'setVisible': out = await setVisibleExam(body.exam ? examOf(body.exam) : ''); break;
+      case 'saveTerm': out = await saveTerm(termOf(body.term), levelOf(body.level), body.classes, body.source); break;
+      case 'clearTerm': await clearTerm(termOf(body.term), levelOf(body.level)); out = { ok: true }; break;
+      case 'saveSchedule': out = await saveSchedule(examOf(body.period), levelOf(body.level), body.exams, body.source); break;
+      case 'addSheets': out = await addSheets(examOf(body.period), levelOf(body.level), body.sheets); break;
+      case 'deleteSheet': await deleteSheet(examOf(body.period), levelOf(body.level), String(body.id)); out = { ok: true }; break;
+      case 'clear': await clearExamLevel(examOf(body.period), levelOf(body.level), body.what); out = { ok: true }; break;
       default: return res.status(400).json({ error: 'action مش معروف' });
     }
+    await refreshPublicView();   // students read this ready-made copy (GET /api/timetable)
+    return res.status(200).json(out);
   } catch (err) {
     if (!err.status) console.error(err);
     return res.status(err.status || 500).json({ error: err.status ? err.message : `حصلت مشكلة في السيرفر: ${err.message}` });

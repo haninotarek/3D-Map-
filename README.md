@@ -53,7 +53,8 @@ The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`).
   - `GET /api/timetable` returns the published term timetables and the visible exam period (no student data).
   - `GET /api/timetable?id=…` returns one student's rooms in the visible exam period, plus their first name only.
   - `POST /api/admin` handles the TA actions and needs the password token.
-  - Full names stay on the admin side. ID lookups are rate-limited per IP.
+  - Full names stay on the admin side. ID lookups are rate-limited per IP (1,500 per 10 minutes, generous because mobile carriers share IPs).
+  - Load: students read a ready-made copy (`pub:view`, rebuilt after every TA write), and Vercel's CDN caches both GET answers for a minute, so a full exam cohort costs about one database read per minute. TA changes reach students within about a minute.
 - **Vercel setup (once):**
   1. The project's **Root Directory** must be `viewer`.
   2. Under Storage / Marketplace, add **Upstash for Redis** and connect it to the project.

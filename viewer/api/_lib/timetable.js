@@ -10,6 +10,7 @@
 //                          students: [{ id, name, status }] }]           (one sheet = one room for one exam)
 //     <p>:seat           hash  studentId -> { first, exams: [{ level, course, code, date, from, to, building, floor, room, roomRaw, seq }] }
 //   cfg:public           { exam: 'midterm' | 'midyear' | 'final' | '' }  which exam tab students see (none = hidden)
+//   pub:view             what GET /api/timetable returns, rebuilt after every TA write (no student data)
 // <p> is "mt" for the midterm (the keys it used before the other periods existed), "my" and "fy" for the others.
 // The seat hash is rebuilt from every level's sheets whenever sheets change, so a lookup is one HGET and full
 // names never leave the admin side (a lookup returns the first name only, as a check).
@@ -171,15 +172,22 @@ async function examView(period) {
   return { period, label_ar: EXAMS[period], levels };
 }
 
-/** Everything the student panel needs: published term timetables (per level) and the visible exam period, if any. */
+/** Everything the student panel needs: published term timetables (per level) and the visible exam period, if any.
+ *  It is kept ready in `pub:view` and rebuilt whenever TAs publish (refreshPublicView), so a student's page
+ *  load costs one small read instead of ~17; it is built on demand the first time. */
 export async function publicView() {
+  return (await getStore().get('pub:view')) || refreshPublicView();
+}
+export async function refreshPublicView() {
   const { exam } = await getSettings();
   const terms = {};
   await Promise.all(Object.keys(TERMS).map(async (term) => {
     const docs = await Promise.all(LEVELS.map((L) => getTerm(term, L)));
     terms[term] = docs.map((d, i) => (d?.classes?.length ? { level: LEVELS[i], classes: d.classes, updatedAt: d.updatedAt } : null)).filter(Boolean);
   }));
-  return { terms, exam: exam ? await examView(exam) : null };
+  const view = { terms, exam: exam ? await examView(exam) : null, builtAt: new Date().toISOString() };
+  await getStore().set('pub:view', view);
+  return view;
 }
 
 /** A student's rooms in the visible exam period. */
