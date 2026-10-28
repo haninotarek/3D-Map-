@@ -15,7 +15,6 @@
   --shadow: 0 10px 30px rgba(17, 37, 89, 0.16), 0 2px 6px rgba(17, 37, 89, 0.08);
   --radius: 16px;
   --topbar-h: 64px;
-  --footer-h: 24px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
@@ -199,8 +198,6 @@ html.inside .label3d { opacity: 0.55; }
 .err-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
 #error-text { font-size: 0.9rem; color: #b42318; }
 
-.attrib { height: var(--footer-h); font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; justify-content: center;
-  background: #fff; border-top: 1px solid var(--line); padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .noscript { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); font-size: 1.1rem; }
 
 @media (prefers-reduced-motion: reduce) { .panel, .loading-logo::after, .label3d { animation: none; transition: none; } }
@@ -230,7 +227,6 @@ html.inside .label3d { opacity: 0.55; }
     border-radius: 4px; background: #c9d4e3; transform: translateX(-50%); }
   .label3d { font-size: 11px; padding: 2px 8px 2px 6px; }
   .label3d .lid { display: none; }
-  .attrib { font-size: 0.62rem; }
 }
 
 /* ---------- directions ---------- */
@@ -253,7 +249,7 @@ html.inside .label3d { opacity: 0.55; }
 .route-pin.end { background: #ff7a1a; font-size: 13px; }
 
 /* ---------- embedded in another page ---------- */
-html.embed .topbar, html.embed .attrib { display: none; }
+html.embed .topbar { display: none; }
 html.embed #btn-help { display: none; }
 @media (max-width: 720px) {
   #route-panel { left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: 45%; border-radius: 20px 20px 0 0; z-index: 5; background: #fff; }
@@ -311,7 +307,7 @@ html.touring #route-panel { top: 16px; max-height: calc(100% - 260px); }
   --sched-w: 380px;
   --s-ink: #1f2430; --s-muted: #7a7f8a; --s-line: #ececec; --s-soft: #f6f6f5; --s-card: #f7f1e6; --s-card-2: #efe6d6;
   --s-accent: #3b6fe0;
-  --lec: #3b82f6; --sec: #22a06b; --lab: #f08a3c; --mid: #e11d48;
+  --lec: #3b82f6; --sec: #22a06b; --lab: #f08a3c;
 }
 #sched, #view-tabs, #legend, #floor-rail { font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
 #sched svg, #view-tabs svg { width: 17px; height: 17px; flex: none; }
@@ -339,13 +335,12 @@ html.sched-open #sched { display: flex; }
 .sched-head .close:hover { color: var(--s-ink); }
 .sched-body { flex: 1; overflow-y: auto; padding: 8px 16px 18px; scrollbar-width: thin; }
 
-/* term tabs: الترم الأول / الترم التاني / الميدترم */
+/* term tabs: الترم الأول / الترم التاني */
 .term-tabs { display: flex; gap: 4px; background: var(--s-soft); padding: 4px; border-radius: 14px; margin-bottom: 12px; }
 .term-tabs button { flex: 1; border: none; background: transparent; color: var(--s-muted); font: inherit; font-size: 0.84rem; font-weight: 700;
   padding: 8px 4px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
 .term-tabs button:hover { color: var(--s-ink); }
 .term-tabs button.on { background: #fff; color: var(--s-ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); }
-.term-tabs button.exam.on { color: var(--mid); }
 
 .search { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 0 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06); border: 1px solid #f0f0f0; }
@@ -399,7 +394,6 @@ html.sched-open #sched { display: flex; }
 .ses.t-lecture { --c: var(--lec); }
 .ses.t-section { --c: var(--sec); }
 .ses.t-lab { --c: var(--lab); }
-.ses.t-midterm { --c: var(--mid); }
 .go { border: none; background: transparent; color: var(--s-accent); font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; padding: 2px 0;
   display: inline-flex; align-items: center; gap: 4px; }
 .go:hover { text-decoration: underline; }
@@ -410,29 +404,6 @@ html.sched-open #sched { display: flex; }
 .not-yet .ny-icon { font-size: 1.7rem; line-height: 1; }
 .not-yet h4 { margin: 10px 0 6px; font-size: 0.98rem; color: var(--s-ink); }
 .not-yet p { margin: 0 0 14px; font-size: 0.84rem; color: var(--s-muted); line-height: 1.7; }
-
-/* midterm: "اعرف لجنتك" — the student's ID gives the room of each of their exams (/api/midterm?id=) */
-#sched-seat { margin-top: 14px; }
-#sched-seat[hidden] { display: none; }
-.seat-box { background: #fff5f6; border: 1px solid #fbd5dc; border-radius: 18px; padding: 12px 14px; }
-.seat-box.found { background: #f0fdf4; border-color: #bbf7d0; }
-.seat-box label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: var(--s-ink); }
-.seat-row { display: flex; gap: 6px; }
-.seat-row input { flex: 1; min-width: 0; border: 1px solid var(--s-line); border-radius: 12px; padding: 9px 12px; font: inherit; font-size: 0.95rem; background: #fff;
-  direction: ltr; text-align: right; letter-spacing: 0.04em; }
-.seat-row input:focus { outline: 2px solid #cfdcf8; border-color: var(--s-accent); }
-.seat-row button { border: none; background: var(--mid); color: #fff; border-radius: 12px; padding: 9px 16px; font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
-.seat-box.found .seat-row button[type="submit"] { background: var(--sec); }
-.seat-row .seat-clear { background: var(--s-soft); color: var(--s-muted); padding: 9px 12px; }
-.seat-msg { margin: 8px 2px 0; font-size: 0.8rem; color: var(--s-muted); line-height: 1.6; }
-.ses-who .mine { color: var(--sec); }
-.ses-course small { font-weight: 600; color: var(--s-muted); font-size: 0.75rem; }
-
-/* toast (seat lookup messages) */
-.sched-toast { position: absolute; left: 14px; right: 14px; bottom: 16px; padding: 12px 14px; border-radius: 14px; font-size: 0.85rem; line-height: 1.6;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-.sched-toast.err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-.sched-toast[hidden] { display: none; }
 
 /* legend (only inside a building) */
 #legend { position: absolute; right: 16px; bottom: 16px; z-index: 3; display: none; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 380px; }
@@ -498,15 +469,6 @@ html.touring #legend, html.touring #view-tabs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
 
-/* footer: one quiet line, OpenStreetMap credit kept (ODbL) */
-.attrib { justify-content: center; gap: 12px; padding: 0 16px; font-size: 0.72rem; color: var(--s-muted); background: #fff;
-  border-top: 1px solid var(--s-line); font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
-.attrib span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.attrib .osm { flex: none; }
-.attrib .osm::before { content: "·"; margin-inline-end: 12px; }
-.attrib a { color: inherit; }
-@media (max-width: 720px) { .attrib > span:first-child, .attrib .osm::before { display: none; } .attrib { justify-content: center; } }
-
 /* ---- voice guidance row + navigation state badge (tour card) ---- */
 #voice-row { position: relative; display: flex; gap: 8px; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line, #e6e2da); }
 .nav-state { font-size: 0.72rem; font-weight: 600; color: #b35a00; background: #fdeadd; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
@@ -538,12 +500,126 @@ html.touring #tour-card.min .tour-progress { height: 3px; }
 .label3d .lar { color: var(--muted, #5b6472); font-weight: 500; font-size: 11px; }
 .label3d.active .lar { color: #dbe7f6; }
 @media (max-width: 720px) { #btn-labels { top: 10px; left: 10px; width: 38px; height: 38px; font-size: 16px; } }
-ls toggle button + bilingual label text ---- */
-#btn-labels { position: absolute; top: 16px; left: 16px; z-index: 7; width: 42px; height: 42px; border-radius: 12px;
-  border: 1px solid #d8d3c8; background: rgba(255,255,255,.92); font-size: 18px; cursor: pointer; line-height: 1;
-  box-shadow: 0 3px 10px rgba(17,37,89,.18); }
-#btn-labels:hover { background: #fff; }
-#btn-labels.is-off { opacity: .55; background: #f1ede4; }
-.label3d .lar { color: var(--muted, #5b6472); font-weight: 500; font-size: 11px; }
-.label3d.active .lar { color: #dbe7f6; }
-@media (max-width: 720px) { #btn-labels { top: 10px; left: 10px; width: 38px; height: 38px; font-size: 16px; } }
+
+/* ---------- «وصلني للجنتي» (js/exam-finder.js) ---------- */
+/* Plain, like a maps app: a round button, a white panel, simple lists, one colour (the route orange). */
+:root { --ex: #ee6a1f; --ex-dark: #d65a12; --ex-tint: #fff4ec; }
+#exam, #exam button { font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
+#exam svg { width: 18px; height: 18px; flex: none; }
+
+/* round floating button, bottom-left (the floor rail is on the right) */
+.ex-fab { position: absolute; left: 20px; bottom: 22px; z-index: 6; width: 58px; height: 58px; border-radius: 50%; border: none; padding: 0;
+  display: grid; place-items: center; background: var(--ex); color: #fff; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); transition: background 0.15s, transform 0.15s, opacity 0.2s, left 0.25s; }
+.ex-fab svg { width: 26px; height: 26px; }
+.ex-fab:hover { background: var(--ex-dark); }
+.ex-fab:active { transform: scale(0.95); }
+.ex-fab:focus-visible { outline: 3px solid #ffd2b0; outline-offset: 3px; }
+html.exam-open .ex-fab { opacity: 0; pointer-events: none; }
+html.sched-open .ex-fab { left: calc(var(--sched-w) + 32px); }
+
+/* the panel */
+#exam { position: absolute; left: 16px; bottom: 16px; width: 380px; max-height: calc(100% - 32px); z-index: 7; display: flex; flex-direction: column;
+  background: #fff; border-radius: 16px; overflow: hidden; color: var(--s-ink); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16);
+  opacity: 0; visibility: hidden; transform: translateY(12px); transition: opacity 0.18s, transform 0.2s ease-out, visibility 0s linear 0.2s; }
+html.exam-open #exam { opacity: 1; visibility: visible; transform: none; transition: opacity 0.18s, transform 0.2s ease-out; }
+
+.ex-head { position: relative; display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; border-bottom: 1px solid var(--s-line); flex: none; }
+.ex-grab { display: none; }
+.ex-titles { flex: 1; min-width: 0; }
+.ex-titles h2 { margin: 0; font-size: 1.08rem; font-weight: 700; }
+.ex-titles p { margin: 2px 0 0; font-size: 0.78rem; color: var(--s-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-close { border: none; background: transparent; width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; color: var(--s-muted); flex: none; }
+.ex-close:hover { background: var(--s-soft); color: var(--s-ink); }
+.ex-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; scrollbar-width: thin; overscroll-behavior: contain; }
+.ex-field + .ex-field { margin-top: 12px; }
+
+/* dropdowns: a form field; the list opens below it, in place */
+.dd-label { display: block; font-size: 0.8rem; font-weight: 600; color: #4b5563; margin-bottom: 6px; }
+.dd-btn { width: 100%; min-height: 46px; display: flex; align-items: center; gap: 8px; text-align: right; cursor: pointer; padding: 8px 12px;
+  border: 1px solid #d9dce1; border-radius: 10px; background: #fff; font: inherit; color: var(--s-ink); transition: border-color 0.15s; }
+.dd-btn:hover { border-color: #b9bec7; }
+.dd.open .dd-btn, .dd-btn:focus-visible { outline: none; border-color: var(--ex); box-shadow: 0 0 0 3px rgba(238, 106, 31, 0.15); }
+.dd-btn:disabled { cursor: default; background: var(--s-soft); border-color: var(--s-line); }
+.dd-value { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dd-ph { color: #9aa0aa; font-size: 0.93rem; }
+.dd-chev { color: var(--s-muted); transition: transform 0.2s; }
+.dd.open .dd-chev { transform: rotate(180deg); }
+.opt-main { font-size: 0.93rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.opt-sub { font-size: 0.76rem; color: var(--s-muted); }
+.opt-sub em { font-style: normal; font-weight: 700; color: var(--ex-dark); }
+.dd-btn .opt-sub em { color: inherit; font-weight: 400; }
+.dd-pop { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.2s ease-out; }
+.dd.open .dd-pop { grid-template-rows: 1fr; }
+.dd-list { min-height: 0; overflow: hidden; list-style: none; margin: 0; padding: 0; border-radius: 10px; }
+.dd.open .dd-list { margin-top: 4px; overflow-y: auto; max-height: 300px; border: 1px solid #d9dce1; background: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+.dd-list li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; }
+.dd-list li + li { border-top: 1px solid #f0f1f3; }
+.dd-list li:hover, .dd-list li:focus { outline: none; background: var(--s-soft); }
+.dd-list li.dim .opt-main { color: #9aa0aa; }
+.dd-list li svg { color: var(--ex); }
+.opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+
+.ex-hint { margin: 16px 2px 0; font-size: 0.85rem; color: var(--s-muted); line-height: 1.7; }
+
+/* the exam */
+.ex-info { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--s-line); }
+.ex-course { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ex-course h3 { margin: 0; font-size: 1.12rem; font-weight: 700; line-height: 1.35; text-align: right; }
+.ex-course span { flex: none; font-size: 0.76rem; font-weight: 600; color: var(--s-muted); }
+.ex-meta { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.ex-meta li { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #374151; }
+#exam .ex-meta svg { width: 17px; height: 17px; color: var(--s-muted); }
+.ex-meta small { margin-inline-start: auto; font-size: 0.76rem; font-weight: 600; color: var(--s-muted); }
+.ex-meta small.st-today, .ex-meta small.st-tomorrow { color: var(--ex-dark); }
+.ex-meta small.st-live { color: #15803d; }
+
+/* the rooms: a plain list, one row per room */
+.ex-list-head { margin-top: 20px; }
+.ex-list-head h4 { margin: 0; font-size: 0.98rem; font-weight: 700; }
+.ex-list-head p { margin: 2px 0 0; font-size: 0.8rem; color: var(--s-muted); }
+.ex-group { margin-top: 12px; }
+.ex-group-name { font-size: 0.76rem; font-weight: 600; color: var(--s-muted); margin: 0 2px 6px; }
+.ex-rooms { list-style: none; margin: 0; padding: 0; border: 1px solid var(--s-line); border-radius: 10px; overflow: hidden; }
+.ex-rooms li + li { border-top: 1px solid var(--s-line); }
+.ex-room { width: 100%; display: flex; align-items: center; gap: 8px; padding: 12px; border: none; background: #fff; font: inherit; color: var(--s-ink);
+  text-align: right; cursor: pointer; transition: background 0.12s; }
+.ex-room:hover { background: var(--s-soft); }
+.ex-room:focus-visible { outline: 2px solid var(--ex); outline-offset: -2px; }
+.ex-room:disabled { opacity: 0.5; cursor: default; }
+.rm-name { flex: 1; font-size: 0.95rem; font-weight: 600; }
+.rm-note { font-size: 0.72rem; color: var(--s-muted); }
+.rm-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #c4c8cf; flex: none; transition: border-color 0.12s, border-width 0.12s; }
+.ex-room.sel { background: var(--ex-tint); }
+.ex-room.sel .rm-radio { border: 5px solid var(--ex); }
+
+/* «وديني», at the bottom once a room is chosen */
+.ex-cta { display: none; }
+.ex-cta.on { display: flex; flex: none; align-items: center; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--s-line); background: #fff; }
+.cta-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cta-text b { font-size: 1rem; font-weight: 700; }
+.cta-text small { font-size: 0.76rem; color: var(--s-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-go { border: none; height: 44px; padding: 0 26px; border-radius: 10px; background: var(--ex); color: #fff; font: inherit; font-size: 0.96rem; font-weight: 700;
+  cursor: pointer; flex: none; transition: background 0.15s; }
+.ex-go:hover { background: var(--ex-dark); }
+.pk-more { display: none; border: 1px solid var(--s-line); width: 44px; height: 44px; border-radius: 10px; place-items: center; cursor: pointer; background: #fff; color: var(--s-ink); flex: none; }
+
+@media (min-width: 721px) {
+  html.exam-open #view-tabs { left: calc(50% + 190px + 8px); }
+  html.exam-open #tour-card { left: calc(50% + 190px + 8px); width: min(520px, calc(100% - 436px)); }
+  html.exam-open #list-panel, html.exam-open #route-panel { left: 412px; top: 76px; }
+}
+@media (max-width: 720px) {
+  .ex-fab { left: 14px; bottom: 16px; width: 54px; height: 54px; }
+  html.sched-open .ex-fab, html.touring .ex-fab { opacity: 0; pointer-events: none; }
+  #exam { left: 0; right: 0; bottom: 0; width: 100%; height: 85%; max-height: none; border-radius: 16px 16px 0 0; z-index: 8; transform: translateY(24px); }
+  .ex-grab { display: block; position: absolute; top: 6px; left: 50%; width: 36px; height: 4px; border-radius: 4px; background: #d9dce1; transform: translateX(-50%); }
+  .ex-head { padding-top: 20px; }
+  /* after tapping a room: only the bottom bar (room + «وديني») so the map shows the room */
+  #exam.peek { height: auto; }
+  #exam.peek .ex-body, #exam.peek .ex-head { display: none; }
+  #exam.peek .pk-more { display: grid; }
+  #exam.peek .ex-cta { border-top: none; padding-top: 16px; }
+}
+html.embed #exam, html.embed .ex-fab { display: none !important; }
+@media (prefers-reduced-motion: reduce) { #exam, .dd-pop, .ex-fab { transition: none; } }

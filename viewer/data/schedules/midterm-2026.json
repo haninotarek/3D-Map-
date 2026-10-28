@@ -1,0 +1,65 @@
+{
+  "_note": "Mid-term exams, first term 2026/2027, from the faculty's PDFs 'Midterm Level One..Four 27-10.pdf' (Computer Science Program). Every exam is in Engineering Building 2. 'rooms' maps each room name as printed in the PDFs to its key in data/room_index.json. Read by js/exam-finder.js («وصلني للجنتي»).",
+  "title_ar": "امتحانات الميدترم",
+  "term_ar": "الترم الأول 2026/2027",
+  "building": "Engineering Building 2",
+  "rooms": {
+    "مدرج 1": "Hall 1",
+    "مدرج 2": "Hall 2",
+    "مدرج 3": "Hall 3",
+    "مدرج 4": "Hall 4",
+    "صالة 101": "Hall 101",
+    "صالة 104": "Room 104",
+    "صالة 105": "Room 105",
+    "صالة 106": "Room 106",
+    "صالة 201": "Hall 201",
+    "صالة 301": "Hall 301",
+    "معمل 1": "Lab 1",
+    "معمل 2": "Lab 2"
+  },
+  "levels": [
+    {
+      "level": 1,
+      "exams": [
+        { "date": "2026-11-14", "from": "10:30", "to": "11:30", "course": "Fundamentals of Computer Science", "code": "CSP 101", "students": 395, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] },
+        { "date": "2026-11-14", "from": "11:45", "to": "12:45", "course": "Physics I", "code": "PHY 101", "students": 387, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] },
+        { "date": "2026-11-16", "from": "10:30", "to": "11:30", "course": "Mathematics I", "code": "MAT 101", "students": 410, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] },
+        { "date": "2026-11-16", "from": "11:45", "to": "12:45", "course": "Principles of Law and Human Rights", "code": "GUR 0C1", "students": 378, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] },
+        { "date": "2026-11-18", "from": "10:30", "to": "11:30", "course": "Programming Fundamentals", "code": "CSP 141", "students": 387, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] },
+        { "date": "2026-11-18", "from": "11:45", "to": "12:45", "course": "Discrete Mathematics", "code": "MAT 102", "students": 395, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101", "معمل 1", "معمل 2"] }
+      ]
+    },
+    {
+      "level": 2,
+      "exams": [
+        { "date": "2026-11-15", "from": "10:30", "to": "11:30", "course": "Numerical Analysis", "code": "MAT 20X", "students": 295, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101"] },
+        { "date": "2026-11-15", "from": "11:45", "to": "12:45", "course": "Logic Design", "code": "CSP 211", "students": 289, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "مدرج 4", "صالة 101"] },
+        { "date": "2026-11-17", "from": "10:30", "to": "11:30", "course": "Object-Oriented Programming", "code": "CSP 241", "students": 246, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "صالة 104", "صالة 105"] },
+        { "date": "2026-11-17", "from": "11:45", "to": "12:45", "course": "Computer Skills", "code": "GUR 1C1", "students": 169, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3"] },
+        { "date": "2026-11-19", "from": "10:30", "to": "11:30", "course": "Mathematics III", "code": "MAT 201", "students": 232, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "صالة 104", "صالة 105"] },
+        { "date": "2026-11-19", "from": "11:45", "to": "12:45", "course": "Systems Analysis and Design", "code": "DSP 231", "students": 241, "rooms": ["مدرج 1", "مدرج 2", "مدرج 3", "صالة 104", "صالة 105"] }
+      ]
+    },
+    {
+      "level": 3,
+      "exams": [
+        { "date": "2026-11-14", "from": "10:30", "to": "11:30", "course": "Computer Networks", "code": "CSP 331", "students": 136, "rooms": ["صالة 104", "صالة 105", "صالة 106", "صالة 201"] },
+        { "date": "2026-11-14", "from": "11:45", "to": "12:45", "course": "Societal Issues", "code": "GUR 2C1", "students": 91, "rooms": ["صالة 201", "صالة 301"] },
+        { "date": "2026-11-16", "from": "10:30", "to": "11:30", "course": "Introduction to History of Civilization", "code": "GUR 2EX", "students": 109, "rooms": ["صالة 104", "صالة 105", "صالة 201"] },
+        { "date": "2026-11-16", "from": "11:45", "to": "12:45", "course": "Artificial Intelligence", "code": "AIP 331", "students": 144, "rooms": ["صالة 104", "صالة 105", "صالة 106", "صالة 201"] },
+        { "date": "2026-11-18", "from": "10:30", "to": "11:30", "course": "Algorithms", "code": "CSP 321", "students": 140, "rooms": ["صالة 104", "صالة 105", "صالة 106", "صالة 201"] },
+        { "date": "2026-11-18", "from": "11:45", "to": "12:45", "course": "Selected Topics in CS", "code": "CSP 3XX", "students": 142, "rooms": ["صالة 104", "صالة 105", "صالة 106", "صالة 201"] }
+      ]
+    },
+    {
+      "level": 4,
+      "exams": [
+        { "date": "2026-11-15", "from": "10:30", "to": "11:30", "course": "Deep Learning", "code": "AIP 473", "rooms": ["معمل 1"] },
+        { "date": "2026-11-17", "from": "10:30", "to": "11:30", "course": "Theory of Computation & Compilers", "code": "CSP 322", "rooms": ["معمل 1"] },
+        { "date": "2026-11-17", "from": "11:45", "to": "12:45", "course": "Image Processing", "code": "CSP 453", "rooms": ["معمل 1"] },
+        { "date": "2026-11-19", "from": "10:30", "to": "11:30", "course": "Parallel Computation", "code": "CSP 401", "rooms": ["معمل 1"] },
+        { "date": "2026-11-19", "from": "11:45", "to": "12:45", "course": "Cloud Computing", "code": "CSP 452", "rooms": ["معمل 1"] }
+      ]
+    }
+  ]
+}

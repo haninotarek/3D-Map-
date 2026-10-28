@@ -19,51 +19,28 @@ cd viewer                 # deliverables/web_viewer/ is an identical, deployable
 python3 serve.py 8080     # any static file server works
 # open http://localhost:8080/
 ```
-- The viewer has no build step and no CDN. Three.js r186 is included in `viewer/lib/three/` and pdf.js 4.10 in `viewer/lib/pdfjs/`. The only external service is the optional midterm API storage (see «Midterm exams» below).
+- The viewer has no build step, no CDN and no server code. Three.js r186 is included in `viewer/lib/three/`.
 - It must be served over HTTP; opening it as a `file://` page will not work.
 - Use `?quality=lite` or `?quality=high` to force a model variant.
 - Use `#bld_main` (or any other building ID) to open the viewer with that building selected.
 
+### «وصلني للجنتي» (exam rooms)
+A floating orange button (bottom-left of the map) opens the exam-room finder (`viewer/js/exam-finder.js`).
+1. The student picks their level (الفرقة الدراسية), then the subject. Subjects are listed by date; past exams are marked «خلص» and the next one «الجاي».
+2. The exam shows as a ticket (day, time, building, number of rooms and students), then every exam room of that subject as a tile, grouped by floor.
+3. Tapping a room opens Engineering Building 2 on that floor and highlights the room; **وديني**, pinned at the bottom of the panel, walks there. On a phone the sheet shrinks to one bar with the room and «وديني», so the map stays visible.
+
+- **Data:** `viewer/data/schedules/midterm-2026.json`, typed from the faculty's PDFs («Midterm Level One…Four 27-10»). `rooms` maps each room name as printed (مدرج 1, صالة 104, معمل 1…) to its key in `viewer/data/room_index.json`. For the next exam period, edit this file (or add a new one and point `DATA` in `exam-finder.js` at it).
+- **صالة 301** is on the third floor, which is not drawn from a plan yet; it is placed above صالة 201 and marked «مكان تقريبي» until the plan arrives.
+
 ### Timetables (الجداول)
-The viewer opens with an Arabic timetable panel (`viewer/js/schedule.js`).
+The timetable panel (`viewer/js/schedule.js`) shows **الترم الأول** and **الترم التاني**.
 - Students pick their level and section and see their next class.
-- **Tapping a class or exam** opens its building on the right floor and highlights the room, with no walk.
+- **Tapping a class** opens its building on the right floor and highlights the room, with no walk.
 - **وديني** gives walking directions to the room.
-- Students cannot upload or change anything; only TAs can (see below).
-
-- **Tabs:** **الترم الأول** and **الترم التاني** are always there. A third exam tab (**الميدترم**, **نص السنة** or **آخر السنة**) shows only while TAs have made it visible, and disappears when they set it back to «مخفي».
-- **Built-in data:** `viewer/data/schedules/fall-2026.json` (term 1) and `spring-2027.json` (term 2). A level whose timetable TAs published on the TA page uses the published one instead.
+- **Data:** `viewer/data/schedules/fall-2026.json` (term 1) and `spring-2027.json` (term 2).
 - **Linking:** each class is linked automatically to its building, and to the room when the indoor map has it (`viewer/data/room_index.json`).
-
-### TA page (لوحة المعيدين) and «اعرف لجنتك»
-- **TA page:** `admin.html`. There is no link to it in the student panel, so TAs open it directly. It is protected by one shared TA password that is checked on the server.
-  1. **تبويب الامتحانات عند الطلاب:** choose which exam tab students see: مخفي, الميدترم, نص السنة or آخر السنة.
-  2. Pick the section (الترم الأول, الترم التاني, الميدترم, امتحانات نص السنة, امتحانات آخر السنة), then the level (سنة أولى → رابعة).
-  3. **Term sections:**
-     - Press **عدّل الجدول ده** to edit the current timetable in a table, or upload an Excel / CSV / JSON file. **نزّل الجدول** gives the current one as CSV, ready to edit in Excel.
-     - The columns are `level, day, period, course, type, group, sections, room, building`. Arabic headers and day names work too.
-     - Review the rows, then press **نشر**. **رجّع للجدول الأصلي** goes back to the built-in data for that level.
-  4. **Exam sections**, each with its own data:
-     - **جدول الامتحانات:** upload the exam timetable as Word (.docx), PDF, Excel (.xlsx) or CSV, or edit the published one. The printed layout works: time slots across the top, one row per day with its date, and `Course | CODE` in the cells.
-     - **كشوف القاعات:** upload the UNIHUB room sheets (PDF, one room per page; several files at once), or Excel / CSV with an `ID` column. Pick the room from the list if it is not linked to the map. Re-uploading the same exam and room replaces the old sheet.
-     - **جرّب كود طالب:** shows what a student will see for an ID in the visible exam period.
-- **«اعرف لجنتك»:** in the exam tab, a student types their ID and sees each of their exams with its room and «وديني».
-- **Reading files:** files are read in the browser (`viewer/js/midterm-parse.js`, with pdf.js in `viewer/lib/pdfjs/`). Scanned PDFs and photos have no text and are rejected, so ask for the original file. Old `.doc` and `.xls` must be saved as `.docx` / `.xlsx` first.
-- **API:** Vercel Functions in `viewer/api/`; the data layout is described at the top of `viewer/api/_lib/timetable.js`.
-  - `GET /api/timetable` returns the published term timetables and the visible exam period (no student data).
-  - `GET /api/timetable?id=…` returns one student's rooms in the visible exam period, plus their first name only.
-  - `POST /api/admin` handles the TA actions and needs the password token.
-  - Full names stay on the admin side. ID lookups are rate-limited per IP (1,500 per 10 minutes, generous because mobile carriers share IPs).
-  - Load: students read a ready-made copy (`pub:view`, rebuilt after every TA write), and Vercel's CDN caches both GET answers for a minute, so a full exam cohort costs about one database read per minute. TA changes reach students within about a minute.
-- **Vercel setup (once):**
-  1. The project's **Root Directory** must be `viewer`.
-  2. Under Storage / Marketplace, add **Upstash for Redis** and connect it to the project.
-  3. Run `node pipeline/hash_admin_password.mjs "<TA password>"` and add the printed `ADMIN_PASSWORD_HASH` under Settings → Environment Variables.
-  4. Redeploy.
-
-  Without this, the site still works with the built-in term timetables and no exam tab.
-- **Local run with the API:** `cd viewer && node dev-server.mjs 8090`, then open `http://localhost:8090/` and `/admin.html`. Put `ADMIN_PASSWORD_HASH=…` in `viewer/.env.local`. Data is kept in `viewer/.data/`; both of these are git-ignored. `python3 serve.py` still works, but without the API (built-in timetables only).
-- **Checking the file readers:** `node pipeline/test_midterm.mjs <files…>` prints what is read from each file (a file name containing "schedule" / "midterm" is read as an exam timetable, anything else as room sheets).
+- Opening the timetable closes «وصلني للجنتي» and the other way round.
 
 Website integration options (iframe or native page) and server settings are in [`deliverables/README.md`](deliverables/README.md#website-integration).
 
@@ -135,7 +112,7 @@ still works).
 - **Testing.** Browser QA ran on headless Chromium with software WebGL (22/22 checks passed). It has not been tested on real GPUs, iOS or physical phones.
 
 ## Attribution and licences
-- Building footprints and roads: © OpenStreetMap contributors, ODbL 1.0. Attribution is required wherever the model is shown; the viewer footer includes it.
+- Building footprints and roads: © OpenStreetMap contributors, ODbL 1.0. Attribution is required wherever the model is shown; the viewer shows it in the help panel.
 - Satellite imagery (reference only): Esri World Imagery, Vantor/Maxar WorldView-3, 2022-08-08.
 - Source video and photo: supplied for this project. The video carries a "WITTY MEDIA" watermark, and its frames were used for analysis.
 - Three.js: MIT licence ([`viewer/lib/three/LICENSE`](viewer/lib/three/LICENSE)).

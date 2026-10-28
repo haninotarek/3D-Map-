@@ -1,5 +1,5 @@
-// Room / building name matching shared by the timetable panel (schedule.js), the TA admin page
-// (admin.js) and the file parsers (midterm-parse.js). Pure functions, no DOM.
+// Room / building name matching shared by the timetable panel (schedule.js) and the exam-room finder
+// (exam-finder.js). Pure functions, no DOM.
 
 export const arDigits = (s) => String(s ?? '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
 

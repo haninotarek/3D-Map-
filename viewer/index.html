@@ -72,11 +72,28 @@
           <select id="sched-day" aria-label="اليوم"></select>
           <select id="sched-section" aria-label="السكشن"></select>
         </div>
-        <div id="sched-seat" hidden></div>
         <div id="sched-next" hidden></div>
         <div id="sched-list"></div>
       </div>
-      <div id="sched-toast" class="sched-toast" role="status" aria-live="polite" hidden></div>
+    </aside>
+
+    <!-- «وصلني للجنتي»: floating button -> level -> subject -> exam room -> «وديني» (js/exam-finder.js) -->
+    <button type="button" id="exam-toggle" class="ex-fab" aria-label="وصلني للجنتي" title="وصلني للجنتي" aria-expanded="false" aria-controls="exam"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg></button>
+    <aside id="exam" dir="rtl" lang="ar" aria-label="وصلني للجنتي">
+      <header class="ex-head">
+        <span class="ex-grab" aria-hidden="true"></span>
+        <div class="ex-titles">
+          <h2>وصلني للجنتي</h2>
+          <p id="exam-term"></p>
+        </div>
+        <button type="button" id="exam-close" class="ex-close" aria-label="إغلاق"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="ex-body">
+        <div id="ex-level" class="ex-field"></div>
+        <div id="ex-course" class="ex-field"></div>
+        <div id="ex-result"></div>
+      </div>
+      <div id="ex-cta" class="ex-cta"></div>
     </aside>
 
     <nav id="floor-rail" class="hidden" dir="rtl" lang="ar" aria-label="الأدوار">
@@ -162,7 +179,7 @@
         <li><b>Select a building:</b> click or tap it, or choose it from <i>Buildings</i></li>
         <li><b>Keyboard:</b> ← / → previous/next building · Home = overview · L = labels · Esc = close panels</li>
       </ul>
-      <p class="small">This model is a reconstruction based on video footage, satellite imagery (Esri/Vantor, 2022) and OpenStreetMap footprints. It is not a survey. Faculty assignments are shown only where sources confirm them.</p>
+      <p class="small">This model is a reconstruction based on video footage, satellite imagery (Esri/Vantor, 2022) and OpenStreetMap footprints. It is not a survey. Faculty assignments are shown only where sources confirm them. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</p>
     </div>
 
     <div id="loading" role="status" aria-live="polite">
@@ -187,13 +204,9 @@
     </div>
   </main>
 
-  <footer class="attrib" dir="rtl" lang="ar">
-    <span>© 2026 كلية علوم الحاسب وتقنية المعلومات · جامعة شرق بورسعيد الأهلية</span>
-    <span class="osm" dir="ltr">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></span>
-  </footer>
-
   <noscript><div class="noscript">This 3D campus guide requires JavaScript and WebGL.</div></noscript>
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/schedule.js"></script>
+  <script type="module" src="js/exam-finder.js"></script>
 </body>
 </html>
